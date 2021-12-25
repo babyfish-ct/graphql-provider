@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.6.10"
+    antlr
 }
 
 repositories {
@@ -20,6 +21,16 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.0")
+
+    antlr("org.antlr:antlr4:4.9.3")
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs("build/generated-src/antlr")
+        }
+    }
 }
 
 tasks.withType<KotlinCompile> {

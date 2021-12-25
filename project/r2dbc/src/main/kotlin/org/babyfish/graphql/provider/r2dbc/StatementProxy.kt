@@ -6,5 +6,4 @@ internal class StatementProxy(
     private val target: Statement
 ) : Statement by target {
 
-
 }
