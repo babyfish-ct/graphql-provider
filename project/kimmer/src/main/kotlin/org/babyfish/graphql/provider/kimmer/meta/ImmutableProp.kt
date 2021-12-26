@@ -1,14 +1,12 @@
 package org.babyfish.graphql.provider.kimmer.meta
 
-import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 
 interface ImmutableProp {
 
     val declaringType: ImmutableType
 
-    val name: String
-
-    val kotlinType: KClass<*>
+    val kotlinProp: KProperty<*>
 
     val isNullable: Boolean
 

@@ -2,15 +2,12 @@ package org.babyfish.graphql.provider.kimmer.meta
 
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
-import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty
-import kotlin.reflect.KProperty
-import kotlin.reflect.KType
+import kotlin.reflect.*
 
 internal class Parser(
-    private val map: Map<Class<*>, ImmutableType>
+    private val map: MutableMap<Class<*>, ImmutableType>
 ) {
-    private val tmpMap = mutableMapOf<Class<*>, ImmutableType>()
+    private var tmpMap = mutableMapOf<Class<*>, TypeImpl>()
 
     fun get(type: Class<*>): ImmutableType =
         map[type]
@@ -19,7 +16,7 @@ internal class Parser(
                 tmpMap[type] = it
             }
 
-    private fun create(type: Class<*>): ImmutableType {
+    private fun create(type: Class<*>): TypeImpl {
         if (!type.isInterface) {
             throw IllegalArgumentException("type '${type.name}' is not interface")
         }
@@ -38,8 +35,20 @@ internal class Parser(
         return result
     }
 
-    val createdTypes: Map<Class<*>, ImmutableType>
-        get() = tmpMap
+    fun terminate(): Map<Class<*>, ImmutableType> {
+        val secondaryResolvedTypes = mutableSetOf<TypeImpl>()
+        var size = 0
+        while (tmpMap.size > size) {
+           size = tmpMap.size
+           val m = tmpMap.toMap()
+           for (type in m.values) {
+               if (secondaryResolvedTypes.add(type)) {
+                   type.secondaryResolve(this)
+               }
+           }
+        }
+        return tmpMap
+    }
 }
 
 private class TypeImpl(
@@ -54,21 +63,33 @@ private class TypeImpl(
 
     private val _superTypes = mutableSetOf<ImmutableType>()
 
-    private val _declaredProps = mutableMapOf<String, ImmutableProp>()
+    private val _declaredProps = mutableMapOf<String, PropImpl>()
 
     override val superTypes: Set<ImmutableType>
-        get() = TODO("Not yet implemented")
+        get() = _superTypes
 
     override val declaredProps: Map<String, ImmutableProp>
-        get() = TODO("Not yet implemented")
+        get() = _declaredProps
 
-    override val props: Map<String, ImmutableProp>
-        get() = TODO("Not yet implemented")
+    override val props: Map<String, ImmutableProp> by lazy {
+        if (this.superTypes.isNotEmpty()) {
+            _declaredProps
+        } else {
+            val props = _declaredProps.toMutableMap<String, ImmutableProp>()
+            for (superType in _superTypes) {
+                for (superProp in superType.props.values) {
+                    props.putIfAbsent(superProp.kotlinProp.name, superProp)
+                }
+            }
+            props
+        }
+    }
 
     fun resolve(parser: Parser) {
         for (supertype in kotlinType.supertypes) {
             this.resolveSuper(supertype, parser)
         }
+        resolveDeclaredProps()
     }
 
     private fun resolveSuper(superType: KType, parser: Parser) {
@@ -76,42 +97,103 @@ private class TypeImpl(
         if (classifier !is KClass<*>) {
             error("Internal bug: classifier of super interface must be KClass")
         }
-        _superTypes += parser.get(classifier.java)
-        for (supertype in kotlinType.supertypes) {
-            this.resolveSuper(supertype, parser)
+        if (classifier.java.isInterface) {
+            _superTypes += parser.get(classifier.java)
+            for (deeperSuperType in classifier.supertypes) {
+                this.resolveSuper(deeperSuperType, parser)
+            }
         }
     }
 
     private fun resolveDeclaredProps() {
         for (member in kotlinType.members) {
-            if (member is KMutableProperty.Setter<*>) {
-                throw MetadataException("'Illegal setter '${member.name}' in type ${kotlinType.qualifiedName}', setter is not allowed in immutable type")
+            if (member.parameters.isNotEmpty() && member.parameters[0].kind == KParameter.Kind.INSTANCE) {
+                if (member is KMutableProperty) {
+                    throw MetadataException("'Illegal setter '${member.name}' in type ${kotlinType.qualifiedName}', setter is not allowed in immutable type")
+                }
+                if (member is KProperty && !isSuperProp(member)) {
+                    _declaredProps[member.name] = PropImpl(this, member)
+                }
             }
-            if (member is KProperty.Getter) {
-                _declaredProps[member.name] = PropImpl()
+        }
+    }
+
+    private fun isSuperProp(kotlinProp: KProperty<*>): Boolean {
+        var result = false
+        for (superType in _superTypes) {
+            val superProp = superType.props[kotlinProp.name]
+            if (superProp !== null) {
+                if (superProp.kotlinProp.returnType != kotlinProp.returnType) {
+                    throw MetadataException("Prop '${kotlinProp}' overrides '${superProp.kotlinProp}' but changes the return type")
+                }
+                result = true
             }
+        }
+        return result
+    }
+
+    fun secondaryResolve(parser: Parser) {
+        for (declaredProp in _declaredProps.values) {
+            declaredProp.resolve(parser)
         }
     }
 }
 
-private class PropImpl: ImmutableProp {
+private class PropImpl(
+    override val declaringType: ImmutableType,
+    override val kotlinProp: KProperty<*>
+): ImmutableProp {
 
-    override val declaringType: ImmutableType
-        get() = TODO("Not yet implemented")
-    override val name: String
-        get() = TODO("Not yet implemented")
-    override val kotlinType: KClass<*>
-        get() = TODO("Not yet implemented")
-    override val isNullable: Boolean
-        get() = TODO("Not yet implemented")
-    override val isAssociation: Boolean
-        get() = TODO("Not yet implemented")
     override val isCollection: Boolean
-        get() = TODO("Not yet implemented")
+
     override val isReference: Boolean
-        get() = TODO("Not yet implemented")
-    override val targetType: ImmutableType?
-        get() = TODO("Not yet implemented")
+
     override val isTargetNullable: Boolean
-        get() = TODO("Not yet implemented")
+
+    private var _targetType: ImmutableType? = null
+
+    init {
+        val classifier = kotlinProp.returnType.classifier
+        if (classifier !is KClass<*>) {
+            error("Internal bug: '${kotlinProp}' does not returns class")
+        }
+        if (Map::class.java.isAssignableFrom(classifier.java)) {
+            throw MetadataException("Illegal property '${kotlinProp}', map is not allowed")
+        }
+        if (classifier.java.isArray) {
+            throw MetadataException("Illegal property '${kotlinProp}', array is not allowed")
+        }
+        isCollection = Collection::class.java.isAssignableFrom(classifier.java)
+        isReference = !isCollection && Immutable::class.java.isAssignableFrom(classifier.java)
+        isTargetNullable = if (isCollection) {
+            kotlinProp.returnType.arguments[0].type?.isMarkedNullable ?: false
+        } else {
+            false
+        }
+    }
+
+    override val isNullable: Boolean
+        get() = kotlinProp.returnType.isMarkedNullable
+
+    override val isAssociation: Boolean
+        get() = isCollection || isReference
+
+    override val targetType: ImmutableType?
+        get() = _targetType
+
+    fun resolve(parser: Parser) {
+        val cls = kotlinProp.returnType.classifier as KClass<*>
+        if (isCollection) {
+            if (cls != List::class) {
+                throw MetadataException("Illegal property '${kotlinProp}', collection property of immutable object must returns 'kotlin.List'")
+            }
+            val targetClassifier = kotlinProp.returnType.arguments[0].type?.classifier
+            if (targetClassifier !is KClass<*> || !Immutable::class.java.isAssignableFrom(targetClassifier.java)) {
+                throw MetadataException("Illegal property '${kotlinProp}', generic argument of list is not immutable type")
+            }
+            _targetType = parser.get(targetClassifier.java)
+        } else if (isReference) {
+            _targetType = parser.get(cls.java)
+        }
+    }
 }

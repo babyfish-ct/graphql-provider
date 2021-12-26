@@ -34,7 +34,7 @@ private fun getImmutableType(type: Class<*>): ImmutableType =
         cacheMap[type]
             ?: Parser(cacheMap).let {
                 val result = it.get(type)
-                cacheMap.putAll(it.createdTypes)
+                cacheMap += it.terminate()
                 result
             }
     }
