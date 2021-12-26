@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.r2dbc
+package org.babyfish.graphql.provider.r2dbc.proxy
 
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory

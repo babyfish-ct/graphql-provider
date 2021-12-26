@@ -2,9 +2,9 @@ package org.babyfish.graphql.provider.r2dbc
 
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactories
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
+import org.babyfish.graphql.provider.r2dbc.proxy.ConnectionFactoryProxy
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
