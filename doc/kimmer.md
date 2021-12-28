@@ -91,10 +91,10 @@ val book2 = new(BookDraft.Sync::class, book) {
 
 ## 4. Special function
 
-#### 1. Partial objects
+#### 4.1. Partial objects
 When creating the object, it is not necessary to assign values to all fields of draft object, unassigned fields are called unloaded fields. In the Kotlin language, trying to access unloaded fields will cause an exception, but JSON serialization will not cause exception, but ignore them. This design implements dynamic shape required by GraphQL.
 
-#### 2. Exception fields
+#### 4.2. Exception fields
 
 You can mark some fields by exceptions
 
