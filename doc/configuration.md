@@ -115,7 +115,7 @@ Finally, let’s take a look at an example of a calculated field
 
 Book has a price attribute, and BookStore has an avgPrice attribute, which represents the average price of all data under the BookStore.
 
-```
+```kt
     entity(BookStore::class) {
         computed(BookStore::avgPrice) {
             batchImplementation {
