@@ -169,3 +169,7 @@ Now, the redis cache should looks like this
 |gp_BookStore-2-books-{name: "X"} | [] | paramerized association cache |
 |gp_BookStore-1-avgPrice| 234.4 | computed cache |
 |gp_BookStore-2-avgPrice| 51 | computed cache |
+
+--------------------------------
+
+[< Back](https://github.com/babyfish-ct/graphql-provider)
