@@ -1,11 +1,11 @@
 # A quickly fraemwrok for GraphQL server by kotlin
 ## (Developing..., will come soon, please wait until this statement is disappeared)
 
-Key value:
+## Key value:
 1. Mapping "RDBMS+Redis" to "GraphQL"
 2. Ensure **absolute** consistency between the database and Redis
 
-Table of conents:
+## Table of conents:
 
-[kimmer](./doc/doc.md)
-[mapping](./doc/mapping.md)
+1. [kimmer](./doc/doc.md)
+2. [configuration](./doc/mapping.md)
