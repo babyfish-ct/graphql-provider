@@ -1,4 +1,4 @@
-# Kimmer: immer for kotlin
+# Kimmer: [immer](https://github.com/immerjs/immer) for kotlin
 
 Kotlin's data class is not powerful. For better development experience, we introduce [https://github.com/immerjs/immer](https://github.com/immerjs/immer) for Kotlin
 
@@ -64,7 +64,7 @@ interface AuthorDraft<T: Author>: Author, NodeDraft<T> {
 2. User interface uses immutable list **"kotlin.List"**, but the generated interface uses writable list **"kotlin.MutableList"**.
 
 ## 3. Usage
-Create new data from scratch
+1. Create new data from scratch
 ```kt
 val book = new(BookDraft.Sync::class) {
     id = "00001"
@@ -79,7 +79,7 @@ val book = new(BookDraft.Sync::class) {
     }
 }
 ```
-Create new data based on existing data
+2. Create new data based on existing data
 ```kt
 val book2 = new(BookDraft.Sync::class, book) {
     name += "!"
