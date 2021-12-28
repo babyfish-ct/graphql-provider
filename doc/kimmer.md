@@ -1,6 +1,6 @@
 # Kimmer: [immer](https://github.com/immerjs/immer) for kotlin
 
-Kotlin's data class is not powerful. For better development experience, we introduce [https://github.com/immerjs/immer](https://github.com/immerjs/immer) for Kotlin
+Kotlin's data class does not match the goal of this framework. For better development experience, we introduce [https://github.com/immerjs/immer](https://github.com/immerjs/immer) for Kotlin
 
 ## 1. User defines immutate data model
 ```kt
