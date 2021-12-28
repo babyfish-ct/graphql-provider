@@ -20,9 +20,9 @@ class EntityConfiguration<E> {
 
     fun <T: Immutable> list(prop: KProperty1<E, List<T>>, block: AssociationConfiguration<E, T>.() -> Unit) {}
 
-    fun <T: Immutable> mappedReference(prop: KProperty1<E, T>, mappedBy: KProperty1<T, *>, block: MappedAssociationConfiguration<E, T>.() -> Unit) {}
+    fun <T: Immutable> mappedReference(prop: KProperty1<E, T>, mappedBy: KProperty1<T, *>, block: (MappedAssociationConfiguration<E, T>.() -> Unit)? = null) {}
 
-    fun <T: Immutable> mappedList(prop: KProperty1<E, List<T>>, mappedBy: KProperty1<T, *>, block: MappedAssociationConfiguration<E, T>.() -> Unit) {}
+    fun <T: Immutable> mappedList(prop: KProperty1<E, List<T>>, mappedBy: KProperty1<T, *>, block: (MappedAssociationConfiguration<E, T>.() -> Unit)? = null) {}
 
     fun <T> computed(prop: KProperty1<E, T>, block: ComputedConfiguration<E, T>.() -> Unit) {
 
