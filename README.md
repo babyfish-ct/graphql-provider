@@ -3,7 +3,7 @@
 
 ## Key value:
 1. Mapping "RDBMS+Redis" to "GraphQL"
-2. Ensure **absolute** consistency between the database and Redis
+2. Ensure **absolute** consistency between the RDBMS and Redis
 
 ## Table of conents:
 
