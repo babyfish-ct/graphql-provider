@@ -60,8 +60,8 @@ interface AuthorDraft<T: Author>: Author, NodeDraft<T> {
 }
 ```
 
-1. User interface uses "val" to define readonly properties, but the  generated interface uses "var" to define writable properties.
-2. User interface uses immutable list "kotlin.List", but the generated interface uses writable list "kotlin.MutableList"
+1. User interface uses **"val"** to define readonly properties, but the  generated interface uses **"var"** to define writable properties.
+2. User interface uses immutable list **"kotlin.List"**, but the generated interface uses writable list **"kotlin.MutableList"**.
 
 ## 3. Usage
 Create new data from scratch
