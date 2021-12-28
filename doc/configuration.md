@@ -58,7 +58,7 @@ We have seen two types of caches here: object-cache and assocation-cache. In fac
 > 
 > 2. Must use ConnectionFactory proxied by this framework
 
-## 2. Add parameters for association
+## 2. Parameterized association
 
 In actual projects, it is impossible to be as simple as the above example, and the associated attributes often have parameters.
 
@@ -93,10 +93,10 @@ Here, we use the "filter" configuration to specify parameters for "BookStore.boo
 It is worth noting that the redis configuration, it tells the framework two things
 
 1. dpendsOnList(BookStore::books) 
-If the Book list of the BookStore object changes (may be creating a new Book object, or deleting the Book object, or modifying the foreign key of the Book), the data of the currently associated Redis cache will be affected
+If the Book list of the BookStore object changes (may be creating a new Book object, or deleting the Book object, or modifying the foreign key of the Book), the data of current association in redis cache will be affected.
 
 2. dependsOn(Book::name) 
-If the name of the Book is modified, the data in the currently associated Redis cache will be affected
+If the name of the Book is modified, the data of current association in redis cache will be affected.
 
 Now, the redis cache should looks like this
 
@@ -108,3 +108,64 @@ Now, the redis cache should looks like this
 |gp_BookStore-1-books-{name: "G"} | [3, 5] | parameterized association cache |
 |gp_BookStore-2-books | [6] | association cache | parmaeterized association cache|
 |gp_BookStore-2-books-{name: "X"} | [] | paramerized association cache |
+
+## 3. Computed fields
+
+Finally, let’s take a look at an example of a calculated field
+
+Book has a price attribute, and BookStore has an avgPrice attribute, which represents the average price of all data under the BookStore.
+
+```
+    entity(BookStore::class) {
+        computed(BookStore::avgPrice) {
+            batchImplementation {
+                createStatement(
+                    "select book_store_id, avg(price) from where book_store_id in (${
+                        List(rows.size) { i -> "?${i + 1}" }.joinToString()
+                    }) book group by book_store_id"
+                )
+                    .apply {
+                        for (i in rows.indices) {
+                            bind("${i + 1}", rows[i].id)
+                        }
+                    }
+                    .execute()
+                    .awaitSingle()
+                    .map(Function<Readable, Pair<String, BigDecimal>> {
+                        it.get(0, String::class.java) to it.get(1, BigDecimal::class.java)
+                    })
+                    .asFlow()
+                    .toList()
+            }
+            redis {
+                dependsOnList(BookStore::books) {
+                    dependsOn(Book::price)
+                }
+            }
+        }
+    }
+```
+
+"computed" is used to config a computed field, "batchImplementation" is a R2DBC SQL query implemented by User.
+
+It is worth noting that the redis configuration, it tells the framework two things
+
+1. dpendsOnList(BookStore::books) 
+If the Book list of the BookStore object changes (may be creating a new Book object, or deleting the Book object, or modifying the foreign key of the Book), the data "avgPrice" of the current BookStore in Redis cache will be affected
+
+2. dependsOn(Book::name) 
+If the "price" of the Book is modified, the data "avgPrice" of the current BookStore in Redis cache will be affected
+
+
+Now, the redis cache should looks like this
+
+|key          |Value             | Description|
+|-------------|------------------|------------|
+|gp_BookStore-1 | {id: "1", name: "O'REILLY"} | object cache |
+|gp_BookStore-2 | {id: "2", name: "MANNING"} | object cache |
+|gp_BookStore-1-books | [3, 4, 5] | association cache |
+|gp_BookStore-1-books-{name: "G"} | [3, 5] | parameterized association cache |
+|gp_BookStore-2-books | [6] | association cache | association cache|
+|gp_BookStore-2-books-{name: "X"} | [] | paramerized association cache |
+|gp_BookStore-1-avgPrice| 234.4 | computed cache |
+|gp_BookStore-2-avgPrice| 51 | computed cache |
