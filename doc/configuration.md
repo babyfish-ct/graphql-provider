@@ -92,6 +92,19 @@ Here, we use the "filter" configuration to specify parameters for "BookStore.boo
 
 It is worth noting that the redis configuration, it tells the framework two things
 
-1. If the Book list of the BookStore object changes (may be creating a new Book object, or deleting the Book object, or modifying the foreign key of the Book), the data of the currently associated Redis cache will be affected
+1. dpendsOnList(BookStore::books) 
+If the Book list of the BookStore object changes (may be creating a new Book object, or deleting the Book object, or modifying the foreign key of the Book), the data of the currently associated Redis cache will be affected
 
-2. If the name of the Book is modified, the data in the currently associated Redis cache will be affected
+2. dependsOn(Book::name) 
+If the name of the Book is modified, the data in the currently associated Redis cache will be affected
+
+Now, the redis cache should looks like this
+
+|key          |Value             | Description|
+|-------------|------------------|------------|
+|gp_BookStore-1 | {id: "1", name: "O'REILLY"} | object cache |
+|gp_BookStore-2 | {id: "2", name: "MANNING"} | object cache |
+|gp_BookStore-1-books | [3, 4, 5] | association cache |
+|gp_BookStore-1-books-{name: "G"} | [3, 5] | parameterized association cache |
+|gp_BookStore-2-books | [6] | association cache | parmaeterized association cache|
+|gp_BookStore-2-books-{name: "X"} | [] | paramerized association cache |
