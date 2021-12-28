@@ -108,4 +108,4 @@ val books = new(BookDraft::class.java) {
 
 In the Kotlin language, trying to access the exception field will cause an exception, but JSON serialization will not cause exception, it will serialize the exception information.
 
-The purpose of this design is because GraphQL allows exception information to be mixed into the data. With this design, we no longer need a design such as ""
+The purpose of this design is because GraphQL allows exception information to be mixed into the data. With this design, we no longer need the design such as [Try of graphql-java](https://github.com/graphql-java/java-dataloader/blob/master/src/main/java/org/dataloader/Try.java)
