@@ -112,4 +112,4 @@ The purpose of this design is because GraphQL allows exception information to be
 
 ----------------------
 
-[< Back](../)
+[< Back](../https://github.com/babyfish-ct/graphql-provider)
