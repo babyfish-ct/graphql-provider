@@ -18,4 +18,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.0")
 
     testImplementation(kotlin("test"))
+    implementation("org.ow2.asm:asm:9.2")
 }
