@@ -153,7 +153,7 @@ It is worth noting that the redis configuration, it tells the framework two thin
 1. dpendsOnList(BookStore::books) 
 If the Book list of the BookStore object changes (may be creating a new Book object, or deleting the Book object, or modifying the foreign key of the Book), the data "avgPrice" of the current BookStore in Redis cache will be affected
 
-2. dependsOn(Book::name) 
+2. dependsOn(Book::price) 
 If the "price" of the Book is modified, the data "avgPrice" of the current BookStore in Redis cache will be affected
 
 
