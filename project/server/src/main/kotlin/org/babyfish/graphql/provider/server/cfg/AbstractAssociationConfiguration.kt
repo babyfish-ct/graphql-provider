@@ -1,6 +1,9 @@
 package org.babyfish.graphql.provider.server.cfg
 
 import org.babyfish.graphql.provider.kimmer.Immutable
+import org.babyfish.graphql.provider.server.meta.Arg
+import org.babyfish.graphql.provider.server.meta.Filter
+import org.babyfish.graphql.provider.server.meta.OnDeleteAction
 
 @Configuration
 abstract class AbstractAssociationConfiguration<E, T: Immutable> {
@@ -36,8 +39,3 @@ class AssociationDbConfiguration {
     ) {}
 }
 
-enum class OnDeleteAction {
-    NONE,
-    CASCADE,
-    SET_NULL
-}
