@@ -1,8 +1,6 @@
 package org.babyfish.graphql.provider.server.cfg
 
 import org.babyfish.graphql.provider.kimmer.Immutable
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
 
 @Configuration
 abstract class AbstractAssociationConfiguration<E, T: Immutable> {
@@ -11,7 +9,7 @@ abstract class AbstractAssociationConfiguration<E, T: Immutable> {
 
     }
 
-    fun redis(enabled: Boolean = true, block: (RedisConfiguration<E>.() -> Unit)? = null) {
+    fun redis(enabled: Boolean = true, block: (RedisConfiguration<T>.() -> Unit)? = null) {
 
     }
 }

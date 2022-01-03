@@ -100,9 +100,7 @@ fun init() {
                 }
             }
             redis {
-                dependsOnList(BookStore::books) {
-                    dependsOn(Book::name)
-                }
+                dependsOn(Book::name)
             }
         }
         computed(BookStore::avgPrice) {
@@ -156,9 +154,7 @@ fun init() {
                 }
             }
             redis {
-                dependsOnList(Book::authors) {
-                    dependsOn(Book::name)
-                }
+                dependsOn(Author::name)
             }
         }
     }
@@ -178,9 +174,7 @@ fun init() {
                 }
             }
             redis {
-                dependsOnList(Author::books) {
-                    dependsOn(Book::name)
-                }
+                dependsOn(Book::name)
             }
         }
     }

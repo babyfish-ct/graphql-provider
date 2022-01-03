@@ -78,7 +78,7 @@ private class SuperContext {
     private fun acceptType(type: KClass<*>) {
         if (type.java.isInterface) {
             if (Draft::class.java.isAssignableFrom(type.java)) {
-                if (SyncDraft::class != type && AsyncDraft::class != type && addDraftType(type)) {
+                if (Draft::class != type && SyncDraft::class != type && AsyncDraft::class != type && addDraftType(type)) {
                     acceptSuperTypes(type)
                 }
             } else if (Immutable::class.java.isAssignableFrom(type.java) &&
