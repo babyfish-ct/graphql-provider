@@ -74,7 +74,7 @@ private class TypeImpl(
         get() = _declaredProps
 
     override val props: Map<String, ImmutableProp> by lazy {
-        if (this.superTypes.isNotEmpty()) {
+        if (this.superTypes.isEmpty()) {
             _declaredProps
         } else {
             val props = _declaredProps.toMutableMap<String, ImmutableProp>()

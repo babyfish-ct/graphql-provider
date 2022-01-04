@@ -22,10 +22,12 @@ class EntityConfiguration<E: Any> internal constructor(private val entity: Entit
         EntityGraphQLConfiguration(this.entity.graphql).block()
     }
 
-    fun <T> id(prop: KProperty1<E, T>, block: IdConfiguration<T>.() -> Unit) {
+    fun <T> id(prop: KProperty1<E, T>, block: (IdConfiguration<T>.() -> Unit)? = null) {
         validateProp(prop)
         val entityProp = EntityPropImpl(entity, EntityProp.Category.ID, prop)
-        IdConfiguration<T>(entityProp).block()
+        block?.let {
+            IdConfiguration<T>(entityProp).it()
+        }
         entity.declaredProps[prop.name] = entityProp
     }
 

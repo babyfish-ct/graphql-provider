@@ -17,14 +17,17 @@ class EntityTypeProvider(
         val map = mutableMapOf<Class<*>, EntityTypeImpl>()
         for (assembler in assemblers) {
             val entityClass = GenericTypeResolver.resolveTypeArgument(
-                this::class.java,
+                assembler::class.java,
                 EntityAssembler::class.java
             ) as Class<out Immutable>
             if (map.containsKey(entityClass)) {
                 throw IllegalStateException("Duplicated entity assemblers for entity type '${entityClass.name}'")
             }
             val entityImpl = EntityTypeImpl(entityClass.kotlin)
-            (assembler as EntityAssembler<Immutable>).assemble(EntityConfiguration(entityImpl))
+            (assembler as EntityAssembler<Immutable>).apply {
+                EntityConfiguration<Immutable>(entityImpl).assemble()
+            }
+            map[entityClass] = entityImpl
         }
         entityTypeMap = map
         for (entityType in map.values) {

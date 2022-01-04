@@ -5,5 +5,5 @@ import org.babyfish.graphql.provider.server.cfg.EntityConfiguration
 
 interface EntityAssembler<E: Immutable> {
 
-    fun assemble(configuration: EntityConfiguration<E>)
+    fun EntityConfiguration<E>.assemble()
 }

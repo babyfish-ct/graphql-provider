@@ -84,7 +84,7 @@ internal class EntityTypeImpl(
         when (phase) {
             ResolvingPhase.SUPER_TYPE ->
                 for (superImmutableType in immutableType.superTypes) {
-                    val superType = provider.tryGet(superImmutableType.kotlinType) as EntityTypeImpl
+                    val superType = provider.tryGet(superImmutableType.kotlinType) as EntityTypeImpl?
                     if (superType !== null) {
                         _superTypes += superType
                     }
@@ -95,12 +95,12 @@ internal class EntityTypeImpl(
                         if (immutableProp.isAssociation) {
                             throw IllegalStateException("The property '${immutableProp}' is not configured")
                         }
+                        declaredProps[immutableProp.name] = EntityPropImpl(
+                            this,
+                            EntityProp.Category.SCALAR,
+                            immutableProp.kotlinProp
+                        )
                     }
-                    declaredProps[immutableProp.name] = EntityPropImpl(
-                        this,
-                        EntityProp.Category.SCALAR,
-                        immutableProp.kotlinProp
-                    )
                 }
             ResolvingPhase.PROPS -> {
                 if (_props === null) {

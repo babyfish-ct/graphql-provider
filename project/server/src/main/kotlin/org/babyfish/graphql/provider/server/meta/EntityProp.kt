@@ -95,8 +95,9 @@ internal class EntityPropImpl(
         get() = (redisDependencyMap as Map<String, RedisDependency>?)?.values
 
     fun resolve(provider: EntityTypeProvider) {
-        val tgtType = provider[immutableProp.targetType!!.kotlinType]
-        if (tgtType !== null) {
+        val tgtKtType = immutableProp.targetType?.kotlinType
+        if (tgtKtType !== null) {
+            val tgtType = provider[tgtKtType]
             targetType = tgtType
             if (mappedBy !== null) {
                 val opposite = tgtType.props[mappedBy] as EntityPropImpl? ?: error("Internal bug")
@@ -130,7 +131,7 @@ internal class EntityPropImpl(
                 }
             else ->
                 if (immutableProp.isAssociation) {
-                    throw IllegalArgumentException("The property '${kotlinProp}' must cannot returns connection, list or another immutable type when category is $category")
+                    throw IllegalArgumentException("The property '${kotlinProp}' cannot returns connection, list or another immutable type when category is $category")
                 }
         }
     }

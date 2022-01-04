@@ -2,6 +2,7 @@ package org.babyfish.graphql.provider.server.cfg
 
 import org.babyfish.graphql.provider.server.meta.EntityPropImpl
 
+@Configuration
 class IdConfiguration<T> internal constructor(
     private val entityProp: EntityPropImpl
 ) {
