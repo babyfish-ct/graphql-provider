@@ -1,7 +1,9 @@
 package org.babyfish.graphql.provider.kimmer.meta
 
+import org.babyfish.graphql.provider.kimmer.Connection
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
+import org.springframework.core.GenericTypeResolver
 import kotlin.reflect.*
 
 internal class Parser(
@@ -9,14 +11,14 @@ internal class Parser(
 ) {
     private var tmpMap = mutableMapOf<Class<*>, TypeImpl>()
 
-    fun get(type: Class<*>): ImmutableType =
+    fun get(type: Class<out Immutable>): ImmutableType =
         map[type]
             ?: tmpMap[type]
             ?: create(type).also {
                 tmpMap[type] = it
             }
 
-    private fun create(type: Class<*>): TypeImpl {
+    private fun create(type: Class<out Immutable>): TypeImpl {
         if (!type.isInterface) {
             throw IllegalArgumentException("type '${type.name}' is not interface")
         }
@@ -52,7 +54,7 @@ internal class Parser(
 }
 
 private class TypeImpl(
-    override val kotlinType: KClass<*>
+    override val kotlinType: KClass<out Immutable>
 ): ImmutableType {
 
     init {
@@ -98,7 +100,7 @@ private class TypeImpl(
             error("Internal bug: classifier of super interface must be KClass")
         }
         if (classifier.java.isInterface) {
-            _superTypes += parser.get(classifier.java)
+            _superTypes += parser.get(classifier.java as Class<out Immutable>)
             for (deeperSuperType in classifier.supertypes) {
                 this.resolveSuper(deeperSuperType, parser)
             }
@@ -111,7 +113,7 @@ private class TypeImpl(
                 if (member is KMutableProperty) {
                     throw MetadataException("'Illegal setter '${member.name}' in type ${kotlinType.qualifiedName}', setter is not allowed in immutable type")
                 }
-                if (member is KProperty && !isSuperProp(member)) {
+                if (member is KProperty1<*, *> && !isSuperProp(member)) {
                     _declaredProps[member.name] = PropImpl(this, member)
                 }
             }
@@ -141,10 +143,12 @@ private class TypeImpl(
 
 private class PropImpl(
     override val declaringType: ImmutableType,
-    override val kotlinProp: KProperty<*>
+    override val kotlinProp: KProperty1<*, *>
 ): ImmutableProp {
 
-    override val isCollection: Boolean
+    override val isConnection: Boolean
+
+    override val isList: Boolean
 
     override val isReference: Boolean
 
@@ -153,19 +157,19 @@ private class PropImpl(
     private var _targetType: ImmutableType? = null
 
     init {
-        val classifier = kotlinProp.returnType.classifier
-        if (classifier !is KClass<*>) {
-            error("Internal bug: '${kotlinProp}' does not returns class")
-        }
+        val classifier = kotlinProp.returnType.classifier as? KClass<*>
+            ?: error("Internal bug: '${kotlinProp}' does not returns class")
+
         if (Map::class.java.isAssignableFrom(classifier.java)) {
             throw MetadataException("Illegal property '${kotlinProp}', map is not allowed")
         }
         if (classifier.java.isArray) {
             throw MetadataException("Illegal property '${kotlinProp}', array is not allowed")
         }
-        isCollection = Collection::class.java.isAssignableFrom(classifier.java)
-        isReference = !isCollection && Immutable::class.java.isAssignableFrom(classifier.java)
-        isTargetNullable = if (isCollection) {
+        isConnection = Connection::class.java.isAssignableFrom(classifier.java)
+        isList = !isConnection && Collection::class.java.isAssignableFrom(classifier.java)
+        isReference = !isConnection && !isList && Immutable::class.java.isAssignableFrom(classifier.java)
+        isTargetNullable = if (isList) {
             kotlinProp.returnType.arguments[0].type?.isMarkedNullable ?: false
         } else {
             false
@@ -176,24 +180,33 @@ private class PropImpl(
         get() = kotlinProp.returnType.isMarkedNullable
 
     override val isAssociation: Boolean
-        get() = isCollection || isReference
+        get() = isConnection || isList || isReference
 
     override val targetType: ImmutableType?
         get() = _targetType
 
     fun resolve(parser: Parser) {
         val cls = kotlinProp.returnType.classifier as KClass<*>
-        if (isCollection) {
+        if (isConnection) {
+            if (cls.typeParameters.isNotEmpty()) {
+                throw MetadataException("Illegal property '${kotlinProp}', connection property of immutable object must return derived type of '${Connection::class.qualifiedName}' without type parameters")
+            }
+            val targetJavaType = GenericTypeResolver.resolveTypeArgument(cls.java, Connection::class.java)
+            _targetType = parser.get(targetJavaType as Class<out Immutable>)
+        } else if (isList) {
             if (cls != List::class) {
-                throw MetadataException("Illegal property '${kotlinProp}', collection property of immutable object must returns 'kotlin.List'")
+                throw MetadataException("Illegal property '${kotlinProp}', list property of immutable object must return 'kotlin.List'")
             }
             val targetClassifier = kotlinProp.returnType.arguments[0].type?.classifier
             if (targetClassifier !is KClass<*> || !Immutable::class.java.isAssignableFrom(targetClassifier.java)) {
                 throw MetadataException("Illegal property '${kotlinProp}', generic argument of list is not immutable type")
             }
-            _targetType = parser.get(targetClassifier.java)
+            _targetType = parser.get(targetClassifier.java as Class<out Immutable>)
         } else if (isReference) {
-            _targetType = parser.get(cls.java)
+            _targetType = parser.get(cls.java as Class<out Immutable>)
         }
     }
+
+    override fun toString(): String =
+        kotlinProp.toString()
 }

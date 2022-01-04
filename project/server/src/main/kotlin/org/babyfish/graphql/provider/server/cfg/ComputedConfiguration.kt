@@ -1,8 +1,11 @@
 package org.babyfish.graphql.provider.server.cfg
 
 import io.r2dbc.spi.Statement
+import org.babyfish.graphql.provider.server.meta.EntityPropImpl
 
-class ComputedConfiguration<E, T> {
+class ComputedConfiguration<E, T> internal constructor(
+    private val entityProp: EntityPropImpl
+) {
 
     fun implementation(block: suspend ImplementationContext<E>.() -> T) {}
 

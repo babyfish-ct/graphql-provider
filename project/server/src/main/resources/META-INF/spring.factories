@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.babyfish.graphql.provider.server.EntityTypeProviderAutoConfiguration

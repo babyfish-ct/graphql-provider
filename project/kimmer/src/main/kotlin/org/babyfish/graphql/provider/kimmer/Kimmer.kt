@@ -22,6 +22,16 @@ interface Immutable {
     }
 }
 
+interface Connection<N> {
+
+    val edges: List<Edge<N>>
+
+    interface Edge<N> {
+        val node: N
+        val cursor: String
+    }
+}
+
 @DslMarker
 @Target(AnnotationTarget.CLASS)
 annotation class DraftDsl

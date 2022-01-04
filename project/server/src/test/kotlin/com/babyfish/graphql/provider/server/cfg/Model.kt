@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitSingle
 import org.babyfish.graphql.provider.kimmer.*
-import org.babyfish.graphql.provider.server.cfg.Arg
-import org.babyfish.graphql.provider.server.cfg.OnDeleteAction
+import org.babyfish.graphql.provider.server.meta.Arg
+import org.babyfish.graphql.provider.server.meta.OnDeleteAction
 import org.babyfish.graphql.provider.server.cfg.entity
 import java.math.BigDecimal
 import java.util.function.Function

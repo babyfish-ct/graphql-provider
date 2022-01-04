@@ -1,18 +1,17 @@
 package org.babyfish.graphql.provider.server.meta
 
-import kotlin.reflect.KProperty1
-
 interface RedisDependency {
 
     val category: Category
 
-    val prop: KProperty1<*, *>
+    val prop: EntityProp
 
-    val dependencies: List<RedisDependency>
+    val dependencies: Collection<RedisDependency>
 
     enum class Category {
+        SCALAR,
         REFERENCE,
         LIST,
-        SCALAR
+        CONNECTION
     }
 }
