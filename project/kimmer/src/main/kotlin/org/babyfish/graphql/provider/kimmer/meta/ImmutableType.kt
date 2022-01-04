@@ -24,6 +24,9 @@ interface ImmutableType {
 
         fun of(type: KClass<out Immutable>): ImmutableType =
             getImmutableType(type.java)
+
+        fun of(type: Class<out Immutable>): ImmutableType =
+            getImmutableType(type)
     }
 }
 

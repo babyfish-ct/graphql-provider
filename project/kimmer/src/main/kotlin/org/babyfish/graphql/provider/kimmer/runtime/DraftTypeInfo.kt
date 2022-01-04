@@ -6,7 +6,7 @@ import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.SyncDraft
 import kotlin.reflect.KClass
 
-data class DraftTypeInfo(
+internal data class DraftTypeInfo(
     val draftType: KClass<*>,
     val immutableType: KClass<*>,
     val superDraftTypes: List<KClass<*>>

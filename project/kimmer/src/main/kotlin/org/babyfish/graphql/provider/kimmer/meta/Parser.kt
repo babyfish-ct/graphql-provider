@@ -146,6 +146,8 @@ private class PropImpl(
     override val kotlinProp: KProperty1<*, *>
 ): ImmutableProp {
 
+    override val returnType: KClass<*>
+
     override val isConnection: Boolean
 
     override val isList: Boolean
@@ -157,18 +159,18 @@ private class PropImpl(
     private var _targetType: ImmutableType? = null
 
     init {
-        val classifier = kotlinProp.returnType.classifier as? KClass<*>
+        returnType = kotlinProp.returnType.classifier as? KClass<*>
             ?: error("Internal bug: '${kotlinProp}' does not returns class")
 
-        if (Map::class.java.isAssignableFrom(classifier.java)) {
+        if (Map::class.java.isAssignableFrom(returnType.java)) {
             throw MetadataException("Illegal property '${kotlinProp}', map is not allowed")
         }
-        if (classifier.java.isArray) {
+        if (returnType.java.isArray) {
             throw MetadataException("Illegal property '${kotlinProp}', array is not allowed")
         }
-        isConnection = Connection::class.java.isAssignableFrom(classifier.java)
-        isList = !isConnection && Collection::class.java.isAssignableFrom(classifier.java)
-        isReference = !isConnection && !isList && Immutable::class.java.isAssignableFrom(classifier.java)
+        isConnection = Connection::class.java.isAssignableFrom(returnType.java)
+        isList = !isConnection && Collection::class.java.isAssignableFrom(returnType.java)
+        isReference = !isConnection && !isList && Immutable::class.java.isAssignableFrom(returnType.java)
         isTargetNullable = if (isList) {
             kotlinProp.returnType.arguments[0].type?.isMarkedNullable ?: false
         } else {

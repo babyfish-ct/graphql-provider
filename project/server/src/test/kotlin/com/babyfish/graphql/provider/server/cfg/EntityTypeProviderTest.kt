@@ -33,6 +33,7 @@ class BookStoreAssembler: EntityAssembler<BookStore> {
 class BookAssembler: EntityAssembler<Book> {
 
     override fun EntityConfiguration<Book>.assemble() {
+
         id(Book::id)
 
         reference(Book::store) {
@@ -40,6 +41,7 @@ class BookAssembler: EntityAssembler<Book> {
                 foreignKey("STORE_ID")
             }
         }
+
         list(Book::authors) {
             db {
                 middleTable(
