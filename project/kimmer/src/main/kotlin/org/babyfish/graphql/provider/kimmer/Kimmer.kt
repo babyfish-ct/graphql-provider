@@ -9,14 +9,17 @@ interface Immutable {
 
     companion object {
 
+        @JvmStatic
         fun <T: Immutable> isLoaded(o: T, prop: KProperty1<T, *>): Boolean {
             return (o as ImmutableImpl).`{loaded}`(prop.name)
         }
 
+        @JvmStatic
         fun <T: Immutable> getThrowable(o: T, prop: KProperty1<T, *>): Throwable? {
-            return (o as ImmutableImpl).`{throwabe}`(prop.name)
+            return (o as ImmutableImpl).`{throwable}`(prop.name)
         }
 
+        @JvmStatic
         fun <T: Immutable> get(o: T, prop: KProperty1<T, *>): Any? {
             return (o as ImmutableImpl).`{value}`(prop.name)
         }

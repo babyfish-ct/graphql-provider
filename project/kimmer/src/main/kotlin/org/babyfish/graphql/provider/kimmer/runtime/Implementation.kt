@@ -57,7 +57,10 @@ private fun ClassVisitor.writeType(type: ImmutableType) {
         writeProp(prop, implInternalName)
     }
 
+    writeRuntimeType(type)
     writeLoaded(type)
+    writeThrowable(type)
+    writeValue(type)
 
     visitEnd()
 }
@@ -90,7 +93,7 @@ private fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
         "(L$implInternalName;)V"
     ) {
 
-        val exceptionDesc = Type.getDescriptor(Throwable::class.java)
+        val throwableDesc = Type.getDescriptor(Throwable::class.java)
 
         visitVarInsn(Opcodes.ALOAD, 0)
         visitMethodInsn(
@@ -105,7 +108,7 @@ private fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
 
             val desc = Type.getDescriptor(prop.returnType.java)
             val loadedName = loadedName(prop)
-            val exceptionName = exceptionName(prop)
+            val throwableName = throwableName(prop)
 
             visitVarInsn(Opcodes.ALOAD, 0)
             visitVarInsn(Opcodes.ALOAD, 1)
@@ -142,14 +145,14 @@ private fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
             visitFieldInsn(
                 Opcodes.GETFIELD,
                 implInternalName,
-                exceptionName,
-                exceptionDesc
+                throwableName,
+                throwableDesc
             )
             visitFieldInsn(
                 Opcodes.PUTFIELD,
                 implInternalName,
-                exceptionName,
-                exceptionDesc
+                throwableName,
+                throwableDesc
             )
         }
         visitInsn(Opcodes.RETURN)
@@ -160,8 +163,8 @@ private fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Strin
 
     val desc = Type.getDescriptor(prop.returnType.java)
     val loadedName = loadedName(prop)
-    val exceptionName = exceptionName(prop)
-    val exceptionDesc = Type.getDescriptor(Throwable::class.java)
+    val throwableName = throwableName(prop)
+    val throwableDesc = Type.getDescriptor(Throwable::class.java)
 
     writeField(
         Opcodes.ACC_PROTECTED,
@@ -177,8 +180,8 @@ private fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Strin
 
     writeField(
         Opcodes.ACC_PROTECTED,
-        exceptionName,
-        exceptionDesc
+        throwableName,
+        throwableDesc
     )
 
     val javaGetter = prop.kotlinProp.getter.javaMethod!!
@@ -189,12 +192,12 @@ private fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Strin
     ) {
 
         visitVarInsn(Opcodes.ALOAD, 0)
-        visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, exceptionName, exceptionDesc)
+        visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, throwableName, throwableDesc)
         visitIf(
             Opcodes.IFNULL
         ) {
             visitVarInsn(Opcodes.ALOAD, 0)
-            visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, exceptionName, exceptionDesc)
+            visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, throwableName, throwableDesc)
             visitInsn(Opcodes.ATHROW)
         }
 
@@ -209,6 +212,54 @@ private fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Strin
         visitVarInsn(Opcodes.ALOAD, 0)
         visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, prop.name, desc)
         visitReturn(prop.returnType.java)
+    }
+}
+
+private fun ClassVisitor.writeRuntimeType(type: ImmutableType) {
+
+    val typeInternalName = Type.getInternalName(ImmutableType::class.java)
+    val typeDesc = Type.getDescriptor(ImmutableType::class.java)
+
+    writeField(
+        Opcodes.ACC_PRIVATE or Opcodes.ACC_STATIC or Opcodes.ACC_FINAL,
+        "{immutableType}",
+        typeDesc
+    )
+
+    writeMethod(
+        Opcodes.ACC_STATIC,
+        "<clinit>",
+        "()V"
+    ) {
+        visitLdcInsn(Type.getType(type.kotlinType.java))
+        visitMethodInsn(
+            Opcodes.INVOKESTATIC,
+            typeInternalName,
+            "of",
+            "(Ljava/lang/Class;)$typeDesc",
+            true
+        )
+        visitFieldInsn(
+            Opcodes.PUTSTATIC,
+            implInternalName(type.kotlinType.java),
+            "{immutableType}",
+            typeDesc
+        )
+        visitInsn(Opcodes.RETURN)
+    }
+
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "{type}",
+        "()" + typeDesc
+    ) {
+        visitFieldInsn(
+            Opcodes.GETSTATIC,
+            implInternalName(type.kotlinType.java),
+            "{immutableType}",
+            typeDesc
+        )
+        visitInsn(Opcodes.ARETURN)
     }
 }
 
@@ -227,6 +278,47 @@ private fun ClassVisitor.writeLoaded(type: ImmutableType) {
                 "Z"
             )
             visitInsn(Opcodes.IRETURN)
+        }
+    }
+}
+
+private fun ClassVisitor.writeThrowable(type: ImmutableType) {
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "{throwable}",
+        "(Ljava/lang/String;)Ljava/lang/Throwable;"
+    ) {
+        visitPropNameSwitch(type, { visitVarInsn(Opcodes.ALOAD, 1)}) { prop, _ ->
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitFieldInsn(
+                Opcodes.GETFIELD,
+                implInternalName(type.kotlinType.java),
+                throwableName(prop),
+                "Ljava/lang/Throwable;"
+            )
+            visitInsn(Opcodes.ARETURN)
+        }
+    }
+}
+
+private fun ClassVisitor.writeValue(type: ImmutableType) {
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "{value}",
+        "(Ljava/lang/String;)Ljava/lang/Object;"
+    ) {
+        visitPropNameSwitch(type, { visitVarInsn(Opcodes.ALOAD, 1)}) { prop, _ ->
+            val getter = prop.kotlinProp.getter.javaMethod!!
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitMethodInsn(
+                Opcodes.INVOKEVIRTUAL,
+                implInternalName(type.kotlinType.java),
+                getter.name,
+                Type.getMethodDescriptor(getter),
+                false
+            )
+            visitBox(getter.returnType)
+            visitReturn(getter.returnType)
         }
     }
 }

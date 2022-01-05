@@ -15,8 +15,8 @@ internal inline fun draftImplInternalName(type: Class<*>): String =
 internal inline fun loadedName(type: ImmutableProp): String =
     "${type.name}{Loaded}"
 
-internal inline fun exceptionName(type: ImmutableProp): String =
-    "${type.name}{Exception}"
+internal inline fun throwableName(type: ImmutableProp): String =
+    "${type.name}{Throwable}"
 
 internal inline fun draftContextName(): String =
     "{draftContext}"
@@ -185,7 +185,6 @@ internal fun MethodVisitor.visitPropNameSwitch(
             visitLabel(labels[i])
             val props = propGroups[keys[i]]!!
             for (prop in props) {
-                val notMatchLabel = Label()
                 visitLdcInsn(prop.name)
                 loadNameBlock()
                 visitMethodInsn(
@@ -195,9 +194,8 @@ internal fun MethodVisitor.visitPropNameSwitch(
                     "(Ljava/lang/Object;)Z",
                     false
                 )
-                visitIf(Opcodes.IFEQ) {
-                    matchedBlock(prop, switchEndLabel)
-                }
+                visitJumpInsn(Opcodes.IFEQ, defaultLabel)
+                matchedBlock(prop, switchEndLabel)
             }
         }
         visitLabel(defaultLabel)
@@ -248,4 +246,36 @@ internal fun MethodVisitor.visitString(vararg blocks: MethodVisitor.() -> Unit) 
         "()Ljava/lang/String;",
         false
     )
+}
+
+internal fun MethodVisitor.visitBox(type: Class<*>) {
+    val (primitiveName, boxName) = when (type) {
+        Boolean::class.javaPrimitiveType ->
+            "Z" to "java/lang/Boolean"
+        Char::class.javaPrimitiveType ->
+            "C" to "java/lang/Character"
+        Byte::class.javaPrimitiveType ->
+            "B" to "java/lang/Byte"
+        Short::class.javaPrimitiveType ->
+            "S" to "java/lang/Short"
+        Int::class.javaPrimitiveType ->
+            "I" to "java/lang/Integer"
+        Long::class.javaPrimitiveType ->
+            "J" to "java/lang/Long"
+        Float::class.javaPrimitiveType ->
+            "F" to "java/lang/Float"
+        Double::class.javaPrimitiveType ->
+            "D" to "java/lang/Double"
+        else ->
+            "" to ""
+    }
+    if (primitiveName != "") {
+        visitMethodInsn(
+            Opcodes.INVOKESTATIC,
+            boxName,
+            "valueOf",
+            "($primitiveName)L$boxName;",
+            false
+        )
+    }
 }

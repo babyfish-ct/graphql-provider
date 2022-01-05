@@ -1,6 +1,7 @@
 package org.babyfish.graphql.provider.kimmer.meta
 
 import org.babyfish.graphql.provider.kimmer.Immutable
+import org.babyfish.graphql.provider.kimmer.runtime.ImmutableImpl
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -22,11 +23,17 @@ interface ImmutableType {
 
     companion object {
 
+        @JvmStatic
         fun of(type: KClass<out Immutable>): ImmutableType =
             getImmutableType(type.java)
 
+        @JvmStatic
         fun of(type: Class<out Immutable>): ImmutableType =
             getImmutableType(type)
+
+        @JvmStatic
+        fun of(o: Immutable): ImmutableType =
+            (o as ImmutableImpl).`{type}`()
     }
 }
 
