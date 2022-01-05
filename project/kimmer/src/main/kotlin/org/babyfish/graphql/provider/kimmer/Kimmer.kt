@@ -1,6 +1,7 @@
 package org.babyfish.graphql.provider.kimmer
 
 import kotlinx.coroutines.delay
+import org.babyfish.graphql.provider.kimmer.runtime.ImmutableImpl
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -9,15 +10,15 @@ interface Immutable {
     companion object {
 
         fun <T: Immutable> isLoaded(o: T, prop: KProperty1<T, *>): Boolean {
-            return true
-        }
-
-        fun <T: Immutable> isUnloaded(o: T, prop: KProperty1<T, *>): Boolean {
-            return false
+            return (o as ImmutableImpl).`{loaded}`(prop.name)
         }
 
         fun <T: Immutable> getThrowable(o: T, prop: KProperty1<T, *>): Throwable? {
-            return null
+            return (o as ImmutableImpl).`{throwabe}`(prop.name)
+        }
+
+        fun <T: Immutable> get(o: T, prop: KProperty1<T, *>): Any? {
+            return (o as ImmutableImpl).`{value}`(prop.name)
         }
     }
 }

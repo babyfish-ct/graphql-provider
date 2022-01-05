@@ -1,14 +1,28 @@
 package org.babyfish.graphql.provider.kimmer.runtime
 
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
+import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import org.springframework.asm.*
+import java.lang.StringBuilder
 import kotlin.reflect.KClass
 
-internal fun implInternalName(type: Class<*>): String =
+internal inline fun implInternalName(type: Class<*>): String =
     "${Type.getInternalName(type)}{Implementation}"
 
-internal fun loadedName(type: ImmutableProp): String =
+internal inline fun draftImplInternalName(type: Class<*>): String =
+    "${Type.getInternalName(type)}{DraftImplementation}"
+
+internal inline fun loadedName(type: ImmutableProp): String =
     "${type.name}{Loaded}"
+
+internal inline fun exceptionName(type: ImmutableProp): String =
+    "${type.name}{Exception}"
+
+internal inline fun draftContextName(): String =
+    "{draftContext}"
+
+internal inline fun baseName(): String =
+    "{base}"
 
 internal fun ClassLoader.defineClass(bytecode: ByteArray) =
     DEFINE_CLASS.invoke(this, bytecode, 0, bytecode.size)
@@ -133,5 +147,105 @@ internal fun MethodVisitor.visitReturn(type: Class<*>) {
             type === Void::class.java -> Opcodes.RETURN
             else -> Opcodes.ARETURN
         }
+    )
+}
+
+internal fun MethodVisitor.visitPropNameSwitch(
+    type: ImmutableType,
+    loadNameBlock: MethodVisitor.() -> Unit,
+    matchedBlock: MethodVisitor.(prop: ImmutableProp, switchEndLabel: Label) -> Unit
+) {
+    val switchEndLabel = Label()
+    val propGroups = type.props.values.groupBy { it.name.hashCode() }.toSortedMap()
+    if (propGroups.isNotEmpty()) {
+        val defaultLabel = Label()
+        val keys = propGroups.keys.let {
+            val arr = IntArray(it.size)
+            var index = 0
+            for (key in it) {
+                arr[index++] = key
+            }
+            arr
+        }
+        val labels = propGroups.keys.map { Label() }.toTypedArray()
+        loadNameBlock()
+        visitMethodInsn(
+            Opcodes.INVOKEVIRTUAL,
+            "java/lang/Object",
+            "hashCode",
+            "()I",
+            false
+        )
+        visitLookupSwitchInsn(
+            defaultLabel,
+            keys,
+            labels
+        )
+        for (i in labels.indices) {
+            visitLabel(labels[i])
+            val props = propGroups[keys[i]]!!
+            for (prop in props) {
+                val notMatchLabel = Label()
+                visitLdcInsn(prop.name)
+                loadNameBlock()
+                visitMethodInsn(
+                    Opcodes.INVOKEVIRTUAL,
+                    "java/lang/Object",
+                    "equals",
+                    "(Ljava/lang/Object;)Z",
+                    false
+                )
+                visitIf(Opcodes.IFEQ) {
+                    matchedBlock(prop, switchEndLabel)
+                }
+            }
+        }
+        visitLabel(defaultLabel)
+    }
+    visitTypeInsn(Opcodes.NEW, Type.getInternalName(IllegalArgumentException::class.java))
+    visitInsn(Opcodes.DUP)
+    visitString(
+        { visitLdcInsn("Illegal property name \"") },
+        loadNameBlock,
+        { visitLdcInsn("\"") }
+    )
+    visitMethodInsn(
+        Opcodes.INVOKESPECIAL,
+        Type.getInternalName(IllegalArgumentException::class.java),
+        "<init>",
+        "(Ljava/lang/String;)V",
+        false
+    )
+    visitInsn(Opcodes.ATHROW)
+    visitLabel(switchEndLabel)
+    visitJumpInsn(Opcodes.GOTO, switchEndLabel)
+}
+
+internal fun MethodVisitor.visitString(vararg blocks: MethodVisitor.() -> Unit) {
+    visitTypeInsn(Opcodes.NEW, Type.getInternalName(StringBuilder::class.java))
+    visitInsn(Opcodes.DUP)
+    visitMethodInsn(
+        Opcodes.INVOKESPECIAL,
+        "java/lang/StringBuilder",
+        "<init>",
+        "()V",
+        false
+    )
+    for (block in blocks) {
+        block()
+        visitMethodInsn(
+            Opcodes.INVOKEVIRTUAL,
+            "java/lang/StringBuilder",
+            "append",
+            "(Ljava/lang/String;)Ljava/lang/StringBuilder;",
+            false
+        )
+    }
+    visitMethodInsn(
+        Opcodes.INVOKEVIRTUAL,
+        "java/lang/StringBuilder",
+        "toString",
+        "()Ljava/lang/String;",
+        false
     )
 }

@@ -47,14 +47,17 @@ private fun ClassVisitor.writeType(type: ImmutableType) {
         implInternalName(type.kotlinType.java),
         null,
         OBJECT_INTERNAL_NAME,
-        arrayOf(Type.getInternalName(type.kotlinType.java))
+        arrayOf(Type.getInternalName(type.kotlinType.java), Type.getInternalName(ImmutableImpl::class.java))
     )
 
     writeConstructor()
+    writeCopyConstructor(type)
 
     for (prop in type.props.values) {
         writeProp(prop, implInternalName)
     }
+
+    writeLoaded(type)
 
     visitEnd()
 }
@@ -64,7 +67,7 @@ private fun ClassVisitor.writeConstructor() {
         Opcodes.ACC_PUBLIC,
         "<init>",
         "()V",
-     ) {
+    ) {
         visitVarInsn(Opcodes.ALOAD, 0)
         visitMethodInsn(
             Opcodes.INVOKESPECIAL,
@@ -77,10 +80,88 @@ private fun ClassVisitor.writeConstructor() {
     }
 }
 
+private fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
+
+    val implInternalName = implInternalName(type.kotlinType.java)
+
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "<init>",
+        "(L$implInternalName;)V"
+    ) {
+
+        val exceptionDesc = Type.getDescriptor(Throwable::class.java)
+
+        visitVarInsn(Opcodes.ALOAD, 0)
+        visitMethodInsn(
+            Opcodes.INVOKESPECIAL,
+            OBJECT_INTERNAL_NAME,
+            "<init>",
+            "()V",
+            false
+        )
+
+        for (prop in type.props.values) {
+
+            val desc = Type.getDescriptor(prop.returnType.java)
+            val loadedName = loadedName(prop)
+            val exceptionName = exceptionName(prop)
+
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitVarInsn(Opcodes.ALOAD, 1)
+            visitFieldInsn(
+                Opcodes.GETFIELD,
+                implInternalName,
+                prop.name,
+                desc
+            )
+            visitFieldInsn(
+                Opcodes.PUTFIELD,
+                implInternalName,
+                prop.name,
+                desc
+            )
+
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitVarInsn(Opcodes.ALOAD, 1)
+            visitFieldInsn(
+                Opcodes.GETFIELD,
+                implInternalName,
+                loadedName,
+                "Z"
+            )
+            visitFieldInsn(
+                Opcodes.PUTFIELD,
+                implInternalName,
+                loadedName,
+                "Z"
+            )
+
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitVarInsn(Opcodes.ALOAD, 1)
+            visitFieldInsn(
+                Opcodes.GETFIELD,
+                implInternalName,
+                exceptionName,
+                exceptionDesc
+            )
+            visitFieldInsn(
+                Opcodes.PUTFIELD,
+                implInternalName,
+                exceptionName,
+                exceptionDesc
+            )
+        }
+        visitInsn(Opcodes.RETURN)
+    }
+}
+
 private fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: String) {
 
     val desc = Type.getDescriptor(prop.returnType.java)
     val loadedName = loadedName(prop)
+    val exceptionName = exceptionName(prop)
+    val exceptionDesc = Type.getDescriptor(Throwable::class.java)
 
     writeField(
         Opcodes.ACC_PROTECTED,
@@ -94,12 +175,29 @@ private fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Strin
         "Z"
     )
 
+    writeField(
+        Opcodes.ACC_PROTECTED,
+        exceptionName,
+        exceptionDesc
+    )
+
     val javaGetter = prop.kotlinProp.getter.javaMethod!!
     writeMethod(
         Opcodes.ACC_PUBLIC,
         javaGetter.name,
         Type.getMethodDescriptor(javaGetter)
     ) {
+
+        visitVarInsn(Opcodes.ALOAD, 0)
+        visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, exceptionName, exceptionDesc)
+        visitIf(
+            Opcodes.IFNULL
+        ) {
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, exceptionName, exceptionDesc)
+            visitInsn(Opcodes.ATHROW)
+        }
+
         visitVarInsn(Opcodes.ALOAD, 0)
         visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, loadedName, "Z")
         visitIf(
@@ -107,8 +205,28 @@ private fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Strin
         ) {
             visitThrow(UnloadedException::class, "The field '${prop.kotlinProp}' is unloaded")
         }
+
         visitVarInsn(Opcodes.ALOAD, 0)
         visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, prop.name, desc)
         visitReturn(prop.returnType.java)
+    }
+}
+
+private fun ClassVisitor.writeLoaded(type: ImmutableType) {
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "{loaded}",
+    "(Ljava/lang/String;)Z"
+    ) {
+        visitPropNameSwitch(type, { visitVarInsn(Opcodes.ALOAD, 1)}) { prop, _ ->
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitFieldInsn(
+                Opcodes.GETFIELD,
+                implInternalName(type.kotlinType.java),
+                loadedName(prop),
+                "Z"
+            )
+            visitInsn(Opcodes.IRETURN)
+        }
     }
 }

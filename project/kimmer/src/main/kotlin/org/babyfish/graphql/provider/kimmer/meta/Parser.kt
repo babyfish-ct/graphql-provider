@@ -6,12 +6,12 @@ import org.babyfish.graphql.provider.kimmer.Immutable
 import org.springframework.core.GenericTypeResolver
 import kotlin.reflect.*
 
-internal class Parser(
-    private val map: MutableMap<Class<*>, ImmutableType>
+internal class Parser internal constructor(
+    private val map: MutableMap<Class<*>, TypeImpl>
 ) {
     private var tmpMap = mutableMapOf<Class<*>, TypeImpl>()
 
-    fun get(type: Class<out Immutable>): ImmutableType =
+    fun get(type: Class<out Immutable>): TypeImpl =
         map[type]
             ?: tmpMap[type]
             ?: create(type).also {
@@ -37,7 +37,7 @@ internal class Parser(
         return result
     }
 
-    fun terminate(): Map<Class<*>, ImmutableType> {
+    fun terminate(): Map<Class<*>, TypeImpl> {
         val secondaryResolvedTypes = mutableSetOf<TypeImpl>()
         var size = 0
         while (tmpMap.size > size) {
@@ -53,7 +53,7 @@ internal class Parser(
     }
 }
 
-private class TypeImpl(
+internal class TypeImpl(
     override val kotlinType: KClass<out Immutable>
 ): ImmutableType {
 
@@ -63,9 +63,11 @@ private class TypeImpl(
         }
     }
 
-    private val _superTypes = mutableSetOf<ImmutableType>()
+    private val _superTypes = mutableSetOf<TypeImpl>()
 
     private val _declaredProps = mutableMapOf<String, PropImpl>()
+
+    private var _props: Map<String, PropImpl>? = null
 
     override val superTypes: Set<ImmutableType>
         get() = _superTypes
@@ -73,25 +75,20 @@ private class TypeImpl(
     override val declaredProps: Map<String, ImmutableProp>
         get() = _declaredProps
 
-    override val props: Map<String, ImmutableProp> by lazy {
-        if (this.superTypes.isEmpty()) {
-            _declaredProps
-        } else {
-            val props = _declaredProps.toMutableMap<String, ImmutableProp>()
-            for (superType in _superTypes) {
-                for (superProp in superType.props.values) {
-                    props.putIfAbsent(superProp.kotlinProp.name, superProp)
-                }
-            }
-            props
-        }
-    }
+    override val props: Map<String, ImmutableProp>
+        get() = _props ?: error("Internal bug")
 
     fun resolve(parser: Parser) {
-        for (supertype in kotlinType.supertypes) {
-            this.resolveSuper(supertype, parser)
+        if (_props === null) {
+            for (supertype in kotlinType.supertypes) {
+                this.resolveSuper(supertype, parser)
+            }
+            for (superType in _superTypes) {
+                superType.resolve(parser)
+            }
+            resolveDeclaredProps()
+            resolveProps()
         }
-        resolveDeclaredProps()
     }
 
     private fun resolveSuper(superType: KType, parser: Parser) {
@@ -100,10 +97,8 @@ private class TypeImpl(
             error("Internal bug: classifier of super interface must be KClass")
         }
         if (classifier.java.isInterface) {
-            _superTypes += parser.get(classifier.java as Class<out Immutable>)
-            for (deeperSuperType in classifier.supertypes) {
-                this.resolveSuper(deeperSuperType, parser)
-            }
+            val superType = parser.get(classifier.java as Class<out Immutable>)
+            _superTypes += superType
         }
     }
 
@@ -134,6 +129,20 @@ private class TypeImpl(
         return result
     }
 
+    private fun resolveProps() {
+        _props = if (this.superTypes.isEmpty()) {
+            _declaredProps
+        } else {
+            val props = _declaredProps.toMutableMap()
+            for (superType in _superTypes) {
+                for (superProp in superType._props!!.values) {
+                    props.putIfAbsent(superProp.kotlinProp.name, superProp)
+                }
+            }
+            props
+        }
+    }
+
     fun secondaryResolve(parser: Parser) {
         for (declaredProp in _declaredProps.values) {
             declaredProp.resolve(parser)
@@ -146,7 +155,9 @@ private class PropImpl(
     override val kotlinProp: KProperty1<*, *>
 ): ImmutableProp {
 
-    override val returnType: KClass<*>
+    override val returnType: KClass<*> =
+        kotlinProp.returnType.classifier as? KClass<*>
+            ?: error("Internal bug: '${kotlinProp}' does not returns class")
 
     override val isConnection: Boolean
 
@@ -159,8 +170,6 @@ private class PropImpl(
     private var _targetType: ImmutableType? = null
 
     init {
-        returnType = kotlinProp.returnType.classifier as? KClass<*>
-            ?: error("Internal bug: '${kotlinProp}' does not returns class")
 
         if (Map::class.java.isAssignableFrom(returnType.java)) {
             throw MetadataException("Illegal property '${kotlinProp}', map is not allowed")

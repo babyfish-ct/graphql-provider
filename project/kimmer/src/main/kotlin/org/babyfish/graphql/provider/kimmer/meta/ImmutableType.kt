@@ -30,7 +30,7 @@ interface ImmutableType {
     }
 }
 
-private val cacheMap = WeakHashMap<Class<*>, ImmutableType>()
+private val cacheMap = WeakHashMap<Class<*>, TypeImpl>()
 
 private val cacheLock = ReentrantReadWriteLock()
 

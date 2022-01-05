@@ -12,19 +12,11 @@ import kotlin.reflect.KClass
 
 interface Factory<T: Immutable> {
     val default: T
-    fun draft(ctx: SyncContext): Draft<T>
+    fun draft(ctx: DraftContext): Draft<T>
     companion object {
         fun <T: Immutable> of(draftType: KClass<out Draft<T>>): Factory<T> =
             factoryOf(draftType.java) as Factory<T>
     }
-}
-
-interface SyncContext {
-
-}
-
-interface AsyncContext {
-
 }
 
 private val cacheMap = mutableMapOf<Class<*>, Factory<*>>()
@@ -52,7 +44,7 @@ private class FactoryImpl<T: Immutable>(
     override val default: T
 ): Factory<T> {
 
-    override fun draft(ctx: SyncContext): Draft<T> {
+    override fun draft(ctx: DraftContext): Draft<T> {
         TODO("Not yet implemented")
     }
 }
