@@ -150,7 +150,7 @@ internal class ListDraft<E>(
 
         private var absIndex = headHide + index
 
-        private var retrievedAbsIndex = -1
+        private var cursor: Cursor? = null
 
         private var modCount = this@ListDraft.modCount
 
@@ -166,7 +166,7 @@ internal class ListDraft<E>(
             if (absIndex >= this@ListDraft.list.size - tailHide) {
                 throw NoSuchElementException()
             }
-            retrievedAbsIndex = absIndex++
+            cursor = Cursor(true, absIndex++)
             itr.next()
         }
 
@@ -182,7 +182,7 @@ internal class ListDraft<E>(
             if (absIndex <= headHide) {
                 throw NoSuchElementException()
             }
-            retrievedAbsIndex = --absIndex
+            cursor = Cursor(false, --absIndex)
             itr.previous()
         }
 
@@ -192,15 +192,12 @@ internal class ListDraft<E>(
 
         override fun remove() {
             execute(true) {
-                val pos = retrievedAbsIndex
-                if (pos == -1) {
-                    throw IllegalStateException()
-                }
+                val pos = cursor?.pos ?: throw IllegalStateException()
                 mutableItr.remove()
                 if (pos < absIndex) {
                     absIndex--
                 }
-                retrievedAbsIndex = -1
+                cursor = null
             }
         }
 
@@ -208,16 +205,13 @@ internal class ListDraft<E>(
             execute(true) {
                 mutableItr.add(element)
                 absIndex++
-                retrievedAbsIndex = -1
+                cursor = null
             }
         }
 
         override fun set(element: E) {
             execute(true) {
-                val pos = retrievedAbsIndex
-                if (pos == -1) {
-                    throw IllegalStateException()
-                }
+                cursor ?: throw IllegalStateException()
                 mutableItr.set(element)
             }
         }
@@ -243,10 +237,14 @@ internal class ListDraft<E>(
 
         private val mutableItr: MutableListIterator<E>
             get() = modified ?:
-                this@ListDraft.mutableList.listIterator(absIndex).also {
+                createMutableItr().also {
                     modified = it
                     base = null
                 }
+
+        private fun createMutableItr(): MutableListIterator<E> =
+            cursor?.recreate(this@ListDraft.mutableList)
+                ?: this@ListDraft.mutableList.listIterator(absIndex)
     }
 
     private class SubList<E>(
@@ -404,5 +402,21 @@ internal class ListDraft<E>(
                 block()
             }
         }
+    }
+
+    private data class Cursor(
+        val next: Boolean,
+        val pos: Int
+    ) {
+        fun <E> recreate(list: MutableList<E>): MutableListIterator<E> =
+            if (next) {
+                list.listIterator(pos).also {
+                    it.next()
+                }
+            } else {
+                list.listIterator(pos + 1).also {
+                    it.previous()
+                }
+            }
     }
 }
