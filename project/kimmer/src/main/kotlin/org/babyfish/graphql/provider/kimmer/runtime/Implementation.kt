@@ -59,6 +59,9 @@ private fun ClassVisitor.writeType(type: ImmutableType) {
     writeThrowable(type)
     writeValue(type)
 
+    writeHashCode(type)
+    writeEquals(type)
+
     visitEnd()
 }
 
@@ -212,7 +215,7 @@ private fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Strin
 
         visitVarInsn(Opcodes.ALOAD, 0)
         visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, throwableName, throwableDesc)
-        visitIf(
+        visitCond(
             Opcodes.IFNULL
         ) {
             visitVarInsn(Opcodes.ALOAD, 0)
@@ -222,7 +225,7 @@ private fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Strin
 
         visitVarInsn(Opcodes.ALOAD, 0)
         visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, loadedName, "Z")
-        visitIf(
+        visitCond(
             Opcodes.IFNE
         ) {
             visitThrow(UnloadedException::class, "The field '${prop.kotlinProp}' is unloaded")
@@ -339,5 +342,278 @@ private fun ClassVisitor.writeValue(type: ImmutableType) {
             visitBox(getter.returnType)
             visitReturn(getter.returnType)
         }
+    }
+}
+
+private fun ClassVisitor.writeHashCode(type: ImmutableType) {
+
+    val internalName = implInternalName(type.kotlinType.java)
+
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "hashCode",
+        "()I"
+    ) {
+        val hashSlot = 1
+        val throwableSlot = 2
+        val loadedSlot = 3
+        val valueSlot = 4
+        visitInsn(Opcodes.ICONST_0)
+        visitVarInsn(Opcodes.ISTORE, hashSlot)
+
+        for (prop in type.props.values) {
+
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitFieldInsn(
+                Opcodes.GETFIELD,
+                internalName,
+                throwableName(prop),
+                "Ljava/lang/Throwable;"
+            )
+            visitVarInsn(Opcodes.ASTORE, throwableSlot)
+
+            visitVarInsn(Opcodes.ALOAD, throwableSlot)
+            visitCond(
+                Opcodes.IFNULL,
+                {
+                    visitVarInsn(Opcodes.ILOAD, hashSlot)
+                    visitLdcInsn(31)
+                    visitInsn(Opcodes.IMUL)
+                    visitVarInsn(Opcodes.ALOAD, throwableSlot)
+                    visitMethodInsn(
+                        Opcodes.INVOKEVIRTUAL,
+                        "java/lang/Object",
+                        "hashCode",
+                        "()I",
+                        false
+                    )
+                    visitInsn(Opcodes.IADD)
+                    visitVarInsn(Opcodes.ISTORE, hashSlot)
+                },
+                {
+                    visitVarInsn(Opcodes.ALOAD, 0)
+                    visitFieldInsn(
+                        Opcodes.GETFIELD,
+                        internalName,
+                        loadedName(prop),
+                        "Z"
+                    )
+                    visitVarInsn(Opcodes.ISTORE, loadedSlot)
+
+                    visitVarInsn(Opcodes.ILOAD, loadedSlot)
+                    visitCond(Opcodes.IFEQ) {
+                        visitVarInsn(Opcodes.ALOAD, 0)
+                        visitFieldInsn(
+                            Opcodes.GETFIELD,
+                            internalName,
+                            prop.name,
+                            Type.getDescriptor(prop.returnType.java)
+                        )
+                        visitStore(prop.returnType.java, valueSlot)
+
+                        val (primitiveType, boxInternalName) = primitiveTuples(prop.returnType.java)
+                        if (primitiveType === "") {
+                            visitVarInsn(Opcodes.ALOAD, valueSlot)
+                            visitCond(Opcodes.IFNULL) {
+                                visitVarInsn(Opcodes.ILOAD, hashSlot)
+                                visitLdcInsn(31)
+                                visitInsn(Opcodes.IMUL)
+                                visitVarInsn(Opcodes.ALOAD, valueSlot)
+                                visitMethodInsn(
+                                    Opcodes.INVOKEVIRTUAL,
+                                    "java/lang/Object",
+                                    "hashCode",
+                                    "()I",
+                                    false
+                                )
+                                visitInsn(Opcodes.IADD)
+                                visitVarInsn(Opcodes.ISTORE, hashSlot)
+                            }
+                        } else {
+                            visitVarInsn(Opcodes.ILOAD, hashSlot)
+                            visitLdcInsn(31)
+                            visitInsn(Opcodes.IMUL)
+                            visitLoad(prop.returnType.java, valueSlot)
+                            visitMethodInsn(
+                                Opcodes.INVOKESTATIC,
+                                boxInternalName,
+                                "hashCode",
+                                "($primitiveType)I",
+                                false
+                            )
+                            visitInsn(Opcodes.IADD)
+                            visitVarInsn(Opcodes.ISTORE, hashSlot)
+                        }
+                    }
+                }
+            )
+        }
+        visitVarInsn(Opcodes.ILOAD, hashSlot)
+        visitInsn(Opcodes.IRETURN)
+    }
+}
+
+private fun ClassVisitor.writeEquals(type: ImmutableType) {
+
+    val internalName = implInternalName(type.kotlinType.java)
+    val modelInternalName = Type.getInternalName(type.kotlinType.java)
+    val spiInternalName = Type.getInternalName(ImmutableSpi::class.java)
+    val immutableTypeDescriptor = Type.getDescriptor(ImmutableType::class.java)
+
+    val spiSlot = 2
+    val throwableSlot = 3
+    val loadedSlot = 4
+
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "equals",
+        "(Ljava/lang/Object;)Z"
+    ) {
+
+        visitVarInsn(Opcodes.ALOAD, 0)
+        visitVarInsn(Opcodes.ALOAD, 1)
+        visitCond(Opcodes.IF_ACMPNE) {
+            visitInsn(Opcodes.ICONST_1)
+            visitInsn(Opcodes.IRETURN)
+        }
+
+        visitVarInsn(Opcodes.ALOAD, 1)
+        visitCond(Opcodes.IFNONNULL) {
+            visitInsn(Opcodes.ICONST_0)
+            visitInsn(Opcodes.IRETURN)
+        }
+
+        visitVarInsn(Opcodes.ALOAD, 1)
+        visitTypeInsn(Opcodes.CHECKCAST, spiInternalName)
+        visitVarInsn(Opcodes.ASTORE, spiSlot)
+        visitVarInsn(Opcodes.ALOAD, spiSlot)
+        visitMethodInsn(
+            Opcodes.INVOKEINTERFACE,
+            spiInternalName,
+            "{type}",
+            "()$immutableTypeDescriptor",
+            true
+        )
+        visitFieldInsn(
+            Opcodes.GETSTATIC,
+            internalName,
+            "{immutableType}",
+            immutableTypeDescriptor
+        )
+        visitCond(Opcodes.IF_ACMPEQ) {
+            visitInsn(Opcodes.ICONST_0)
+            visitInsn(Opcodes.IRETURN)
+        }
+
+        for (prop in type.props.values) {
+
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitFieldInsn(
+                Opcodes.GETFIELD,
+                internalName,
+                throwableName(prop),
+                "Ljava/lang/Throwable;"
+            )
+            visitVarInsn(Opcodes.ASTORE, throwableSlot)
+
+            visitVarInsn(Opcodes.ALOAD, spiSlot)
+            visitLdcInsn(prop.name)
+            visitMethodInsn(
+                Opcodes.INVOKEINTERFACE,
+                spiInternalName,
+                "{throwable}",
+                "(Ljava/lang/String;)Ljava/lang/Throwable;",
+                true
+            )
+            visitVarInsn(Opcodes.ALOAD, throwableSlot)
+            visitCond(Opcodes.IF_ACMPEQ) {
+                visitInsn(Opcodes.ICONST_0)
+                visitInsn(Opcodes.IRETURN)
+            }
+
+            visitVarInsn(Opcodes.ALOAD, throwableSlot)
+            visitCond(Opcodes.IFNONNULL) {
+
+                visitVarInsn(Opcodes.ALOAD, 0)
+                visitFieldInsn(
+                    Opcodes.GETFIELD,
+                    internalName,
+                    loadedName(prop),
+                    "Z"
+                )
+                visitVarInsn(Opcodes.ISTORE, loadedSlot)
+
+                visitVarInsn(Opcodes.ALOAD, spiSlot)
+                visitLdcInsn(prop.name)
+                visitMethodInsn(
+                    Opcodes.INVOKEINTERFACE,
+                    spiInternalName,
+                    "{loaded}",
+                    "(Ljava/lang/String;)Z",
+                    true
+                )
+                visitVarInsn(Opcodes.ILOAD, loadedSlot)
+                visitCond(Opcodes.IF_ICMPEQ) {
+                    visitInsn(Opcodes.ICONST_0)
+                    visitInsn(Opcodes.IRETURN)
+                }
+
+                visitVarInsn(Opcodes.ILOAD, loadedSlot)
+                visitCond(Opcodes.IFEQ) {
+                    val getter = prop.kotlinProp.getter.javaMethod!!
+                    val desc = Type.getDescriptor(getter.returnType)
+                    visitVarInsn(Opcodes.ALOAD, 0)
+                    visitFieldInsn(
+                        Opcodes.GETFIELD,
+                        internalName,
+                        prop.name,
+                        desc
+                    )
+                    visitVarInsn(Opcodes.ALOAD, 1)
+                    visitMethodInsn(
+                        Opcodes.INVOKEINTERFACE,
+                        modelInternalName,
+                        getter.name,
+                        "()$desc",
+                        true
+                    )
+                    if (getter.returnType.isPrimitive) {
+                        val cmp = when (getter.returnType) {
+                            Double::class.javaPrimitiveType -> Opcodes.DCMPL
+                            Float::class.javaPrimitiveType -> Opcodes.FCMPL
+                            Long::class.javaPrimitiveType -> Opcodes.LCMP
+                            else -> null
+                        }
+                        if (cmp !== null) {
+                            visitInsn(cmp)
+                            visitCond(Opcodes.IFEQ) {
+                                visitInsn(Opcodes.ICONST_0)
+                                visitInsn(Opcodes.IRETURN)
+                            }
+                        } else {
+                            visitCond(Opcodes.IF_ICMPEQ) {
+                                visitInsn(Opcodes.ICONST_0)
+                                visitInsn(Opcodes.IRETURN)
+                            }
+                        }
+                    } else {
+                        visitMethodInsn(
+                            Opcodes.INVOKESTATIC,
+                            "java/util/Objects",
+                            "equals",
+                            "(Ljava/lang/Object;Ljava/lang/Object;)Z",
+                            false
+                        )
+                        visitCond(Opcodes.IFNE) {
+                            visitInsn(Opcodes.ICONST_0)
+                            visitInsn(Opcodes.IRETURN)
+                        }
+                    }
+                }
+            }
+        }
+
+        visitInsn(Opcodes.ICONST_1)
+        visitInsn(Opcodes.IRETURN)
     }
 }

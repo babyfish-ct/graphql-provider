@@ -77,14 +77,14 @@ internal fun ClassVisitor.writeMethod(
     }
 }
 
-internal fun MethodVisitor.visitIf(
+internal fun MethodVisitor.visitCond(
     opcode: Int,
     block: MethodVisitor.() -> Unit
 ) {
-    visitIf(opcode, block, null)
+    visitCond(opcode, block, null)
 }
 
-internal fun MethodVisitor.visitIf(
+internal fun MethodVisitor.visitCond(
     opcode: Int,
     block: MethodVisitor.() -> Unit,
     elseBlock: (MethodVisitor.() -> Unit)?
@@ -265,8 +265,8 @@ internal fun MethodVisitor.visitString(vararg blocks: MethodVisitor.() -> Unit) 
     )
 }
 
-internal fun MethodVisitor.visitBox(type: Class<*>) {
-    val (primitiveName, boxName) = when (type) {
+internal fun primitiveTuples(type: Class<*>): Pair<String, String> =
+    when (type) {
         Boolean::class.javaPrimitiveType ->
             "Z" to "java/lang/Boolean"
         Char::class.javaPrimitiveType ->
@@ -286,6 +286,9 @@ internal fun MethodVisitor.visitBox(type: Class<*>) {
         else ->
             "" to ""
     }
+
+internal fun MethodVisitor.visitBox(type: Class<*>) {
+    val (primitiveName, boxName) = primitiveTuples(type)
     if (primitiveName != "") {
         visitMethodInsn(
             Opcodes.INVOKESTATIC,

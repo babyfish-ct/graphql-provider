@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.kimmer.runtime
 
+import java.lang.IllegalStateException
 import java.lang.IndexOutOfBoundsException
 
 internal class ListDraft<E>(
@@ -113,12 +114,14 @@ internal class ListDraft<E>(
     override fun listIterator(): MutableListIterator<E> =
         listIterator(0)
 
-    override fun listIterator(index: Int): MutableListIterator<E> {
-        TODO("Not yet implemented")
-    }
+    override fun listIterator(index: Int): MutableListIterator<E> =
+        Itr(0, 0, index)
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
-        TODO("Not yet implemented")
+        if (fromIndex < 0 || toIndex > list.size) {
+            throw IndexOutOfBoundsException()
+        }
+        return SubList(this, fromIndex, list.size - toIndex)
     }
 
     override fun hashCode(): Int =
@@ -137,6 +140,114 @@ internal class ListDraft<E>(
         get() = modified ?: base.toMutableList().also {
             modified = it
         }
+
+    private inner class Itr(
+        private val headHide: Int,
+        private val tailHide: Int,
+        index: Int,
+        private val modCountChanged: ((Int) -> Unit)? = null
+    ): MutableListIterator<E> {
+
+        private var absIndex = headHide + index
+
+        private var retrievedAbsIndex = -1
+
+        private var modCount = this@ListDraft.modCount
+
+        private var base: ListIterator<E>? = this@ListDraft.list.listIterator(absIndex)
+
+        private var modified: MutableListIterator<E>? = null
+
+        override fun hasNext(): Boolean = execute {
+            absIndex < this@ListDraft.list.size - tailHide
+        }
+
+        override fun next(): E  = execute {
+            if (absIndex >= this@ListDraft.list.size - tailHide) {
+                throw NoSuchElementException()
+            }
+            retrievedAbsIndex = absIndex++
+            itr.next()
+        }
+
+        override fun nextIndex(): Int = execute {
+            absIndex - headHide
+        }
+
+        override fun hasPrevious(): Boolean = execute {
+            absIndex > headHide
+        }
+
+        override fun previous(): E = execute {
+            if (absIndex <= headHide) {
+                throw NoSuchElementException()
+            }
+            retrievedAbsIndex = --absIndex
+            itr.previous()
+        }
+
+        override fun previousIndex(): Int = execute {
+            absIndex - headHide - 1
+        }
+
+        override fun remove() {
+            execute(true) {
+                val pos = retrievedAbsIndex
+                if (pos == -1) {
+                    throw IllegalStateException()
+                }
+                mutableItr.remove()
+                if (pos < absIndex) {
+                    absIndex--
+                }
+                retrievedAbsIndex = -1
+            }
+        }
+
+        override fun add(element: E) {
+            execute(true) {
+                mutableItr.add(element)
+                absIndex++
+                retrievedAbsIndex = -1
+            }
+        }
+
+        override fun set(element: E) {
+            execute(true) {
+                val pos = retrievedAbsIndex
+                if (pos == -1) {
+                    throw IllegalStateException()
+                }
+                mutableItr.set(element)
+            }
+        }
+
+        private inline fun <T> execute(forUpdate: Boolean = false, block: () -> T): T {
+            if (modCount != this@ListDraft.modCount) {
+                throw ConcurrentModificationException()
+            }
+            return if (forUpdate) {
+                val result = block()
+                modCount = ++this@ListDraft.modCount
+                modCountChanged?.let {
+                    it(modCount)
+                }
+                result
+            } else {
+                block()
+            }
+        }
+
+        private val itr: ListIterator<E>
+            get() = modified ?: base ?: error("Internal bug")
+
+        private val mutableItr: MutableListIterator<E>
+            get() = modified ?:
+                this@ListDraft.mutableList.listIterator(absIndex).also {
+                    modified = it
+                    base = null
+                }
+    }
 
     private class SubList<E>(
         private val draft: ListDraft<E>,
@@ -255,16 +366,15 @@ internal class ListDraft<E>(
             draft.set(index + headHide, element)
         }
 
-        override fun iterator(): MutableIterator<E> {
-            TODO("Not yet implemented")
-        }
+        override fun iterator(): MutableIterator<E> =
+            this.listIterator(0)
 
-        override fun listIterator(): MutableListIterator<E> {
-            TODO("Not yet implemented")
-        }
+        override fun listIterator(): MutableListIterator<E> = this.listIterator(0)
 
-        override fun listIterator(index: Int): MutableListIterator<E> {
-            TODO("Not yet implemented")
+        override fun listIterator(index: Int): MutableListIterator<E> = execute {
+            draft.Itr(headHide, tailHide, index) {
+                modCount = it
+            }
         }
 
         override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> = execute {
@@ -282,11 +392,11 @@ internal class ListDraft<E>(
             )
         }
 
-        private fun <T> execute(syncModCount: Boolean = false, block: () -> T): T {
+        private inline fun <T> execute(forUpdate: Boolean = false, block: () -> T): T {
             if (modCount != draft.modCount) {
                 throw ConcurrentModificationException()
             }
-            return if (syncModCount) {
+            return if (forUpdate) {
                 val result = block()
                 modCount = draft.modCount
                 result

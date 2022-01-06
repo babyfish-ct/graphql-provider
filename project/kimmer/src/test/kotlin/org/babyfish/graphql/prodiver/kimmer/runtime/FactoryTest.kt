@@ -22,13 +22,19 @@ class FactoryTest {
         val draft = type.getConstructor(DraftContext::class.java, Book::class.java)
             .newInstance(DraftContext(), book)
             as BookDraft<Book>
+        println(draft.hashCode())
         draft.name = "a"
         println(draft.name)
+        println(draft.hashCode())
         val draft2 = type.getConstructor(DraftContext::class.java, Book::class.java)
             .newInstance(DraftContext(), draft)
             as BookDraft<Book>
         println(draft2.name)
+        println(draft.hashCode())
+        println(draft == draft2)
         draft2.name = "b"
+        println(draft == draft2)
         println(draft2.name)
+        println(draft2.hashCode())
     }
 }

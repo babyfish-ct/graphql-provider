@@ -90,6 +90,9 @@ private fun ClassVisitor.writeType(args: GeneratorArgs) {
     writeSetThrowable(args)
     writeSetValue(args)
 
+    writeHashCode(args)
+    writeEquals(args)
+
     visitEnd()
 }
 
@@ -245,6 +248,43 @@ private fun ClassVisitor.writeValue(args: GeneratorArgs) {
     }
 }
 
+private fun ClassVisitor.writeHashCode(args: GeneratorArgs) {
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "hashCode",
+        "()I"
+    ) {
+        visitModelGetter(args)
+        visitMethodInsn(
+            Opcodes.INVOKEVIRTUAL,
+            "java/lang/Object",
+            "hashCode",
+            "()I",
+            false
+        )
+        visitInsn(Opcodes.IRETURN)
+    }
+}
+
+private fun ClassVisitor.writeEquals(args: GeneratorArgs) {
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "equals",
+        "(Ljava/lang/Object;)Z"
+    ) {
+        visitModelGetter(args)
+        visitVarInsn(Opcodes.ALOAD, 1)
+        visitMethodInsn(
+            Opcodes.INVOKEVIRTUAL,
+            "java/lang/Object",
+            "equals",
+            "(Ljava/lang/Object;)Z",
+            false
+        )
+        visitInsn(Opcodes.IRETURN)
+    }
+}
+
 private fun ClassVisitor.writeSetThrowable(args: GeneratorArgs) {
 
 }
@@ -274,7 +314,7 @@ private fun MethodVisitor.visitModelGetter(args: GeneratorArgs) {
         modifiedName(),
         args.modelImplDescriptor
     )
-    visitIf(
+    visitCond(
         Opcodes.IFNULL,
         {
             visitVarInsn(Opcodes.ALOAD, 0)
@@ -312,7 +352,7 @@ private fun MethodVisitor.visitSetter(prop: ImmutableProp, args: GeneratorArgs) 
     }
     visitVarInsn(Opcodes.ASTORE, local)
     visitVarInsn(Opcodes.ALOAD, local)
-    visitIf(Opcodes.IFNONNULL) {
+    visitCond(Opcodes.IFNONNULL) {
         visitTypeInsn(Opcodes.NEW, args.modelImplInternalName)
         visitInsn(Opcodes.DUP)
         visitVarInsn(Opcodes.ALOAD, 0)
