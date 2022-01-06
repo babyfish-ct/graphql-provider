@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.kimmer.meta
 
 import org.babyfish.graphql.provider.kimmer.Immutable
-import org.babyfish.graphql.provider.kimmer.runtime.ImmutableImpl
+import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -33,7 +33,7 @@ interface ImmutableType {
 
         @JvmStatic
         fun of(o: Immutable): ImmutableType =
-            (o as ImmutableImpl).`{type}`()
+            (o as ImmutableSpi).`{type}`()
     }
 }
 

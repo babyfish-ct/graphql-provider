@@ -3,10 +3,7 @@ package org.babyfish.graphql.provider.kimmer.runtime
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
-import org.springframework.asm.ClassVisitor
-import org.springframework.asm.ClassWriter
-import org.springframework.asm.Opcodes
-import org.springframework.asm.Type
+import org.springframework.asm.*
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -47,7 +44,7 @@ private fun ClassVisitor.writeType(type: ImmutableType) {
         implInternalName(type.kotlinType.java),
         null,
         OBJECT_INTERNAL_NAME,
-        arrayOf(Type.getInternalName(type.kotlinType.java), Type.getInternalName(ImmutableImpl::class.java))
+        arrayOf(Type.getInternalName(type.kotlinType.java), Type.getInternalName(ImmutableSpi::class.java))
     )
 
     writeConstructor()
@@ -87,13 +84,16 @@ private fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
 
     val implInternalName = implInternalName(type.kotlinType.java)
 
+    val itfInternalName = Type.getInternalName(type.kotlinType.java)
+
     writeMethod(
         Opcodes.ACC_PUBLIC,
         "<init>",
-        "(L$implInternalName;)V"
+        "(L$itfInternalName;)V"
     ) {
 
         val throwableDesc = Type.getDescriptor(Throwable::class.java)
+        val implItfInternalName = Type.getInternalName(ImmutableSpi::class.java)
 
         visitVarInsn(Opcodes.ALOAD, 0)
         visitMethodInsn(
@@ -104,56 +104,75 @@ private fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
             false
         )
 
+        val throwableSlot = 2
+        val loadedSlot = 3
         for (prop in type.props.values) {
 
-            val desc = Type.getDescriptor(prop.returnType.java)
-            val loadedName = loadedName(prop)
-            val throwableName = throwableName(prop)
+            var getter = prop.kotlinProp.getter.javaMethod!!
 
-            visitVarInsn(Opcodes.ALOAD, 0)
             visitVarInsn(Opcodes.ALOAD, 1)
-            visitFieldInsn(
-                Opcodes.GETFIELD,
-                implInternalName,
-                prop.name,
-                desc
+            visitTypeInsn(Opcodes.CHECKCAST, implItfInternalName)
+            visitLdcInsn(prop.name)
+            visitMethodInsn(
+                Opcodes.INVOKEINTERFACE,
+                implItfInternalName,
+                "{throwable}",
+                "(Ljava/lang/String;)$throwableDesc",
+                true
             )
+            visitVarInsn(Opcodes.ASTORE, throwableSlot)
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitVarInsn(Opcodes.ALOAD, throwableSlot)
             visitFieldInsn(
                 Opcodes.PUTFIELD,
                 implInternalName,
-                prop.name,
-                desc
-            )
-
-            visitVarInsn(Opcodes.ALOAD, 0)
-            visitVarInsn(Opcodes.ALOAD, 1)
-            visitFieldInsn(
-                Opcodes.GETFIELD,
-                implInternalName,
-                loadedName,
-                "Z"
-            )
-            visitFieldInsn(
-                Opcodes.PUTFIELD,
-                implInternalName,
-                loadedName,
-                "Z"
-            )
-
-            visitVarInsn(Opcodes.ALOAD, 0)
-            visitVarInsn(Opcodes.ALOAD, 1)
-            visitFieldInsn(
-                Opcodes.GETFIELD,
-                implInternalName,
-                throwableName,
+                throwableName(prop),
                 throwableDesc
             )
+
+            visitVarInsn(Opcodes.ALOAD, 1)
+            visitTypeInsn(Opcodes.CHECKCAST, implItfInternalName)
+            visitLdcInsn(prop.name)
+            visitMethodInsn(
+                Opcodes.INVOKEINTERFACE,
+                implItfInternalName,
+                "{loaded}",
+                "(Ljava/lang/String;)Z",
+                true
+            )
+            visitVarInsn(Opcodes.ISTORE, loadedSlot)
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitVarInsn(Opcodes.ILOAD, loadedSlot)
             visitFieldInsn(
                 Opcodes.PUTFIELD,
                 implInternalName,
-                throwableName,
-                throwableDesc
+                loadedName(prop),
+                "Z"
             )
+
+            val endPropLabel = Label()
+            visitVarInsn(Opcodes.ALOAD, throwableSlot)
+            visitJumpInsn(Opcodes.IFNONNULL, endPropLabel)
+            visitVarInsn(Opcodes.ILOAD, loadedSlot)
+            visitJumpInsn(Opcodes.IFEQ, endPropLabel)
+
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitVarInsn(Opcodes.ALOAD, 1)
+            visitMethodInsn(
+                Opcodes.INVOKEINTERFACE,
+                itfInternalName,
+                getter.name,
+                Type.getMethodDescriptor(getter),
+                true
+            )
+            visitFieldInsn(
+                Opcodes.PUTFIELD,
+                implInternalName,
+                prop.name,
+                Type.getDescriptor(getter.returnType)
+            )
+
+            visitLabel(endPropLabel)
         }
         visitInsn(Opcodes.RETURN)
     }

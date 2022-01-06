@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.kimmer
 
 import kotlinx.coroutines.delay
-import org.babyfish.graphql.provider.kimmer.runtime.ImmutableImpl
+import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -11,28 +11,37 @@ interface Immutable {
 
         @JvmStatic
         fun <T: Immutable> isLoaded(o: T, prop: KProperty1<T, *>): Boolean {
-            return (o as ImmutableImpl).`{loaded}`(prop.name)
+            return (o as ImmutableSpi).`{loaded}`(prop.name)
         }
 
         @JvmStatic
         fun <T: Immutable> getThrowable(o: T, prop: KProperty1<T, *>): Throwable? {
-            return (o as ImmutableImpl).`{throwable}`(prop.name)
+            return (o as ImmutableSpi).`{throwable}`(prop.name)
         }
 
         @JvmStatic
         fun <T: Immutable> get(o: T, prop: KProperty1<T, *>): Any? {
-            return (o as ImmutableImpl).`{value}`(prop.name)
+            return (o as ImmutableSpi).`{value}`(prop.name)
         }
     }
 }
 
-interface Connection<N> {
+interface Connection<N>: Immutable {
 
     val edges: List<Edge<N>>
 
-    interface Edge<N> {
+    val pageInfo: PageInfo
+
+    interface Edge<N>: Immutable {
         val node: N
         val cursor: String
+    }
+
+    interface PageInfo: Immutable {
+        val hasNextPage: Boolean
+        val hasPreviousPage: Boolean
+        val startCursor: String
+        val endCursor: String
     }
 }
 

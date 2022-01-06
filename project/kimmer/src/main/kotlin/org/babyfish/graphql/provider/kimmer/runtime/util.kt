@@ -22,7 +22,10 @@ internal inline fun draftContextName(): String =
     "{draftContext}"
 
 internal inline fun baseName(): String =
-    "{base}"
+    "base"
+
+internal inline fun modifiedName(): String =
+    "modified"
 
 internal fun ClassLoader.defineClass(bytecode: ByteArray) =
     DEFINE_CLASS.invoke(this, bytecode, 0, bytecode.size)
@@ -125,15 +128,29 @@ internal fun MethodVisitor.visitThrow(
     visitInsn(Opcodes.ATHROW)
 }
 
-internal fun MethodVisitor.visitLoad(type: Class<*>) {
-    visitInsn(
+internal fun MethodVisitor.visitLoad(type: Class<*>, local: Int) {
+    visitVarInsn(
         when {
             type === Double::class.javaPrimitiveType -> Opcodes.DLOAD
             type === Float::class.javaPrimitiveType -> Opcodes.FLOAD
             type === Long::class.javaPrimitiveType -> Opcodes.LLOAD
             type.isPrimitive -> Opcodes.ILOAD
             else -> Opcodes.ALOAD
-        }
+        },
+        local
+    )
+}
+
+internal fun MethodVisitor.visitStore(type: Class<*>, local: Int) {
+    visitVarInsn(
+        when {
+            type === Double::class.javaPrimitiveType -> Opcodes.DSTORE
+            type === Float::class.javaPrimitiveType -> Opcodes.FSTORE
+            type === Long::class.javaPrimitiveType -> Opcodes.LSTORE
+            type.isPrimitive -> Opcodes.ISTORE
+            else -> Opcodes.ASTORE
+        },
+        local
     )
 }
 
