@@ -4,6 +4,7 @@ import org.babyfish.graphql.provider.kimmer.AsyncDraft
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.SyncDraft
+import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import org.springframework.util.ReflectionUtils
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -34,8 +35,8 @@ private fun factoryOf(draftType: Class<*>): Factory<*> =
     }
 
 private fun createFactory(draftType: Class<*>): Factory<*> {
-    val draftTypeInfo = DraftTypeInfo.of(draftType.kotlin as KClass<Draft<*>>)
-    val clazz = implementationOf(draftTypeInfo.immutableType.java as Class<out Immutable>)
+    val immutableType = ImmutableType.fromDraftType(draftType as Class<out Draft<*>>)
+    val clazz = implementationOf(immutableType.kotlinType.java)
     val default = clazz.getConstructor().newInstance() as Immutable
     return FactoryImpl<Immutable>(default)
 }

@@ -1,9 +1,8 @@
 package org.babyfish.graphql.provider.kimmer.meta
 
-import org.babyfish.graphql.provider.kimmer.Connection
-import org.babyfish.graphql.provider.kimmer.Draft
-import org.babyfish.graphql.provider.kimmer.Immutable
+import org.babyfish.graphql.provider.kimmer.*
 import org.springframework.core.GenericTypeResolver
+import java.util.*
 import kotlin.reflect.*
 
 internal class Parser internal constructor(
@@ -148,6 +147,13 @@ internal class TypeImpl(
             declaredProp.resolve(parser)
         }
     }
+
+    override val draftInfo: DraftInfo by lazy {
+        val abstractDraftType = getAbstractDraftType(this)
+        val syncDraftType = getFinalDraftType(abstractDraftType, SyncDraft::class.java) as Class<out SyncDraft<*>>?
+        val asyncDraftType = getFinalDraftType(abstractDraftType, AsyncDraft::class.java) as Class<out AsyncDraft<*>>?
+        DraftInfo(abstractDraftType, syncDraftType, asyncDraftType)
+    }
 }
 
 private class PropImpl(
@@ -220,4 +226,77 @@ private class PropImpl(
 
     override fun toString(): String =
         kotlinProp.toString()
+}
+
+private fun getAbstractDraftType(immutableType: ImmutableType): Class<Draft<*>> {
+    val javaType = immutableType.kotlinType.java
+    val abstractDraftType =
+        try {
+            Class.forName("${javaType.name}Draft")
+        } catch (ex: ClassNotFoundException) {
+            throw IllegalArgumentException("Cannot find draft type '${javaType.name}Draft' for '${javaType.name}'")
+        }
+    if (!abstractDraftType.isInterface) {
+        throw MetadataException(
+            "As the draft interface type of '${javaType.name}', " +
+                "'${abstractDraftType.name}' must be interface"
+        )
+    }
+    if (!javaType.isAssignableFrom(abstractDraftType)) {
+        throw MetadataException(
+            "As the draft interface type of '${javaType.name}', " +
+                "'${abstractDraftType.name}' must extend '${javaType.name}'"
+        )
+    }
+    if (!Draft::class.java.isAssignableFrom(abstractDraftType)) {
+        throw MetadataException(
+            "As the draft interface type of '${javaType.name}', " +
+                "'${abstractDraftType.name}' must extend '${Draft::class.java.name}'"
+        )
+    }
+    if (SyncDraft::class.java.isAssignableFrom(abstractDraftType)) {
+        throw MetadataException(
+            "As the abstract draft interface type of '${javaType.name}', " +
+                "'${abstractDraftType.name}' cannot extend '${SyncDraft::class.java.name}'"
+        )
+    }
+    if (AsyncDraft::class.java.isAssignableFrom(abstractDraftType)) {
+        throw MetadataException(
+            "As the abstract draft interface type of '${javaType.name}', " +
+                "'${abstractDraftType.name}' cannot extend '${AsyncDraft::class.java.name}'"
+        )
+    }
+    if (abstractDraftType.typeParameters.size != 1 ||
+        !Arrays.equals(abstractDraftType.typeParameters[0].bounds, arrayOf(javaType))) {
+        throw MetadataException(
+            "As the abstract draft interface type of '${javaType.name}', " +
+                "'${abstractDraftType.name}' must have one type argument whose bound is '${javaType.name}'"
+        )
+    }
+    return abstractDraftType as Class<Draft<*>>
+}
+
+private fun getFinalDraftType(
+    abstractDraftType: Class<*>,
+    draftContractType: Class<*>
+): Class<*> ? {
+    val simpleName = when (draftContractType) {
+        SyncDraft::class.java -> "Sync"
+        AsyncDraft::class.java -> "Async"
+        else -> error("Internal bug")
+    }
+    val finalDraftType = abstractDraftType.declaredClasses.find {
+        it.simpleName == simpleName
+    } ?: return null
+
+    if (!finalDraftType.isInterface) {
+        throw MetadataException("'${finalDraftType.name}' must be interface")
+    }
+    if (!draftContractType.isAssignableFrom(finalDraftType)) {
+        throw MetadataException("'${finalDraftType.name}' must extend '${draftContractType.name}'")
+    }
+    if (finalDraftType.typeParameters.isNotEmpty()) {
+        throw MetadataException("'${finalDraftType.name}' cannot have type parameters")
+    }
+    return finalDraftType
 }

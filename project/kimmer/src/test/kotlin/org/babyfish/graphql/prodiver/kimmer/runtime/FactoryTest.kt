@@ -6,6 +6,7 @@ import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import org.babyfish.graphql.provider.kimmer.runtime.DraftContext
 import org.babyfish.graphql.provider.kimmer.runtime.Factory
+import org.babyfish.graphql.provider.kimmer.runtime.draftContext
 import org.babyfish.graphql.provider.kimmer.runtime.draftImplementationOf
 import kotlin.test.Test
 
@@ -20,14 +21,14 @@ class FactoryTest {
 
         val type = draftImplementationOf(BookDraft::class.java)
         val draft = type.getConstructor(DraftContext::class.java, Book::class.java)
-            .newInstance(DraftContext(), book)
+            .newInstance(draftContext(), book)
             as BookDraft<Book>
         println(draft.hashCode())
         draft.name = "a"
         println(draft.name)
         println(draft.hashCode())
         val draft2 = type.getConstructor(DraftContext::class.java, Book::class.java)
-            .newInstance(DraftContext(), draft)
+            .newInstance(draftContext(), draft)
             as BookDraft<Book>
         println(draft2.name)
         println(draft.hashCode())

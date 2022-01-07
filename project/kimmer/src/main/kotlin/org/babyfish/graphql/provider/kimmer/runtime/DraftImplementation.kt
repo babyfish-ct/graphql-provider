@@ -30,11 +30,7 @@ private fun createDraftImplementation(draftType: Class<out Draft<*>>): Class<out
     if (draftType.typeParameters.isEmpty()) {
         throw IllegalArgumentException("draftArgument must have type parameters")
     }
-    val draftTypeInfo = DraftTypeInfo.of(draftType.kotlin)
-    if (draftTypeInfo.draftType.java !== draftType) {
-        throw IllegalArgumentException("Illegal draftType: '${draftType.name}'")
-    }
-    val immutableType = ImmutableType.of(draftTypeInfo.immutableType as KClass<out Immutable>)
+    val immutableType = ImmutableType.fromDraftType(draftType)
     if (draftType.`package` !== immutableType.kotlinType.java.`package`) {
         throw IllegalArgumentException("Draft type '${draftType.name}' and immutable type ${immutableType.kotlinType.java.name} belongs to different packages")
     }
