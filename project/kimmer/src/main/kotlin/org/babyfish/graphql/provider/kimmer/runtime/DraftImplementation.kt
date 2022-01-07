@@ -4,7 +4,10 @@ import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
+import org.babyfish.graphql.provider.kimmer.runtime.draft.GeneratorArgs
+import org.babyfish.graphql.provider.kimmer.runtime.draft.writeResolve
 import org.springframework.asm.*
+import java.lang.invoke.TypeDescriptor
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -124,6 +127,8 @@ private fun ClassVisitor.writeType(args: GeneratorArgs) {
 
     writeHashCode(args)
     writeEquals(args)
+
+    writeResolve(args)
 
     visitEnd()
 }
@@ -592,17 +597,3 @@ private fun MethodVisitor.visitToDraft(
     }
 }
 
-private data class GeneratorArgs(
-    val draftJavaType: Class<*>,
-    val immutableType: ImmutableType
-) {
-    val draftImplInternalName = draftImplInternalName(draftJavaType)
-    val draftInternalName = Type.getInternalName(draftJavaType)
-    val draftDescriptor = Type.getDescriptor(draftJavaType)
-    val draftContextInternalName = Type.getInternalName(DraftContext::class.java)
-    val draftContextDescriptor = Type.getDescriptor(DraftContext::class.java)
-    val modelInternalName = Type.getInternalName(immutableType.kotlinType.java)
-    val modelDescriptor = Type.getDescriptor(immutableType.kotlinType.java)
-    val modelImplInternalName = implInternalName(immutableType.kotlinType.java)
-    val modelImplDescriptor = "L$modelImplInternalName;"
-}

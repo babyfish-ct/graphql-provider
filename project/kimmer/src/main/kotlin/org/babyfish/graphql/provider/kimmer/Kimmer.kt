@@ -30,8 +30,8 @@ interface Immutable {
         }
 
         @JvmStatic
-        fun <T: Immutable> shallowEquals(o: T, other: T): Boolean {
-            return (o as ImmutableSpi).equals(true)
+        fun <T: Immutable> shallowEquals(a: T, b: T): Boolean {
+            return (a as ImmutableSpi).equals(b, true)
         }
     }
 }

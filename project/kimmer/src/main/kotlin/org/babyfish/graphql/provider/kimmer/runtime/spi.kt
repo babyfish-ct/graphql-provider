@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.kimmer.runtime
 
+import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 
 internal interface ImmutableSpi {
@@ -14,4 +15,5 @@ internal interface ImmutableSpi {
 internal interface DraftSpi: ImmutableSpi {
     fun `{throwable}`(prop: String, throwable: Throwable?): Unit
     fun `{value}`(prop: String, value: Any?): Unit
+    fun `{resolve}`(): Immutable
 }

@@ -1,17 +1,30 @@
 package org.babyfish.graphql.provider.kimmer.runtime
 
-internal class ListDraft<E>(
+import org.babyfish.graphql.provider.kimmer.Immutable
+import kotlin.reflect.full.isSubclassOf
+
+internal class ListDraft<E: Immutable>(
     draftContext: DraftContext, base: List<E>
-): ListProxy<E>(
+): ListProxy<E?>(
     base,
-    object: ListElementHandler<E> {
+    object: ListElementHandler<E?> {
 
-        override fun input(element: E) {
-
+        override fun input(element: E?) {
+            if (element !== null && !element::class.isSubclassOf(Immutable::class)) {
+                throw IllegalArgumentException("List element must be instance of '${Immutable::class.qualifiedName}'")
+            }
         }
 
-        override fun output(element: E): E {
-            return element
+        override fun output(element: E?): E? {
+            return draftContext.toDraft(element) as E?
+        }
+
+        override fun resolve(element: E?): E {
+            return draftContext.resolve(element)!!
+        }
+
+        override fun changed(a: E?, b: E?): Boolean {
+            return a === b
         }
     }
 )

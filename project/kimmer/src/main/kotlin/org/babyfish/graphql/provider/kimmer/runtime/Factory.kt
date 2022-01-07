@@ -12,7 +12,7 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.reflect.KClass
 
-interface Factory<T: Immutable> {
+internal interface Factory<T: Immutable> {
     fun create(): T
     fun createDraft(ctx: DraftContext, o: T): Draft<T>
 
