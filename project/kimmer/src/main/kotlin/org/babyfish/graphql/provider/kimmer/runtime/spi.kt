@@ -7,6 +7,8 @@ internal interface ImmutableSpi {
     fun `{loaded}`(prop: String): Boolean
     fun `{throwable}`(prop: String): Throwable?
     fun `{value}`(prop: String): Any?
+    fun hashCode(shallow: Boolean): Int
+    fun equals(other: Any?, shallow: Boolean): Boolean
 }
 
 internal interface DraftSpi: ImmutableSpi {

@@ -23,6 +23,16 @@ interface Immutable {
         fun <T: Immutable> get(o: T, prop: KProperty1<T, *>): Any? {
             return (o as ImmutableSpi).`{value}`(prop.name)
         }
+
+        @JvmStatic
+        fun <T: Immutable> shallowHashCode(o: T): Int {
+            return (o as ImmutableSpi).hashCode(true)
+        }
+
+        @JvmStatic
+        fun <T: Immutable> shallowEquals(o: T, other: T): Boolean {
+            return (o as ImmutableSpi).equals(true)
+        }
     }
 }
 

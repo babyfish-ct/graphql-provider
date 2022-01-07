@@ -354,10 +354,27 @@ private fun ClassVisitor.writeHashCode(type: ImmutableType) {
         "hashCode",
         "()I"
     ) {
-        val hashSlot = 1
-        val throwableSlot = 2
-        val loadedSlot = 3
-        val valueSlot = 4
+        visitVarInsn(Opcodes.ALOAD, 0)
+        visitInsn(Opcodes.ICONST_0)
+        visitMethodInsn(
+            Opcodes.INVOKEVIRTUAL,
+            internalName,
+            "hashCode",
+            "(Z)I",
+            false
+        )
+        visitInsn(Opcodes.IRETURN)
+    }
+
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "hashCode",
+        "(Z)I"
+    ) {
+        val hashSlot = 2
+        val throwableSlot = 3
+        val loadedSlot = 4
+        val valueSlot = 5
         visitInsn(Opcodes.ICONST_0)
         visitVarInsn(Opcodes.ISTORE, hashSlot)
 
@@ -418,14 +435,35 @@ private fun ClassVisitor.writeHashCode(type: ImmutableType) {
                                 visitVarInsn(Opcodes.ILOAD, hashSlot)
                                 visitLdcInsn(31)
                                 visitInsn(Opcodes.IMUL)
-                                visitVarInsn(Opcodes.ALOAD, valueSlot)
-                                visitMethodInsn(
-                                    Opcodes.INVOKEVIRTUAL,
-                                    "java/lang/Object",
-                                    "hashCode",
-                                    "()I",
-                                    false
-                                )
+                                val deepHashCodeBlock: () -> Unit = {
+                                    visitVarInsn(Opcodes.ALOAD, valueSlot)
+                                    visitMethodInsn(
+                                        Opcodes.INVOKEVIRTUAL,
+                                        "java/lang/Object",
+                                        "hashCode",
+                                        "()I",
+                                        false
+                                    )
+                                }
+                                if (prop.targetType != null) {
+                                    visitVarInsn(Opcodes.ILOAD, 1)
+                                    visitCond(
+                                        Opcodes.IFNE,
+                                        { deepHashCodeBlock() },
+                                        {
+                                            visitVarInsn(Opcodes.ALOAD, valueSlot)
+                                            visitMethodInsn(
+                                                Opcodes.INVOKESTATIC,
+                                                "java/lang/System",
+                                                "identityHashCode",
+                                                "(Ljava/lang/Object;)I",
+                                                false
+                                            )
+                                        }
+                                    )
+                                } else {
+                                    deepHashCodeBlock()
+                                }
                                 visitInsn(Opcodes.IADD)
                                 visitVarInsn(Opcodes.ISTORE, hashSlot)
                             }
@@ -460,15 +498,33 @@ private fun ClassVisitor.writeEquals(type: ImmutableType) {
     val spiInternalName = Type.getInternalName(ImmutableSpi::class.java)
     val immutableTypeDescriptor = Type.getDescriptor(ImmutableType::class.java)
 
-    val spiSlot = 2
-    val throwableSlot = 3
-    val loadedSlot = 4
-
     writeMethod(
         Opcodes.ACC_PUBLIC,
         "equals",
         "(Ljava/lang/Object;)Z"
     ) {
+        visitVarInsn(Opcodes.ALOAD, 0)
+        visitVarInsn(Opcodes.ALOAD, 1)
+        visitInsn(Opcodes.ICONST_0)
+        visitMethodInsn(
+            Opcodes.INVOKEVIRTUAL,
+            internalName,
+            "equals",
+            "(Ljava/lang/Object;Z)Z",
+            false
+        )
+        visitInsn(Opcodes.IRETURN)
+    }
+
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        "equals",
+        "(Ljava/lang/Object;Z)Z"
+    ) {
+
+        val spiSlot = 3
+        val throwableSlot = 4
+        val loadedSlot = 5
 
         visitVarInsn(Opcodes.ALOAD, 0)
         visitVarInsn(Opcodes.ALOAD, 1)
@@ -597,16 +653,33 @@ private fun ClassVisitor.writeEquals(type: ImmutableType) {
                             }
                         }
                     } else {
-                        visitMethodInsn(
-                            Opcodes.INVOKESTATIC,
-                            "java/util/Objects",
-                            "equals",
-                            "(Ljava/lang/Object;Ljava/lang/Object;)Z",
-                            false
-                        )
-                        visitCond(Opcodes.IFNE) {
-                            visitInsn(Opcodes.ICONST_0)
-                            visitInsn(Opcodes.IRETURN)
+                        val deepEqualBock: () -> Unit = {
+                            visitMethodInsn(
+                                Opcodes.INVOKESTATIC,
+                                "java/util/Objects",
+                                "equals",
+                                "(Ljava/lang/Object;Ljava/lang/Object;)Z",
+                                false
+                            )
+                            visitCond(Opcodes.IFNE) {
+                                visitInsn(Opcodes.ICONST_0)
+                                visitInsn(Opcodes.IRETURN)
+                            }
+                        }
+                        if (prop.targetType !== null) {
+                            visitVarInsn(Opcodes.ILOAD, 2)
+                            visitCond(
+                                Opcodes.IFNE,
+                                { deepEqualBock() },
+                                {
+                                    visitCond(Opcodes.IF_ACMPEQ) {
+                                        visitInsn(Opcodes.ICONST_0)
+                                        visitInsn(Opcodes.IRETURN)
+                                    }
+                                }
+                            )
+                        } else {
+                            deepEqualBock()
                         }
                     }
                 }
