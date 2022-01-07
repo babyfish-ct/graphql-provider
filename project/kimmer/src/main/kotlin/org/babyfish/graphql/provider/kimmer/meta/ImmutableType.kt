@@ -4,6 +4,7 @@ import org.babyfish.graphql.provider.kimmer.AsyncDraft
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.SyncDraft
+import org.babyfish.graphql.provider.kimmer.runtime.Factory
 import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock

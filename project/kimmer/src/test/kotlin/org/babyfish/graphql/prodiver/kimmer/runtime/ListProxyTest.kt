@@ -1,21 +1,19 @@
 package org.babyfish.graphql.prodiver.kimmer.runtime
 
-import org.babyfish.graphql.provider.kimmer.runtime.DraftContext
-import org.babyfish.graphql.provider.kimmer.runtime.ListDraft
-import org.babyfish.graphql.provider.kimmer.runtime.draftContext
+import org.babyfish.graphql.provider.kimmer.runtime.ListProxy
 import org.junit.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.expect
 
-class ListDraftTest {
+class ListProxyTest {
 
     @Test
     fun testReadList() {
         val base = listOf("a", "b", "c")
-        testRead0(ListDraft(draftContext(), base))
+        testRead0(ListProxy(base, null))
 
         val base2 = listOf("-4", "-3", "-2", "-1", "a", "b", "c", "+1", "+2", "+3", "+4", "+5", "+6")
-        val draft = ListDraft(draftContext(), base2)
+        val draft = ListProxy(base2, null)
             .let {
                 it.subList(2, it.size - 3)
             }
@@ -28,10 +26,10 @@ class ListDraftTest {
     @Test
     fun testWriteList() {
         val base = listOf("a", "b", "c")
-        testWrite0(ListDraft(draftContext(), base))
+        testWrite0(ListProxy(base, null))
 
         val base2 = listOf("-4", "-3", "-2", "-1", "a", "b", "c", "+1", "+2", "+3", "+4", "+5", "+6")
-        val draft = ListDraft(draftContext(), base2)
+        val draft = ListProxy(base2, null)
             .let {
                 it.subList(2, it.size - 3)
             }

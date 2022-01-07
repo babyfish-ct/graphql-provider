@@ -35,6 +35,7 @@ interface NodeDraft<T: Node>: Node, Draft<T> {
 }
 
 interface BookStoreDraft<T: BookStore>: BookStore, NodeDraft<T> {
+    override var name: String
     override var books: MutableList<BookDraft<out Book>>
     override var avgPrice: BigDecimal
     interface Sync: BookStoreDraft<BookStore>, SyncDraft<BookStore>
@@ -44,8 +45,10 @@ interface BookStoreDraft<T: BookStore>: BookStore, NodeDraft<T> {
 interface BookDraft<T: Book>: Book, NodeDraft<T> {
     override var name: String
     override var price: BigDecimal
-    override var store: BookStore?
+    override var store: BookStoreDraft<out BookStore>?
     override var authors: MutableList<AuthorDraft<out Author>>
+    fun store(): BookStoreDraft<out BookStore>
+    fun authors(): MutableList<AuthorDraft<out Author>>
     interface Sync: BookDraft<Book>, SyncDraft<Book>
     interface Async: BookDraft<Book>, AsyncDraft<Book>
 }

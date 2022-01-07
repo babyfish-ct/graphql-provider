@@ -3,9 +3,9 @@ package org.babyfish.graphql.provider.kimmer.runtime
 import java.lang.IllegalStateException
 import java.lang.IndexOutOfBoundsException
 
-internal abstract class ListProxy<E> protected constructor(
+internal open class ListProxy<E>(
     private val base: List<E>,
-    private val elementHandler: ElementHandler<E>?
+    private val elementHandler: ListElementHandler<E>?
 ): MutableList<E> {
 
     init {
@@ -466,9 +466,9 @@ internal abstract class ListProxy<E> protected constructor(
                 }
             }
     }
+}
 
-    protected interface ElementHandler<E> {
-        fun input(element: E): Unit
-        fun output(element: E): E
-    }
+internal interface ListElementHandler<E> {
+    fun input(element: E): Unit
+    fun output(element: E): E
 }

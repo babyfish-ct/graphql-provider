@@ -14,21 +14,19 @@ class FactoryTest {
 
     @Test
     fun create() {
-        val book = Factory.of(BookDraft.Sync::class).default
+        val factory = Factory.of(BookDraft.Sync::class)
+        val book = factory.create()
         println(Immutable.isLoaded(book, Book::name))
         println(Immutable.getThrowable(book, Book::name))
         println(ImmutableType.of(book).name)
 
-        val type = draftImplementationOf(BookDraft::class.java)
-        val draft = type.getConstructor(DraftContext::class.java, Book::class.java)
-            .newInstance(draftContext(), book)
+        val draft = factory.createDraft(draftContext(), book)
             as BookDraft<Book>
         println(draft.hashCode())
         draft.name = "a"
         println(draft.name)
         println(draft.hashCode())
-        val draft2 = type.getConstructor(DraftContext::class.java, Book::class.java)
-            .newInstance(draftContext(), draft)
+        val draft2 = factory.createDraft(draftContext(), draft)
             as BookDraft<Book>
         println(draft2.name)
         println(draft.hashCode())
@@ -37,5 +35,8 @@ class FactoryTest {
         println(draft == draft2)
         println(draft2.name)
         println(draft2.hashCode())
+        draft2.store().name = "dev"
+        println(draft2.store?.name)
+        println(draft2.store().name)
     }
 }

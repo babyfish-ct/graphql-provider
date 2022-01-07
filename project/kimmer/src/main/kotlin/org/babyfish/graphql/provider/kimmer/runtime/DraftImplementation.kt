@@ -9,28 +9,61 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.reflect.KClass
 import kotlin.reflect.jvm.javaMethod
 
-internal fun draftImplementationOf(draftType: Class<out Draft<*>>): Class<out Draft<*>> =
+internal fun draftImplementationOf(modelType: Class<out Immutable>): Class<out Draft<*>> =
     cacheLock.read {
-        cacheMap[draftType]
+        cacheMap[modelType]
     } ?: cacheLock.write {
-        cacheMap[draftType]
-            ?: createDraftImplementation(draftType).also {
-                cacheMap[draftType] = it
+        cacheMap[modelType]
+            ?: DraftImplementationCreator(cacheMap).let {
+                val result =it.create(modelType)
+                cacheMap += it.tmpMap
+                result
             }
     }
 
-private val cacheMap = WeakHashMap<Class<out Draft<*>>, Class<out Draft<*>>>()
+private class DraftImplementationCreator(
+    private val map: Map<Class<out Immutable>, Class<out Draft<*>>>
+) {
+    val tmpMap = mutableMapOf<Class<out Immutable>, Class<out Draft<*>>?>()
+
+    fun create(modelType: Class<out Immutable>): Class<out Draft<*>> {
+        return createImpl(ImmutableType.of(modelType))
+    }
+
+    private fun tryCreateOtherTypes(immutableType: ImmutableType) {
+        for (superType in immutableType.superTypes) {
+            tryCreate(superType)
+        }
+        for (prop in immutableType.declaredProps.values) {
+            prop.targetType?.let {
+                tryCreate(it)
+            }
+        }
+    }
+
+    private fun tryCreate(immutableType: ImmutableType) {
+        if (!map.containsKey(immutableType.kotlinType.java) && !tmpMap.containsKey(immutableType.kotlinType.java)) {
+            createImpl(immutableType)
+        }
+    }
+
+    private fun createImpl(immutableType: ImmutableType): Class<out Draft<*>> {
+        tmpMap[immutableType.kotlinType.java] = null
+        val draftImplementationType = createDraftImplementation(immutableType)
+        tryCreateOtherTypes(immutableType)
+        tmpMap[immutableType.kotlinType.java] = draftImplementationType
+        return draftImplementationType
+    }
+}
+
+private val cacheMap = WeakHashMap<Class<out Immutable>, Class<out Draft<*>>>()
 
 private val cacheLock = ReentrantReadWriteLock()
 
-private fun createDraftImplementation(draftType: Class<out Draft<*>>): Class<out Draft<*>> {
-    if (draftType.typeParameters.isEmpty()) {
-        throw IllegalArgumentException("draftArgument must have type parameters")
-    }
-    val immutableType = ImmutableType.fromDraftType(draftType)
+private fun createDraftImplementation(immutableType: ImmutableType): Class<out Draft<*>> {
+    val draftType = immutableType.draftInfo.abstractType
     if (draftType.`package` !== immutableType.kotlinType.java.`package`) {
         throw IllegalArgumentException("Draft type '${draftType.name}' and immutable type ${immutableType.kotlinType.java.name} belongs to different packages")
     }
@@ -76,6 +109,9 @@ private fun ClassVisitor.writeType(args: GeneratorArgs) {
     for (prop in args.immutableType.props.values) {
         writeGetter(prop, args)
         writeSetter(prop, args)
+        if (prop.targetType !== null) {
+            writeCreator(prop, args)
+        }
     }
 
     writeRuntimeType(args)
@@ -131,13 +167,30 @@ private fun ClassVisitor.writeConstructor(args: GeneratorArgs) {
 
 private fun ClassVisitor.writeGetter(prop: ImmutableProp, args: GeneratorArgs) {
     val getter = prop.kotlinProp.getter.javaMethod!!
-    val typeDesc = Type.getDescriptor(getter.returnType)
+    val returnType = prop.targetType?.draftInfo?.abstractType ?: prop.returnType.java
     writeMethod(
         Opcodes.ACC_PUBLIC,
         getter.name,
-        "()$typeDesc"
+        "()${Type.getDescriptor(returnType)}"
     ) {
         visitGetter(prop, args)
+    }
+    if (returnType !== prop.returnType.java) {
+        writeMethod(
+            Opcodes.ACC_PUBLIC or Opcodes.ACC_BRIDGE,
+            getter.name,
+            "()${Type.getDescriptor(prop.returnType.java)}"
+        ) {
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitMethodInsn(
+                Opcodes.INVOKEVIRTUAL,
+                args.draftImplInternalName,
+                getter.name,
+                "()${Type.getDescriptor(returnType)}",
+                false
+            )
+            visitReturn(returnType)
+        }
     }
 }
 
@@ -157,6 +210,90 @@ private fun ClassVisitor.writeSetter(prop: ImmutableProp, args: GeneratorArgs) {
         "($typeDesc)V"
     ) {
         visitSetter(prop, args)
+    }
+}
+
+private fun ClassVisitor.writeCreator(prop: ImmutableProp, args: GeneratorArgs) {
+
+    val desc = Type.getDescriptor(prop.returnType.java)
+
+    val draftDesc = if (prop.isList) {
+        "Ljava/util/List;"
+    } else {
+        Type.getDescriptor(prop.targetType!!.draftInfo.abstractType)
+    }
+
+    writeMethod(
+        Opcodes.ACC_PUBLIC,
+        prop.name,
+        "()$draftDesc"
+    ) {
+
+        val modifiedLocal = 1
+
+        visitMutableModelStorage(modifiedLocal, args)
+        val loadMutableValue: MethodVisitor.() -> Unit = {
+            visitVarInsn(Opcodes.ALOAD, modifiedLocal)
+            visitFieldInsn(
+                Opcodes.GETFIELD,
+                args.modelImplInternalName,
+                prop.name,
+                desc
+            )
+        }
+
+        visitVarInsn(Opcodes.ALOAD, modifiedLocal)
+        visitFieldInsn(
+            Opcodes.GETFIELD,
+            args.modelImplInternalName,
+            throwableName(prop),
+            "Ljava/lang/Throwable;"
+        )
+        visitCond(Opcodes.IFNONNULL) {
+
+            visitVarInsn(Opcodes.ALOAD, modifiedLocal)
+            visitFieldInsn(
+                Opcodes.GETFIELD,
+                args.modelImplInternalName,
+                loadedName(prop),
+                "Z"
+            )
+            visitCond(Opcodes.IFEQ) {
+
+                loadMutableValue()
+                visitCond(Opcodes.IFNULL) {
+                    visitToDraft(prop, args, loadMutableValue)
+                    visitInsn(Opcodes.ARETURN)
+                }
+            }
+        }
+
+        visitSetter(modifiedLocal, prop, args) {
+            if (prop.isList) {
+                visitTypeInsn(Opcodes.NEW, "java/util/ArrayList")
+                visitInsn(Opcodes.DUP)
+                visitMethodInsn(
+                    Opcodes.INVOKESPECIAL,
+                    "java/util/ArrayList",
+                    "<init>",
+                    "()V",
+                    false
+                )
+            } else {
+                val targetInternalName = implInternalName(prop.targetType!!.kotlinType.java)
+                visitTypeInsn(Opcodes.NEW, targetInternalName)
+                visitInsn(Opcodes.DUP)
+                visitMethodInsn(
+                    Opcodes.INVOKESPECIAL,
+                    targetInternalName,
+                    "<init>",
+                    "()V",
+                    false
+                )
+            }
+        }
+        visitToDraft(prop, args, loadMutableValue)
+        visitInsn(Opcodes.ARETURN)
     }
 }
 
@@ -290,15 +427,24 @@ private fun ClassVisitor.writeSetValue(args: GeneratorArgs) {
 }
 
 private fun MethodVisitor.visitGetter(prop: ImmutableProp, args: GeneratorArgs) {
-    visitModelGetter(args)
     val getter = prop.kotlinProp.getter.javaMethod!!
-    visitMethodInsn(
-        Opcodes.INVOKEINTERFACE,
-        args.modelInternalName,
-        getter.name,
-        Type.getMethodDescriptor(getter),
-        true
-    )
+
+    val loadValue: MethodVisitor.() -> Unit = {
+        visitModelGetter(args)
+        visitMethodInsn(
+            Opcodes.INVOKEINTERFACE,
+            args.modelInternalName,
+            getter.name,
+            Type.getMethodDescriptor(getter),
+            true
+        )
+    }
+
+    if (prop.targetType !== null) {
+        visitToDraft(prop, args, loadValue)
+    } else {
+        loadValue()
+    }
     visitReturn(prop.returnType.java)
 }
 
@@ -334,6 +480,51 @@ private fun MethodVisitor.visitModelGetter(args: GeneratorArgs) {
 }
 
 private fun MethodVisitor.visitSetter(prop: ImmutableProp, args: GeneratorArgs) {
+    val local = when (prop.returnType.java) {
+        Long::class.javaPrimitiveType -> 3
+        Double::class.javaPrimitiveType -> 3
+        else -> 2
+    }
+    visitMutableModelStorage(local, args)
+    visitSetter(local, prop, args) {
+        visitLoad(prop.returnType.java, 1)
+    }
+    visitInsn(Opcodes.RETURN)
+}
+
+private fun MethodVisitor.visitSetter(
+    modifiedLocal: Int,
+    prop: ImmutableProp,
+    args: GeneratorArgs,
+    valueBlocK: MethodVisitor.() -> Unit
+) {
+    visitVarInsn(Opcodes.ALOAD, modifiedLocal)
+    visitInsn(Opcodes.ACONST_NULL)
+    visitFieldInsn(
+        Opcodes.PUTFIELD,
+        args.modelImplInternalName,
+        throwableName(prop),
+        "Ljava/lang/Throwable;"
+    )
+    visitVarInsn(Opcodes.ALOAD, modifiedLocal)
+    visitInsn(Opcodes.ICONST_1)
+    visitFieldInsn(
+        Opcodes.PUTFIELD,
+        args.modelImplInternalName,
+        loadedName(prop),
+        "Z"
+    )
+    visitVarInsn(Opcodes.ALOAD, modifiedLocal)
+    valueBlocK()
+    visitFieldInsn(
+        Opcodes.PUTFIELD,
+        args.modelImplInternalName,
+        prop.name,
+        Type.getDescriptor(prop.returnType.java)
+    )
+}
+
+private fun MethodVisitor.visitMutableModelStorage(local: Int, args: GeneratorArgs) {
     visitVarInsn(Opcodes.ALOAD, 0)
     visitFieldInsn(
         Opcodes.GETFIELD,
@@ -341,11 +532,6 @@ private fun MethodVisitor.visitSetter(prop: ImmutableProp, args: GeneratorArgs) 
         modifiedName(),
         args.modelImplDescriptor
     )
-    val local = when (prop.returnType.java) {
-        Long::class.javaPrimitiveType -> 3
-        Double::class.javaPrimitiveType -> 3
-        else -> 2
-    }
     visitVarInsn(Opcodes.ASTORE, local)
     visitVarInsn(Opcodes.ALOAD, local)
     visitCond(Opcodes.IFNONNULL) {
@@ -375,31 +561,35 @@ private fun MethodVisitor.visitSetter(prop: ImmutableProp, args: GeneratorArgs) 
             args.modelImplDescriptor
         )
     }
-    visitVarInsn(Opcodes.ALOAD, local)
-    visitInsn(Opcodes.ACONST_NULL)
+}
+
+private fun MethodVisitor.visitToDraft(
+    prop: ImmutableProp,
+    args: GeneratorArgs,
+    valueBlock: MethodVisitor.() -> Unit
+) {
+    visitVarInsn(Opcodes.ALOAD, 0)
     visitFieldInsn(
-        Opcodes.PUTFIELD,
-        args.modelImplInternalName,
-        throwableName(prop),
-        "Ljava/lang/Throwable;"
+        Opcodes.GETFIELD,
+        args.draftImplInternalName,
+        draftContextName(),
+        Type.getDescriptor(DraftContext::class.java)
     )
-    visitVarInsn(Opcodes.ALOAD, local)
-    visitInsn(Opcodes.ICONST_1)
-    visitFieldInsn(
-        Opcodes.PUTFIELD,
-        args.modelImplInternalName,
-        loadedName(prop),
-        "Z"
+    valueBlock()
+    visitMethodInsn(
+        Opcodes.INVOKEINTERFACE,
+        Type.getInternalName(DraftContext::class.java),
+        "toDraft",
+        if (prop.isList) {
+            "(Ljava/util/List;)Ljava/util/List;"
+        } else {
+            "(${Type.getDescriptor(Immutable::class.java)})${Type.getDescriptor(Draft::class.java)}"
+        },
+        true
     )
-    visitVarInsn(Opcodes.ALOAD, local)
-    visitLoad(prop.returnType.java, 1)
-    visitFieldInsn(
-        Opcodes.PUTFIELD,
-        args.modelImplInternalName,
-        prop.name,
-        Type.getDescriptor(prop.returnType.java)
-    )
-    visitInsn(Opcodes.RETURN)
+    if (!prop.isList) {
+        visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(prop.targetType!!.draftInfo.abstractType))
+    }
 }
 
 private data class GeneratorArgs(

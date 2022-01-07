@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.kimmer.runtime
 
+import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
@@ -15,10 +16,47 @@ internal fun implementationOf(type: Class<out Immutable>): Class<out Immutable> 
         cacheMap[type]
     } ?: cacheLock.write {
         cacheMap[type]
-            ?: (createImplementation(ImmutableType.of(type)) as Class<out Immutable>).also {
-                cacheMap[type] = it
+            ?: ImplementationCreator(cacheMap).let {
+                val result = it.create(type)
+                cacheMap += it.tmpMap
+                result
             }
     }
+
+private class ImplementationCreator(
+    private val map: Map<Class<out Immutable>, Class<out Immutable>>
+) {
+    val tmpMap = mutableMapOf<Class<out Immutable>, Class<out Immutable>?>()
+
+    fun create(modelType: Class<out Immutable>): Class<out Immutable> {
+        return createImpl(ImmutableType.of(modelType))
+    }
+
+    private fun tryCreateOtherTypes(immutableType: ImmutableType) {
+        for (superType in immutableType.superTypes) {
+            tryCreate(superType)
+        }
+        for (prop in immutableType.declaredProps.values) {
+            prop.targetType?.let {
+                tryCreate(it)
+            }
+        }
+    }
+
+    private fun tryCreate(immutableType: ImmutableType) {
+        if (!map.containsKey(immutableType.kotlinType.java) && !tmpMap.containsKey(immutableType.kotlinType.java)) {
+            createImpl(immutableType)
+        }
+    }
+
+    private fun createImpl(immutableType: ImmutableType): Class<out Immutable> {
+        tmpMap[immutableType.kotlinType.java] = null
+        val implementationType = createImplementation(immutableType) as Class<out Immutable>
+        tryCreateOtherTypes(immutableType)
+        tmpMap[immutableType.kotlinType.java] = implementationType
+        return implementationType
+    }
+}
 
 private val cacheMap = WeakHashMap<Class<out Immutable>, Class<out Immutable>>()
 

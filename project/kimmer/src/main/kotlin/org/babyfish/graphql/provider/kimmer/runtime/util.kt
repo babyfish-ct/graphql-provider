@@ -27,8 +27,8 @@ internal inline fun baseName(): String =
 internal inline fun modifiedName(): String =
     "modified"
 
-internal fun ClassLoader.defineClass(bytecode: ByteArray) =
-    DEFINE_CLASS.invoke(this, bytecode, 0, bytecode.size)
+internal fun ClassLoader.defineClass(bytecode: ByteArray): Class<*> =
+    DEFINE_CLASS.invoke(this, bytecode, 0, bytecode.size) as Class<*>
 
 private val DEFINE_CLASS = ClassLoader::class.java.getDeclaredMethod(
     "defineClass",

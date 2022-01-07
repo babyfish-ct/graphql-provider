@@ -4,7 +4,7 @@ internal class ListDraft<E>(
     draftContext: DraftContext, base: List<E>
 ): ListProxy<E>(
     base,
-    object: ElementHandler<E> {
+    object: ListElementHandler<E> {
 
         override fun input(element: E) {
 

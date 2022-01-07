@@ -95,7 +95,7 @@ internal class TypeImpl(
         if (classifier !is KClass<*>) {
             error("Internal bug: classifier of super interface must be KClass")
         }
-        if (classifier.java.isInterface) {
+        if (classifier.java.isInterface && classifier.java !== Immutable::class.java) {
             val superType = parser.get(classifier.java as Class<out Immutable>)
             _superTypes += superType
         }
