@@ -5,8 +5,8 @@ import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.symbol.*
 import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import java.io.OutputStreamWriter
-import javax.lang.model.type.TypeMirror
 
 class DraftGenerator(
     private val codeGenerator: CodeGenerator,
@@ -45,13 +45,34 @@ class DraftGenerator(
     }
 
     private fun FileSpec.Builder.addType(classDeclaration: KSClassDeclaration) {
+        val packageName = classDeclaration.packageName.asString()
+        val name = classDeclaration.simpleName.asString()
         addType(
             TypeSpec.interfaceBuilder(
-                classDeclaration.simpleName.asString() + "2"
+                classDeclaration.simpleName.asString() + "Draft2"
             ).apply {
                 addTypeVariable(
-                    TypeVariableName("E", ClassName(file.packageName.asString(), classDeclaration.simpleName.asString()))
+                    TypeVariableName("T", ClassName(packageName, name))
                 )
+                addSuperinterface(ClassName(packageName, name))
+                for (superType in classDeclaration.superTypes) {
+                    val st = superType.resolve()
+                    if (sysTypes.immutableType.isAssignableFrom(st) && st.arguments.isEmpty()) {
+                        if (st === sysTypes.immutableType) {
+                            addSuperinterface(
+                                ClassName("org.babyfish.graphql.provider.kimmer", "Draft")
+                                    .parameterizedBy(TypeVariableName("T"))
+                            )
+                        } else {
+                            addSuperinterface(
+                                ClassName(
+                                    st.declaration.packageName.asString(),
+                                    "${st.declaration.simpleName.asString()}Draft2"
+                                ).parameterizedBy(TypeVariableName("T"))
+                            )
+                        }
+                    }
+                }
                 for (prop in classDeclaration.getDeclaredProperties()) {
                     addProp(prop)
                 }
