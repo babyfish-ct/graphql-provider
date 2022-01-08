@@ -156,5 +156,46 @@ class ListProxyTest {
         expect(listOf("b", "d", "f")) {
             draft
         }
+
+        draft.listIterator().let {
+            while (it.hasNext()) {
+                val new = (it.next()[0] + 1).toChar().toString()
+                it.add(new)
+            }
+        }
+        expect(listOf("b", "c", "d", "e", "f", "g")) {
+            draft
+        }
+
+        draft.listIterator(draft.size).let {
+            while (it.hasPrevious()) {
+                val old = it.previous()
+                val upper = old.uppercase()
+                if (upper != old) {
+                    it.add(upper)
+                }
+            }
+        }
+        expect(listOf("B", "b", "C", "c", "D", "d", "E", "e", "F", "f", "G", "g")) {
+            draft
+        }
+
+        draft.listIterator().let {
+            while (it.hasNext()) {
+                it.set(it.next() + "*")
+            }
+        }
+        expect(listOf("B*", "b*", "C*", "c*", "D*", "d*", "E*", "e*", "F*", "f*", "G*", "g*")) {
+            draft
+        }
+
+        draft.listIterator(draft.size).let {
+            while (it.hasPrevious()) {
+                it.set("*" + it.previous())
+            }
+        }
+        expect(listOf("*B*", "*b*", "*C*", "*c*", "*D*", "*d*", "*E*", "*e*", "*F*", "*f*", "*G*", "*g*")) {
+            draft
+        }
     }
 }

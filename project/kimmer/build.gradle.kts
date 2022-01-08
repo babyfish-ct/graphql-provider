@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.6.10"
+    id("com.google.devtools.ksp") version "1.6.10-1.0.2"
 }
 
 group = "org.babyfish.graphql.provider"
@@ -20,4 +21,6 @@ dependencies {
     implementation("org.springframework:spring-core:5.3.14")
 
     testImplementation(kotlin("test"))
+
+    kspTest(project(":graphql-provider-kimmer-ksp"))
 }

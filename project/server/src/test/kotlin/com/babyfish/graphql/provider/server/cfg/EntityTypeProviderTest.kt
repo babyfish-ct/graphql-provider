@@ -3,6 +3,10 @@ package com.babyfish.graphql.provider.server.cfg
 import org.babyfish.graphql.provider.server.EntityAssembler
 import org.babyfish.graphql.provider.server.EntityTypeProvider
 import org.babyfish.graphql.provider.server.cfg.EntityConfiguration
+import org.babyfish.graphql.provider.server.cfg.length
+import org.babyfish.graphql.provider.server.cfg.precision
+import org.babyfish.graphql.provider.server.cfg.scale
+import org.babyfish.graphql.provider.server.meta.Arg
 import kotlin.test.Test
 
 class EntityTypeProviderTest {
@@ -22,11 +26,37 @@ class EntityTypeProviderTest {
     }
 }
 
-class BookStoreAssembler: EntityAssembler<BookStore> {
+@Component
+class BookStoreAssembler: EntityAssembler<BookStore>(
+    private val computeServer: ComputeServeice
+) {
 
     override fun EntityConfiguration<BookStore>.assemble() {
         id(BookStore::id)
-        mappedList(BookStore::books, Book::store)
+        mappedList(BookStore::books, Book::store) {
+            filter(Arg("authorName", String::class)) {
+                args.string("authorName")?.let {
+                    query.addCondition(
+                        query.like(query.join(Book::authors).get(Author::name), it)
+                    )
+                }
+            }
+            redis {
+                dependsOnList(Book::authors) {
+                    dependsOn(Author::name)
+                }
+            }
+        }
+        computed(BookStore::avgPrice) {
+            batchImplementation {
+                computedServer.blabla()
+            }
+            redis {
+                dependsOn(BookStore::books) {
+                    dependsOn(Book::price)
+                }
+            }
+        }
     }
 }
 
@@ -49,6 +79,13 @@ class BookAssembler: EntityAssembler<Book> {
                     "BOOK_ID",
                     "AUTHOR_ID"
                 )
+            }
+        }
+
+        scalar(Book::price) {
+            db {
+                precision(10)
+                scale(2)
             }
         }
     }
