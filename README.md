@@ -1,4 +1,4 @@
-# A rapid development fraemwrok for GraphQL server by kotlin
+# A rapid development framework for GraphQL server by kotlin
 ## (Developing..., will come soon, please wait until this statement is disappeared)
 
 ## Key value:
