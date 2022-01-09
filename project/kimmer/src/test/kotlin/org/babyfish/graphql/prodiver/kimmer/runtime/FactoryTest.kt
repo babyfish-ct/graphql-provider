@@ -25,7 +25,7 @@ class FactoryTest {
         val ctx = draftContext()
         val draft = bookFactory.createDraft(ctx, book) as BookDraft<Book>
         draft.name = "book"
-        //draft.store().name = "store"
+        draft.store().name = "store"
         draft.authors().apply {
             val author1 = authorFactory.createDraft(ctx, author) as AuthorDraft<Author>
             author1.name = "Jim"

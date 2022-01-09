@@ -24,3 +24,9 @@ dependencies {
 
     kspTest(project(":graphql-provider-kimmer-ksp"))
 }
+
+kotlin {
+    sourceSets.test {
+        kotlin.srcDir("build/generated/ksp/test/kotlin")
+    }
+}

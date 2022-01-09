@@ -10,12 +10,12 @@ class SysTypes private constructor(
     resolver: Resolver
 ) {
     val draftType: KSType = resolver
-        .getClassDeclarationByName("org.babyfish.graphql.provider.kimmer.Draft")
+        .getClassDeclarationByName("$KIMMER_PACKAGE.Draft")
         ?.asStarProjectedType()
         ?: error("Internal bug")
 
     val connectionType: KSType = resolver
-        .getClassDeclarationByName("org.babyfish.graphql.provider.kimmer.Connection")
+        .getClassDeclarationByName("$KIMMER_PACKAGE.Connection")
         ?.asStarProjectedType()
         ?: error("Internal bug")
 
@@ -37,7 +37,7 @@ class SysTypes private constructor(
     companion object {
         fun of(resolver: Resolver): SysTypes? {
             val immutableType = resolver
-                .getClassDeclarationByName("org.babyfish.graphql.provider.kimmer.Immutable")
+                .getClassDeclarationByName("$KIMMER_PACKAGE.Immutable")
                 ?.asStarProjectedType()
                 ?: return null
             return SysTypes(immutableType, resolver)

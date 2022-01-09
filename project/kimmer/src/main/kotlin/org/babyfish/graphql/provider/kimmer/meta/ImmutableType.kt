@@ -39,7 +39,16 @@ interface ImmutableType {
 
         @JvmStatic
         fun of(o: Immutable): ImmutableType =
-            (o as ImmutableSpi).`{type}`()
+            (o as? ImmutableSpi ?:
+                throw IllegalArgumentException(
+                    "does not accept argument which implements '${Immutable::class.qualifiedName}'" +
+                        "but does not implement '${ImmutableSpi::class.qualifiedName}'"
+                )
+            ).`{type}`()
+
+        @JvmStatic
+        fun of(o: Any): ImmutableType? =
+            (o as? ImmutableSpi)?.`{type}`()
 
         @JvmStatic
         fun fromDraftType(draftType: KClass<out Draft<*>>): ImmutableType =
