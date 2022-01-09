@@ -120,7 +120,5 @@ suspend fun <T: Immutable, D: AsyncDraft<T>> new(
     base: T? = null,
     block: suspend D.() -> Unit
 ): T {
-
-    delay(1000)
-    TODO()
+    error("'new' with async draft is not supported in this version")
 }
