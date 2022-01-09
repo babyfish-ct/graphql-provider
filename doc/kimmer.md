@@ -106,7 +106,7 @@ You can mark some fields by exceptions
 val books = new(BookDraft::class.java) {
     id = "00001"
     name = "Learning GraphQL"
-    authors(BusinessException("The remote data of authors is not ready."))
+    Draft::error(this, Book::name, BusinessException("The remote data of authors is not ready."))
 }
 ```
 
