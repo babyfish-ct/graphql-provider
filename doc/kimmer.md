@@ -39,6 +39,7 @@ interface NodeDraft<T: Node>: Node, Draft<T> {
 interface BookStoreDraft<T: BookStore>: BookStore, NodeDraft<T> {
     override var books: MutableList<BookDraft<out Book>>
     override var avgPrice: BigDecimal
+    fun books(): MutableList<BookDraft<out Book>> // Get or create
     interface Sync: BookStoreDraft<BookStore>, SyncDraft<BookStore>
     interface Async: BookStoreDraft<BookStore>, AsyncDraft<BookStore>
 }
@@ -48,6 +49,8 @@ interface BookDraft<T: Book>: Book, NodeDraft<T> {
     override var price: BigDecimal
     override var store: BookStore?
     override var authors: MutableList<AuthorDraft<out Author>>
+    fun store(): BookStore // Get or create
+    fun authors(): MutableList<AuthorDraft<out Book>> // Get or create
     interface Sync: BookDraft<Book>, SyncDraft<Book>
     interface Async: BookDraft<Book>, AsyncDraft<Book>
 }
@@ -55,6 +58,7 @@ interface BookDraft<T: Book>: Book, NodeDraft<T> {
 interface AuthorDraft<T: Author>: Author, NodeDraft<T> {
     override var name: String
     override var books: MutableList<BookDraft<out Book>>
+    fun books(): MutableList<BookDraft<out Book>> // Get or create
     interface Sync: AuthorDraft<Author>, SyncDraft<Author>
     interface Async: AuthorDraft<Author>, AsyncDraft<Author>
 }
@@ -69,11 +73,11 @@ interface AuthorDraft<T: Author>: Author, NodeDraft<T> {
 val book = new(BookDraft.Sync::class) {
     id = "00001"
     name = "Learning GraphQL"
-    authors += new(AuthorDraft.Sync::class) {
+    authors() += new(AuthorDraft.Sync::class) {
         id = "00002"
         name = "Jim"
     }
-    authors += new(AuthorDraft.Sync::class) {
+    authors() += new(AuthorDraft.Sync::class) {
         id = "00003"
         name = "Kate"
     }
