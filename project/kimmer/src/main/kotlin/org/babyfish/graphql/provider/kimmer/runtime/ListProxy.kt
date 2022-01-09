@@ -187,23 +187,16 @@ internal open class ListProxy<E>(
     }
 
     fun resolve(): List<E> {
+
+        resolveElements()
+
         val b = base
         val m = modified
         if (m === null) {
             return b
         }
-        val h = elementHandler
-        if (h !== null) {
-            val itr = m.listIterator()
-            while (itr.hasNext()) {
-                val unresolved = itr.next()
-                val resolved = h.resolve(unresolved)
-                if (unresolved !== resolved) {
-                    itr.set(resolved)
-                }
-            }
-        }
         if (b.size === m.size) {
+            val h = elementHandler
             val itr1 = b.iterator()
             val itr2 = m.iterator()
             var changed = false
@@ -221,6 +214,20 @@ internal open class ListProxy<E>(
             }
         }
         return m
+    }
+
+    private fun resolveElements() {
+        val h = elementHandler
+        if (h !== null) {
+            val itr = listIterator()
+            while (itr.hasNext()) {
+                val unresolved = itr.next()
+                val resolved = h.resolve(unresolved)
+                if (unresolved !== resolved) {
+                    itr.set(resolved)
+                }
+            }
+        }
     }
 
     private inner class Itr(

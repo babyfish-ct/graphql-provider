@@ -302,3 +302,75 @@ internal fun MethodVisitor.visitBox(type: Class<*>) {
         )
     }
 }
+
+internal fun MethodVisitor.visitChanged(
+    prop: ImmutableProp,
+    shadow: Shallow,
+    block: MethodVisitor.() -> Unit
+) {
+    val type = prop.returnType.java
+    if (type.isPrimitive) {
+        val cmp = when (type) {
+            Double::class.javaPrimitiveType -> Opcodes.DCMPL
+            Float::class.javaPrimitiveType -> Opcodes.FCMPL
+            Long::class.javaPrimitiveType -> Opcodes.LCMP
+            else -> null
+        }
+        if (cmp !== null) {
+            visitInsn(cmp)
+            visitCond(Opcodes.IFEQ) {
+                block()
+            }
+        } else {
+            visitCond(Opcodes.IF_ICMPEQ) {
+                block()
+            }
+        }
+    } else {
+        val deepEqualBock: () -> Unit = {
+            visitMethodInsn(
+                Opcodes.INVOKESTATIC,
+                "java/util/Objects",
+                "equals",
+                "(Ljava/lang/Object;Ljava/lang/Object;)Z",
+                false
+            )
+            visitCond(Opcodes.IFNE) {
+                block()
+            }
+        }
+        if (prop.targetType !== null) {
+            if (shadow is Shallow.Dynamic) {
+                shadow.block(this)
+                visitCond(
+                    Opcodes.IFNE,
+                    { deepEqualBock() },
+                    {
+                        visitCond(Opcodes.IF_ACMPEQ) {
+                            block()
+                        }
+                    }
+                )
+            } else if (shadow is Shallow.Static){
+                if (shadow.value) {
+                    visitCond(Opcodes.IF_ACMPEQ) {
+                        block()
+                    }
+                } else {
+                    deepEqualBock()
+                }
+            }
+        } else {
+            deepEqualBock()
+        }
+    }
+}
+
+interface Shallow {
+    companion object {
+        fun dynamic(block: MethodVisitor.() -> Unit) = Dynamic(block)
+        fun static(value: Boolean) = Static(value)
+    }
+    class Dynamic(val block: MethodVisitor.() -> Unit): Shallow
+    class Static(val value: Boolean): Shallow
+}

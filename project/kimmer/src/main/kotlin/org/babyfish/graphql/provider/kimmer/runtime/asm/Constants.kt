@@ -3,9 +3,11 @@ package org.babyfish.graphql.provider.kimmer.runtime.asm
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.SyncDraft
+import org.babyfish.graphql.provider.kimmer.runtime.*
 import org.babyfish.graphql.provider.kimmer.runtime.AsyncDraftContext
 import org.babyfish.graphql.provider.kimmer.runtime.DraftContext
 import org.babyfish.graphql.provider.kimmer.runtime.Factory
+import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
 import org.babyfish.graphql.provider.kimmer.runtime.SyncDraftContext
 import org.objectweb.asm.Type
 import kotlin.reflect.KClass
@@ -13,6 +15,8 @@ import kotlin.reflect.KClass
 internal val KCLASS_DESCRIPTOR = Type.getDescriptor(KClass::class.java)
 
 internal val IMMUTABLE_DESCRIPTOR = Type.getDescriptor(Immutable::class.java)
+
+internal val IMMUTABLE_SPI_INTERNAL_NAME = Type.getInternalName(ImmutableSpi::class.java)
 
 internal val DRAFT_DESCRIPTOR = Type.getDescriptor(Draft::class.java)
 

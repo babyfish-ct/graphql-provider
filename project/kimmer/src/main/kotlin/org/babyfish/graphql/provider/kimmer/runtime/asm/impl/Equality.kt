@@ -296,54 +296,11 @@ internal fun ClassVisitor.writeEquals(type: ImmutableType) {
                         "()$desc",
                         true
                     )
-                    if (getter.returnType.isPrimitive) {
-                        val cmp = when (getter.returnType) {
-                            Double::class.javaPrimitiveType -> Opcodes.DCMPL
-                            Float::class.javaPrimitiveType -> Opcodes.FCMPL
-                            Long::class.javaPrimitiveType -> Opcodes.LCMP
-                            else -> null
-                        }
-                        if (cmp !== null) {
-                            visitInsn(cmp)
-                            visitCond(Opcodes.IFEQ) {
-                                visitInsn(Opcodes.ICONST_0)
-                                visitInsn(Opcodes.IRETURN)
-                            }
-                        } else {
-                            visitCond(Opcodes.IF_ICMPEQ) {
-                                visitInsn(Opcodes.ICONST_0)
-                                visitInsn(Opcodes.IRETURN)
-                            }
-                        }
-                    } else {
-                        val deepEqualBock: () -> Unit = {
-                            visitMethodInsn(
-                                Opcodes.INVOKESTATIC,
-                                "java/util/Objects",
-                                "equals",
-                                "(Ljava/lang/Object;Ljava/lang/Object;)Z",
-                                false
-                            )
-                            visitCond(Opcodes.IFNE) {
-                                visitInsn(Opcodes.ICONST_0)
-                                visitInsn(Opcodes.IRETURN)
-                            }
-                        }
-                        if (prop.targetType !== null) {
-                            visitVarInsn(Opcodes.ILOAD, 2)
-                            visitCond(
-                                Opcodes.IFNE,
-                                { deepEqualBock() },
-                                {
-                                    visitCond(Opcodes.IF_ACMPEQ) {
-                                        visitInsn(Opcodes.ICONST_0)
-                                        visitInsn(Opcodes.IRETURN)
-                                    }
-                                }
-                            )
-                        } else {
-                            deepEqualBock()
-                        }
+                    visitChanged(prop, Shallow.dynamic {
+                        visitVarInsn(Opcodes.ILOAD, 2)
+                    }) {
+                        visitInsn(Opcodes.ICONST_0)
+                        visitInsn(Opcodes.IRETURN)
                     }
                 }
             }

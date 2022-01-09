@@ -24,7 +24,7 @@ internal class ListDraft<E: Immutable>(
         }
 
         override fun changed(a: E?, b: E?): Boolean {
-            return a === b
+            return a !== b
         }
     }
 )

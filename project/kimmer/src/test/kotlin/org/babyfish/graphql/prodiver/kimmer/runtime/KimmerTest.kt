@@ -27,8 +27,8 @@ class KimmerTest {
             store().name = "store"
             authors[0].name = "Jim!"
             authors[0].name = "Jim"
-            authors[1].name = "Jim!"
-            authors[1].name = "Jim"
+            authors[1].name = "Kate!"
+            authors[1].name = "Kate"
         }
         val book3 = new(BookDraft.Sync::class, book) {
             name += "!"
