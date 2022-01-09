@@ -2,8 +2,8 @@ package org.babyfish.graphql.provider.kimmer.runtime.asm.draft
 
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.runtime.*
-import org.babyfish.graphql.provider.kimmer.runtime.visitReturn
-import org.babyfish.graphql.provider.kimmer.runtime.writeMethod
+import org.babyfish.graphql.provider.kimmer.runtime.asm.visitReturn
+import org.babyfish.graphql.provider.kimmer.runtime.asm.writeMethod
 import org.springframework.asm.ClassVisitor
 import org.springframework.asm.MethodVisitor
 import org.springframework.asm.Opcodes

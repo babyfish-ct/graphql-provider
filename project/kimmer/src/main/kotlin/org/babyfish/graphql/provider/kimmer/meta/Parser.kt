@@ -152,7 +152,11 @@ internal class TypeImpl(
         val abstractDraftType = getAbstractDraftType(this)
         val syncDraftType = getFinalDraftType(abstractDraftType, SyncDraft::class.java) as Class<out SyncDraft<*>>?
         val asyncDraftType = getFinalDraftType(abstractDraftType, AsyncDraft::class.java) as Class<out AsyncDraft<*>>?
-        DraftInfo(abstractDraftType, syncDraftType, asyncDraftType)
+        DraftInfo(
+            abstractDraftType,
+            syncDraftType ?: error("No nested interface 'sync' for '${abstractDraftType::class.qualifiedName}'"),
+            asyncDraftType ?: error("No nested interface 'sync' for '${abstractDraftType::class.qualifiedName}'")
+        )
     }
 }
 

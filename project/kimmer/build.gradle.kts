@@ -23,6 +23,9 @@ dependencies {
     testImplementation(kotlin("test"))
 
     kspTest(project(":graphql-provider-kimmer-ksp"))
+
+    implementation("org.ow2.asm:asm:9.2")
+    implementation("org.ow2.asm:asm-util:9.2")
 }
 
 kotlin {

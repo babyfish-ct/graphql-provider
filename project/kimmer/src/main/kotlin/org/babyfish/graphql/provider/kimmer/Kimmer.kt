@@ -1,8 +1,11 @@
 package org.babyfish.graphql.provider.kimmer
 
 import kotlinx.coroutines.delay
+import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import org.babyfish.graphql.provider.kimmer.runtime.DraftSpi
+import org.babyfish.graphql.provider.kimmer.runtime.Factory
 import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
+import org.babyfish.graphql.provider.kimmer.runtime.SyncDraftContext
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -84,7 +87,7 @@ interface Draft<out T: Immutable> {
 
 interface SyncDraft<out T: Immutable>: Draft<T> {
 
-    fun <X: Any, D: SyncDraft<X>> new(
+    fun <X: Immutable, D: SyncDraft<X>> new(
         draftType: KClass<D>,
         base: X? = null,
         block: D.() -> Unit
@@ -94,22 +97,25 @@ interface SyncDraft<out T: Immutable>: Draft<T> {
 @DraftDsl
 interface AsyncDraft<out T: Immutable>: Draft<T> {
 
-    suspend fun <X: Any, D: AsyncDraft<X>> new(
+    suspend fun <X: Immutable, D: AsyncDraft<X>> new(
         draftType: KClass<D>,
         base: X? = null,
         block: suspend D.() -> Unit
     ): D
 }
 
-fun <T: Any, D: SyncDraft<T>> new(
+fun <T: Immutable, D: SyncDraft<T>> new(
     draftType: KClass<D>,
     base: T? = null,
     block: D.() -> Unit
 ): T {
-    TODO()
+    val ctx = SyncDraftContext()
+    val draft = ctx.createDraft(draftType, base) as D
+    draft.block()
+    return (draft as DraftSpi).`{resolve}`() as T
 }
 
-suspend fun <T: Any, D: AsyncDraft<T>> new(
+suspend fun <T: Immutable, D: AsyncDraft<T>> new(
     draftType: KClass<D>,
     base: T? = null,
     block: suspend D.() -> Unit

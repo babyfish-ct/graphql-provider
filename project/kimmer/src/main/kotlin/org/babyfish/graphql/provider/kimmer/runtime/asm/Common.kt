@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.kimmer.runtime
+package org.babyfish.graphql.provider.kimmer.runtime.asm
 
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
@@ -6,11 +6,14 @@ import org.springframework.asm.*
 import java.lang.StringBuilder
 import kotlin.reflect.KClass
 
-internal inline fun implInternalName(type: Class<*>): String =
-    "${Type.getInternalName(type)}{Implementation}"
+internal inline fun implInternalName(immutableType: ImmutableType): String =
+    "${Type.getInternalName(immutableType.kotlinType.java)}{Implementation}"
 
-internal inline fun draftImplInternalName(type: Class<*>): String =
-    "${Type.getInternalName(type)}{DraftImplementation}"
+internal inline fun draftImplInternalName(immutableType: ImmutableType): String =
+    "${Type.getInternalName(immutableType.kotlinType.java)}{DraftImplementation}"
+
+internal inline fun syncDraftImplInternalName(immutableType: ImmutableType): String =
+    "${Type.getInternalName(immutableType.kotlinType.java)}{SyncDraftImplementation}"
 
 internal inline fun loadedName(type: ImmutableProp): String =
     "${type.name}{Loaded}"

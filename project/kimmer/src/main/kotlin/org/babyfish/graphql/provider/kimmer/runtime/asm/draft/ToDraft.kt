@@ -4,7 +4,7 @@ import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.runtime.DraftContext
-import org.babyfish.graphql.provider.kimmer.runtime.draftContextName
+import org.babyfish.graphql.provider.kimmer.runtime.asm.draftContextName
 import org.springframework.asm.MethodVisitor
 import org.springframework.asm.Opcodes
 import org.springframework.asm.Type

@@ -1,19 +1,14 @@
-package org.babyfish.graphql.provider.kimmer.runtime
+package org.babyfish.graphql.provider.kimmer.runtime.asm.draft
 
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
-import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
-import org.babyfish.graphql.provider.kimmer.runtime.asm.draft.GeneratorArgs
-import org.babyfish.graphql.provider.kimmer.runtime.asm.draft.writeResolve
-import org.babyfish.graphql.provider.kimmer.runtime.asm.draft.writeType
+import org.babyfish.graphql.provider.kimmer.runtime.asm.defineClass
 import org.springframework.asm.*
-import java.lang.invoke.TypeDescriptor
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.reflect.jvm.javaMethod
 
 internal fun draftImplementationOf(modelType: Class<out Immutable>): Class<out Draft<*>> =
     cacheLock.read {
@@ -21,7 +16,7 @@ internal fun draftImplementationOf(modelType: Class<out Immutable>): Class<out D
     } ?: cacheLock.write {
         cacheMap[modelType]
             ?: DraftImplementationCreator(cacheMap).let {
-                val result =it.create(modelType)
+                val result = it.create(modelType)
                 cacheMap += it.tmpMap
                 result
             }
@@ -48,7 +43,8 @@ private class DraftImplementationCreator(
     }
 
     private fun tryCreate(immutableType: ImmutableType) {
-        if (!map.containsKey(immutableType.kotlinType.java) && !tmpMap.containsKey(immutableType.kotlinType.java)) {
+        if (!map.containsKey(immutableType.kotlinType.java) &&
+            !tmpMap.containsKey(immutableType.kotlinType.java)) {
             createImpl(immutableType)
         }
     }
@@ -73,7 +69,7 @@ private fun createDraftImplementation(immutableType: ImmutableType): Class<out D
     }
     return ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
         .apply {
-            writeType(GeneratorArgs(draftType, immutableType))
+            writeType(GeneratorArgs(immutableType))
         }
         .toByteArray()
         .let {

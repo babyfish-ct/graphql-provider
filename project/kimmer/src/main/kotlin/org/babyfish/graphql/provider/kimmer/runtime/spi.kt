@@ -13,6 +13,7 @@ internal interface ImmutableSpi {
 }
 
 internal interface DraftSpi: ImmutableSpi {
+    fun `{draftContext}`(): DraftContext
     fun `{throwable}`(prop: String, throwable: Throwable?): Unit
     fun `{unload}`(prop: String): Unit
     fun `{value}`(prop: String, value: Any?): Unit

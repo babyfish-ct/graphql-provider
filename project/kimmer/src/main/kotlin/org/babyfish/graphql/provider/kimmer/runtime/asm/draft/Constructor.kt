@@ -1,8 +1,9 @@
 package org.babyfish.graphql.provider.kimmer.runtime.asm.draft
 
-import org.babyfish.graphql.provider.kimmer.runtime.baseName
-import org.babyfish.graphql.provider.kimmer.runtime.draftContextName
-import org.babyfish.graphql.provider.kimmer.runtime.writeMethod
+import org.babyfish.graphql.provider.kimmer.runtime.asm.DRAFT_CONTEXT_DESCRIPTOR
+import org.babyfish.graphql.provider.kimmer.runtime.asm.baseName
+import org.babyfish.graphql.provider.kimmer.runtime.asm.draftContextName
+import org.babyfish.graphql.provider.kimmer.runtime.asm.writeMethod
 import org.springframework.asm.ClassVisitor
 import org.springframework.asm.Opcodes
 
@@ -11,7 +12,7 @@ internal fun ClassVisitor.writeConstructor(args: GeneratorArgs) {
     writeMethod(
         Opcodes.ACC_PUBLIC,
         "<init>",
-        "(${args.draftContextDescriptor}${args.modelDescriptor})V"
+        "($DRAFT_CONTEXT_DESCRIPTOR${args.modelDescriptor})V"
     ) {
         visitVarInsn(Opcodes.ALOAD, 0)
         visitMethodInsn(
@@ -27,7 +28,7 @@ internal fun ClassVisitor.writeConstructor(args: GeneratorArgs) {
             Opcodes.PUTFIELD,
             args.draftImplInternalName,
             draftContextName(),
-            args.draftContextDescriptor
+            DRAFT_CONTEXT_DESCRIPTOR
         )
 
         visitVarInsn(Opcodes.ALOAD, 0)

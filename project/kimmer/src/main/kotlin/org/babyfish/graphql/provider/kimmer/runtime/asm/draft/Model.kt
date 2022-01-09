@@ -1,8 +1,8 @@
 package org.babyfish.graphql.provider.kimmer.runtime.asm.draft
 
-import org.babyfish.graphql.provider.kimmer.runtime.baseName
-import org.babyfish.graphql.provider.kimmer.runtime.modifiedName
-import org.babyfish.graphql.provider.kimmer.runtime.visitCond
+import org.babyfish.graphql.provider.kimmer.runtime.asm.baseName
+import org.babyfish.graphql.provider.kimmer.runtime.asm.modifiedName
+import org.babyfish.graphql.provider.kimmer.runtime.asm.visitCond
 import org.springframework.asm.MethodVisitor
 import org.springframework.asm.Opcodes
 

@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.kimmer.runtime.asm.draft
 
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
-import org.babyfish.graphql.provider.kimmer.runtime.*
+import org.babyfish.graphql.provider.kimmer.runtime.asm.*
 import org.springframework.asm.ClassVisitor
 import org.springframework.asm.MethodVisitor
 import org.springframework.asm.Opcodes
@@ -74,7 +74,7 @@ internal fun ClassVisitor.writeCreator(prop: ImmutableProp, args: GeneratorArgs)
                     false
                 )
             } else {
-                val targetInternalName = implInternalName(prop.targetType!!.kotlinType.java)
+                val targetInternalName = implInternalName(prop.targetType!!)
                 visitTypeInsn(Opcodes.NEW, targetInternalName)
                 visitInsn(Opcodes.DUP)
                 visitMethodInsn(

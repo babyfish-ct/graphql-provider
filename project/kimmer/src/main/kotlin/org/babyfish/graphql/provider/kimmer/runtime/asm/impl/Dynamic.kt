@@ -1,12 +1,7 @@
 package org.babyfish.graphql.provider.kimmer.runtime.asm.impl
 
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
-import org.babyfish.graphql.provider.kimmer.runtime.*
-import org.babyfish.graphql.provider.kimmer.runtime.implInternalName
-import org.babyfish.graphql.provider.kimmer.runtime.loadedName
-import org.babyfish.graphql.provider.kimmer.runtime.throwableName
-import org.babyfish.graphql.provider.kimmer.runtime.visitPropNameSwitch
-import org.babyfish.graphql.provider.kimmer.runtime.writeMethod
+import org.babyfish.graphql.provider.kimmer.runtime.asm.*
 import org.springframework.asm.ClassVisitor
 import org.springframework.asm.Opcodes
 import org.springframework.asm.Type
@@ -22,7 +17,7 @@ internal fun ClassVisitor.writeLoaded(type: ImmutableType) {
             visitVarInsn(Opcodes.ALOAD, 0)
             visitFieldInsn(
                 Opcodes.GETFIELD,
-                implInternalName(type.kotlinType.java),
+                implInternalName(type),
                 loadedName(prop),
                 "Z"
             )
@@ -41,7 +36,7 @@ internal fun ClassVisitor.writeThrowable(type: ImmutableType) {
             visitVarInsn(Opcodes.ALOAD, 0)
             visitFieldInsn(
                 Opcodes.GETFIELD,
-                implInternalName(type.kotlinType.java),
+                implInternalName(type),
                 throwableName(prop),
                 "Ljava/lang/Throwable;"
             )
@@ -61,7 +56,7 @@ internal fun ClassVisitor.writeValue(type: ImmutableType) {
             visitVarInsn(Opcodes.ALOAD, 0)
             visitMethodInsn(
                 Opcodes.INVOKEVIRTUAL,
-                implInternalName(type.kotlinType.java),
+                implInternalName(type),
                 getter.name,
                 Type.getMethodDescriptor(getter),
                 false

@@ -2,7 +2,7 @@ package org.babyfish.graphql.provider.kimmer.runtime.asm.draft
 
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
-import org.babyfish.graphql.provider.kimmer.runtime.writeMethod
+import org.babyfish.graphql.provider.kimmer.runtime.asm.writeMethod
 import org.springframework.asm.ClassVisitor
 import org.springframework.asm.Opcodes
 import org.springframework.asm.Type

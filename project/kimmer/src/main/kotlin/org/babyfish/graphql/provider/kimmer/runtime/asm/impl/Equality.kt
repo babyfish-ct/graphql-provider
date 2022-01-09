@@ -1,16 +1,8 @@
 package org.babyfish.graphql.provider.kimmer.runtime.asm.impl
 
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
-import org.babyfish.graphql.provider.kimmer.runtime.*
+import org.babyfish.graphql.provider.kimmer.runtime.asm.*
 import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
-import org.babyfish.graphql.provider.kimmer.runtime.implInternalName
-import org.babyfish.graphql.provider.kimmer.runtime.loadedName
-import org.babyfish.graphql.provider.kimmer.runtime.primitiveTuples
-import org.babyfish.graphql.provider.kimmer.runtime.throwableName
-import org.babyfish.graphql.provider.kimmer.runtime.visitCond
-import org.babyfish.graphql.provider.kimmer.runtime.visitLoad
-import org.babyfish.graphql.provider.kimmer.runtime.visitStore
-import org.babyfish.graphql.provider.kimmer.runtime.writeMethod
 import org.springframework.asm.ClassVisitor
 import org.springframework.asm.Opcodes
 import org.springframework.asm.Type
@@ -18,7 +10,7 @@ import kotlin.reflect.jvm.javaMethod
 
 internal fun ClassVisitor.writeHashCode(type: ImmutableType) {
 
-    val internalName = implInternalName(type.kotlinType.java)
+    val internalName = implInternalName(type)
 
     writeMethod(
         Opcodes.ACC_PUBLIC,
@@ -164,7 +156,7 @@ internal fun ClassVisitor.writeHashCode(type: ImmutableType) {
 
 internal fun ClassVisitor.writeEquals(type: ImmutableType) {
 
-    val internalName = implInternalName(type.kotlinType.java)
+    val internalName = implInternalName(type)
     val modelInternalName = Type.getInternalName(type.kotlinType.java)
     val spiInternalName = Type.getInternalName(ImmutableSpi::class.java)
     val immutableTypeDescriptor = Type.getDescriptor(ImmutableType::class.java)

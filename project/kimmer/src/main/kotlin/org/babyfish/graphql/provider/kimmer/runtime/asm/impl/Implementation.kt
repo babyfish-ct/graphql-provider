@@ -1,16 +1,13 @@
-package org.babyfish.graphql.provider.kimmer.runtime
+package org.babyfish.graphql.provider.kimmer.runtime.asm.impl
 
-import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
-import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
-import org.babyfish.graphql.provider.kimmer.runtime.asm.impl.writeType
+import org.babyfish.graphql.provider.kimmer.runtime.asm.defineClass
 import org.springframework.asm.*
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.reflect.jvm.javaMethod
 
 internal fun implementationOf(type: Class<out Immutable>): Class<out Immutable> =
     cacheLock.read {

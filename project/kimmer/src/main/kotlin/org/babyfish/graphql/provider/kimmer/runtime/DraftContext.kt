@@ -1,11 +1,15 @@
 package org.babyfish.graphql.provider.kimmer.runtime
 
+import org.babyfish.graphql.provider.kimmer.AsyncDraft
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import java.util.*
+import kotlin.reflect.KClass
 
 internal interface DraftContext {
+
+    fun <T: Immutable> createDraft(draftType: KClass<out Draft<T>>, base: T?): Draft<T>
 
     fun <T: Immutable> toDraft(obj: T?): Draft<T>?
 
@@ -16,27 +20,45 @@ internal interface DraftContext {
     fun <E: Immutable> resolve(obj: List<E>?): List<E>?
 }
 
-internal fun draftContext(): DraftContext =
-    DraftContextImpl()
-
-private class DraftContextImpl: DraftContext {
+internal abstract class AbstractDraftContext: DraftContext {
 
     private val objDraftMap = IdentityHashMap<Immutable, Draft<*>>()
 
     private val listDraftMap = IdentityHashMap<List<*>, ListDraft<*>>()
 
+    override fun <T : Immutable> createDraft(draftType: KClass<out Draft<T>>, base: T?): Draft<T> {
+        val raw = base
+            ?: this.createFactory(ImmutableType.fromDraftType(draftType))
+                .let {
+                    (it as Factory<T>).create()
+                }
+        return toDraft(raw)!!
+    }
+
     override fun <T: Immutable> toDraft(obj: T?): Draft<T>? {
-        if (obj === null || obj is Draft<*>) {
-            return obj as Draft<T>?
+        if (obj === null) {
+            return null
+        }
+        if (obj is Draft<*>) {
+            if ((obj as DraftSpi).`{draftContext}`() !== this) {
+                throw IllegalArgumentException("Cannot accept draft object created by another DraftContext")
+            }
+            return obj as Draft<T>
         }
         return objDraftMap.computeIfAbsent(obj) {
-            val factory = Factory.of(ImmutableType.of(obj).draftInfo.abstractType) as Factory<T>
+            val factory = this.createFactory(ImmutableType.of(obj)) as Factory<T>
             factory.createDraft(this, obj)
         } as Draft<T>
     }
 
     override fun <E: Immutable> toDraft(list: List<E>?): MutableList<E>? {
-        if (list === null || list is ListDraft<*>) {
+        if (list === null) {
+            return null
+        }
+        if (list is ListDraft<*>) {
+            if (list.draftContext !== this) {
+                throw IllegalArgumentException("Cannot accept draft list created by another DraftContext")
+            }
             return list as MutableList<E>
         }
         return listDraftMap.computeIfAbsent(list) {
@@ -65,7 +87,17 @@ private class DraftContextImpl: DraftContext {
         }
         return draft.resolve() as List<E>
     }
+
+    protected abstract fun createFactory(immutableType: ImmutableType): Factory<*>
 }
 
+internal class SyncDraftContext: AbstractDraftContext() {
 
+    override fun createFactory(immutableType: ImmutableType): Factory<*> =
+        Factory.of(immutableType.draftInfo.syncType)
+}
 
+internal class AsyncDraftContext: AbstractDraftContext() {
+    override fun createFactory(immutableType: ImmutableType): Factory<*> =
+        Factory.of(immutableType.draftInfo.asyncType)
+}

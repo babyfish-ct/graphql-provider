@@ -1,13 +1,8 @@
 package org.babyfish.graphql.provider.kimmer.runtime.asm.impl
 
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
-import org.babyfish.graphql.provider.kimmer.runtime.*
 import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
-import org.babyfish.graphql.provider.kimmer.runtime.OBJECT_INTERNAL_NAME
-import org.babyfish.graphql.provider.kimmer.runtime.implInternalName
-import org.babyfish.graphql.provider.kimmer.runtime.loadedName
-import org.babyfish.graphql.provider.kimmer.runtime.throwableName
-import org.babyfish.graphql.provider.kimmer.runtime.writeMethod
+import org.babyfish.graphql.provider.kimmer.runtime.asm.*
 import org.springframework.asm.ClassVisitor
 import org.springframework.asm.Label
 import org.springframework.asm.Opcodes
@@ -34,7 +29,7 @@ internal fun ClassVisitor.writeConstructor() {
 
 internal fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
 
-    val implInternalName = implInternalName(type.kotlinType.java)
+    val implInternalName = implInternalName(type)
 
     val itfInternalName = Type.getInternalName(type.kotlinType.java)
 
