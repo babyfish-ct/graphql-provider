@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.kimmer.runtime.draft
+package org.babyfish.graphql.provider.kimmer.runtime.asm.draft
 
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
