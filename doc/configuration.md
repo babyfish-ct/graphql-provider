@@ -6,14 +6,20 @@ API of this framework, configuration the information data such as about RDBMS, R
 
 If the association fields have no parameters, simple ORM configuration is engouh, like this
 ```kt
-    entity(BookStore::class) {
+@Component
+class BookStoreAssembler: EntityAssembler<BookStore> {
+
+    overrride fun EntityConfiguration<BookStore>.assemble() {
         db {
             table("BOOK_STORE")
         }
         mappedList(BookStore::books, Book::store)
     }
+}
 
-    entity(Book::class) {
+@Component
+class BookAssembler: EntityAssembler<Book> {
+    override fun EntityConfiguration<Book>.assmeble() {
         db {
             table("BOOK")
         }
@@ -28,13 +34,18 @@ If the association fields have no parameters, simple ORM configuration is engouh
             }
         }
     }
+}
 
+@Component
+class AuthorAssembler: EntityAssembler<Author> {
+    override fun EntityConfiguration<Author>.assmeble() {
     entity(Author::class) {
         db {
             table("AUTHOR")
         }
         mappedList(Author::books, Book::authors)
     }
+}
 ```
 
 We see that this is a very simple ORM configuration, no difference from the traditional ORM framework.
@@ -65,7 +76,7 @@ In actual projects, it is impossible to be as simple as the above example, and t
 Let us look at an example of adding an optional parameter named "name" to BookStore.books.
 
 ```kt
-   entity(BookStore::class) {
+   override fun EntityConfiguration<BookStore>.assemble() {
         
         mappedList(BookStore::books, Book::store) {
             filter(Arg("name", String::class)) {
@@ -112,18 +123,14 @@ Finally, let’s take a look at an example of a calculated field
 Book has a price attribute, and BookStore has an avgPrice attribute, which represents the average price of all data under the BookStore.
 
 ```kt
-    entity(BookStore::class) {
+    override fun EntityConfiguration<BookStore>.assemble(BookStore::class) {
         computed(BookStore::avgPrice) {
             batchImplementation {
                 createStatement(
-                    "select book_store_id, avg(price) from where book_store_id in (${
-                        List(rows.size) { i -> "?${i + 1}" }.joinToString()
-                    }) book group by book_store_id"
+                    "select book_store_id, avg(price) from where book_store_id in $ids book group by book_store_id"
                 )
                     .apply {
-                        for (i in rows.indices) {
-                            bind("${i + 1}", rows[i].id)
-                        }
+                        bind(ids, rows.map {it.id })
                     }
                     .execute()
                     .awaitSingle()
