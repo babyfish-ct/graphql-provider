@@ -49,10 +49,12 @@ internal fun ClassVisitor.writeType(args: GeneratorArgs) {
 
     writeHashCode(args)
     writeEquals(args)
+    writeToString(args)
 
     writeContext(args)
     writeResolve(args)
 
+    writeSetValue(args)
     writeUnload(args)
 
     visitEnd()

@@ -46,7 +46,7 @@ internal abstract class AbstractDraftContext: DraftContext {
             return obj as Draft<T>
         }
         return objDraftMap.computeIfAbsent(obj) {
-            val factory = this.createFactory(ImmutableType.of(obj)) as Factory<T>
+            val factory = this.createFactory(ImmutableType.fromInstance(obj)) as Factory<T>
             factory.createDraft(this, obj)
         } as Draft<T>
     }

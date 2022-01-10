@@ -1,8 +1,10 @@
 package org.babyfish.graphql.provider.kimmer.runtime.asm
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.SyncDraft
+import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import org.babyfish.graphql.provider.kimmer.runtime.AsyncDraftContext
 import org.babyfish.graphql.provider.kimmer.runtime.DraftContext
 import org.babyfish.graphql.provider.kimmer.runtime.Factory
@@ -16,6 +18,8 @@ internal val KCLASS_DESCRIPTOR = Type.getDescriptor(KClass::class.java)
 internal val IMMUTABLE_DESCRIPTOR = Type.getDescriptor(Immutable::class.java)
 
 internal val IMMUTABLE_SPI_INTERNAL_NAME = Type.getInternalName(ImmutableSpi::class.java)
+
+internal val IMMUTABLE_TYPE_DESCRIPTOR = Type.getDescriptor(ImmutableType::class.java)
 
 internal val DRAFT_DESCRIPTOR = Type.getDescriptor(Draft::class.java)
 
@@ -40,4 +44,8 @@ internal val FACTORY_INTERNAL_NAME = Type.getInternalName(Factory::class.java)
 internal val KFUNCTION1_INTERNAL_NAME = "kotlin/jvm/functions/Function1"
 
 internal val KFUNCTION1_DESCRITPOR = "L${KFUNCTION1_INTERNAL_NAME};"
+
+internal val OBJECT_MAPPER_INTERNAL_NAME = Type.getInternalName(ObjectMapper::class.java)
+
+internal val OBJECT_MAPPER_DESCRIPTOR = Type.getDescriptor(ObjectMapper::class.java)
 

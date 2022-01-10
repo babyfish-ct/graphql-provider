@@ -9,5 +9,6 @@ class ImmutableModule: SimpleModule() {
         super.setupModule(ctx)
 
         ctx.addSerializers(ImmutableSerializers())
+        ctx.addDeserializers(ImmutableDeserializers())
     }
 }

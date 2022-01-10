@@ -1,9 +1,8 @@
 package org.babyfish.graphql.provider.kimmer
 
-import kotlinx.coroutines.delay
-import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
+import org.babyfish.graphql.provider.kimmer.jackson.immutableObjectMapper
+import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.runtime.DraftSpi
-import org.babyfish.graphql.provider.kimmer.runtime.Factory
 import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
 import org.babyfish.graphql.provider.kimmer.runtime.SyncDraftContext
 import kotlin.reflect.KClass
@@ -19,7 +18,17 @@ interface Immutable {
         }
 
         @JvmStatic
+        fun <T: Immutable> isLoaded(o: T, prop: ImmutableProp): Boolean {
+            return (o as ImmutableSpi).`{loaded}`(prop.name)
+        }
+
+        @JvmStatic
         fun <T: Immutable> get(o: T, prop: KProperty1<T, *>): Any? {
+            return (o as ImmutableSpi).`{value}`(prop.name)
+        }
+
+        @JvmStatic
+        fun <T: Immutable> get(o: T, prop: ImmutableProp): Any? {
             return (o as ImmutableSpi).`{value}`(prop.name)
         }
 
@@ -32,6 +41,14 @@ interface Immutable {
         fun <T: Immutable> shallowEquals(a: T, b: T): Boolean {
             return (a as ImmutableSpi).equals(b, true)
         }
+
+        @JvmStatic
+        fun <T: Immutable> fromString(value: String, type: KClass<T>): T =
+            fromString(value, type.java)
+
+        @JvmStatic
+        fun <T: Immutable> fromString(value: String, type: Class<T>): T =
+            objectMapper.readValue(value, type)
     }
 }
 
@@ -69,7 +86,17 @@ interface Draft<out T: Immutable> {
         }
 
         @JvmStatic
+        fun set(draft: Draft<*>, prop: ImmutableProp, value: Any?) {
+            (draft as DraftSpi).`{value}`(prop.name, value)
+        }
+
+        @JvmStatic
         fun <T: Immutable> unload(draft: Draft<T>, prop: KProperty1<T, *>) {
+            (draft as DraftSpi).`{unload}`(prop.name)
+        }
+
+        @JvmStatic
+        fun <T: Immutable> unload(draft: Draft<T>, prop: ImmutableProp) {
             (draft as DraftSpi).`{unload}`(prop.name)
         }
     }
@@ -112,3 +139,5 @@ suspend fun <T: Immutable, D: AsyncDraft<T>> new(
 ): T {
     error("'new' with async draft is not supported in this version")
 }
+
+private val objectMapper = immutableObjectMapper()

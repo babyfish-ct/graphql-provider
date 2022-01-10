@@ -45,15 +45,6 @@ internal fun ClassVisitor.writeResolve(args: GeneratorArgs) {
                         visitResolveBaseProp(prop, args)
                     }
                 }
-                // store modified again because it may be changed
-                visitVarInsn(Opcodes.ALOAD, 0)
-                visitFieldInsn(
-                    Opcodes.GETFIELD,
-                    args.draftImplInternalName,
-                    modifiedName(),
-                    args.modelImplDescriptor
-                )
-                visitVarInsn(Opcodes.ASTORE, modifiedSlot)
             },
             {
                 for (prop in args.immutableType.props.values) {
@@ -63,6 +54,16 @@ internal fun ClassVisitor.writeResolve(args: GeneratorArgs) {
                 }
             }
         )
+
+        // store modified again because it may be changed
+        visitVarInsn(Opcodes.ALOAD, 0)
+        visitFieldInsn(
+            Opcodes.GETFIELD,
+            args.draftImplInternalName,
+            modifiedName(),
+            args.modelImplDescriptor
+        )
+        visitVarInsn(Opcodes.ASTORE, modifiedSlot)
 
         visitVarInsn(Opcodes.ALOAD, modifiedSlot)
         visitCond(Opcodes.IFNONNULL) {
@@ -98,61 +99,48 @@ private fun MethodVisitor.visitResolveBaseProp(prop: ImmutableProp, args: Genera
     visitMethodInsn(
         Opcodes.INVOKEINTERFACE,
         IMMUTABLE_SPI_INTERNAL_NAME,
-        "{throwable}",
-        "(Ljava/lang/String;)Ljava/lang/Throwable;",
+        "{loaded}",
+        "(Ljava/lang/String;)Z",
         true
     )
 
-    visitCond(Opcodes.IFNONNULL) {
+    visitCond(Opcodes.IFEQ) {
 
+        val getter = prop.kotlinProp.getter.javaMethod!!
         visitVarInsn(Opcodes.ALOAD, baseSlot)
-        visitTypeInsn(Opcodes.CHECKCAST, IMMUTABLE_SPI_INTERNAL_NAME)
-        visitLdcInsn(prop.name)
         visitMethodInsn(
             Opcodes.INVOKEINTERFACE,
-            IMMUTABLE_SPI_INTERNAL_NAME,
-            "{loaded}",
-            "(Ljava/lang/String;)Z",
+            args.modelInternalName,
+            getter.name,
+            Type.getMethodDescriptor(getter),
             true
         )
+        visitStore(prop.returnType.java, oldValueSlot)
 
-        visitCond(Opcodes.IFEQ) {
-
-            visitVarInsn(Opcodes.ALOAD, baseSlot)
-            visitMethodInsn(
-                Opcodes.INVOKEINTERFACE,
-                args.modelInternalName,
-                prop.name,
-                Type.getMethodDescriptor(prop.kotlinProp.getter.javaMethod),
-                true
-            )
-            visitStore(prop.returnType.java, oldValueSlot)
-
-            visitResolveValue(prop, args) {
-                visitLoad(prop.returnType.java, oldValueSlot)
-            }
-            visitStore(prop.returnType.java, newValueSlot(prop))
-
+        visitResolveValue(prop, args) {
             visitLoad(prop.returnType.java, oldValueSlot)
+        }
+        visitStore(prop.returnType.java, newValueSlot(prop))
+
+        visitLoad(prop.returnType.java, oldValueSlot)
+        visitLoad(prop.returnType.java, newValueSlot(prop))
+        visitChanged(prop, Shallow.static(true)) {
+            visitVarInsn(Opcodes.ALOAD, 0)
             visitLoad(prop.returnType.java, newValueSlot(prop))
-            visitChanged(prop, Shallow.static(true)) {
-                visitVarInsn(Opcodes.ALOAD, 0)
-                visitLoad(prop.returnType.java, newValueSlot(prop))
-                visitMethodInsn(
-                    Opcodes.INVOKEVIRTUAL,
-                    args.draftImplInternalName,
-                    prop.kotlinProp.getter.javaMethod!!.name.let {
-                        if (it.startsWith("is")) {
-                            "set${it.substring(2)}"
-                        } else {
-                            "set${it.substring(3)}"
-                        }
-                    },
-                    "(${Type.getDescriptor(prop.returnType.java)})V",
-                    false
-                )
-            }
-       }
+            visitMethodInsn(
+                Opcodes.INVOKEVIRTUAL,
+                args.draftImplInternalName,
+                prop.kotlinProp.getter.javaMethod!!.name.let {
+                    if (it.startsWith("is")) {
+                        "set${it.substring(2)}"
+                    } else {
+                        "set${it.substring(3)}"
+                    }
+                },
+                "(${Type.getDescriptor(prop.returnType.java)})V",
+                false
+            )
+        }
     }
 }
 

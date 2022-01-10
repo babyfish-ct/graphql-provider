@@ -300,6 +300,27 @@ internal fun MethodVisitor.visitBox(type: Class<*>) {
     }
 }
 
+internal fun MethodVisitor.visitUnbox(type: Class<*>) {
+    val (primitiveName, boxName) = primitiveTuples(type)
+    if (primitiveName != "") {
+        val boxSimpleName = boxName.substring(boxName.lastIndexOf('/') + 1)
+        val methodName = if (boxSimpleName === "Integer") {
+            "intValue"
+        } else {
+            "${boxSimpleName.lowercase()}Value"
+        }
+        visitMethodInsn(
+            Opcodes.INVOKEVIRTUAL,
+            boxName,
+            methodName,
+            "()L$primitiveName;",
+            false
+        )
+    } else {
+        visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(type))
+    }
+}
+
 internal fun MethodVisitor.visitChanged(
     prop: ImmutableProp,
     shadow: Shallow,

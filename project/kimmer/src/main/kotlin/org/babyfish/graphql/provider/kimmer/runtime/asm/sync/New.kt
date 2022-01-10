@@ -48,6 +48,7 @@ internal fun ClassVisitor.writeNew(type: ImmutableType) {
             "(Ljava/lang/Object;)Ljava/lang/Object;",
             true
         )
+        visitInsn(Opcodes.POP)
 
         visitVarInsn(Opcodes.ALOAD, draftSlot)
         visitInsn(Opcodes.ARETURN)

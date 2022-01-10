@@ -27,12 +27,13 @@ internal fun ClassVisitor.writeType(type: ImmutableType) {
         writeProp(prop, implInternalName)
     }
 
-    writeRuntimeType(type)
     writeLoaded(type)
     writeValue(type)
 
     writeHashCode(type)
     writeEquals(type)
+
+    writeStaticBehaviors(type)
 
     visitEnd()
 }

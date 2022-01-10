@@ -38,25 +38,51 @@ interface ImmutableType {
             getImmutableType(type)
 
         @JvmStatic
-        fun of(o: Immutable): ImmutableType =
-            (o as? ImmutableSpi ?:
-                throw IllegalArgumentException(
-                    "does not accept argument which implements '${Immutable::class.qualifiedName}'" +
-                        "but does not implement '${ImmutableSpi::class.qualifiedName}'"
-                )
-            ).`{type}`()
-
-        @JvmStatic
-        fun of(o: Any): ImmutableType? =
-            (o as? ImmutableSpi)?.`{type}`()
-
-        @JvmStatic
         fun fromDraftType(draftType: KClass<out Draft<*>>): ImmutableType =
             fromDraftType(draftType.java)
 
         @JvmStatic
         fun fromDraftType(draftType: Class<out Draft<*>>): ImmutableType =
             getImmutableTypeByDraftType(draftType)
+
+        @JvmStatic
+        fun fromAnyType(type: KClass<*>): ImmutableType? =
+            fromAnyType(type.java)
+
+        @JvmStatic
+        fun fromInstance(o: Immutable): ImmutableType =
+            (o as? ImmutableSpi ?:
+            throw IllegalArgumentException(
+                "does not accept argument which implements '${Immutable::class.qualifiedName}'" +
+                    "but does not implement '${ImmutableSpi::class.qualifiedName}'"
+            )
+                ).`{type}`()
+
+        @JvmStatic
+        fun fromAnyObject(o: Any): ImmutableType? =
+            (o as? ImmutableSpi)?.`{type}`()
+
+        @JvmStatic
+        fun fromAnyType(type: Class<*>): ImmutableType? {
+            if (type.isInterface && Immutable::class.java.isAssignableFrom(type)) {
+                if (!Draft::class.java.isAssignableFrom(type)) {
+                    return of(type as Class<out Immutable>)
+                }
+                val superFromClass = type.superclass?.let {
+                    fromAnyType(it)
+                }
+                if (superFromClass !== null) {
+                    return superFromClass
+                }
+                for (itf in type.interfaces) {
+                    val superFromItf = fromAnyType(itf)
+                    if (superFromItf !== null) {
+                        return superFromItf
+                    }
+                }
+            }
+            return null
+        }
     }
 }
 

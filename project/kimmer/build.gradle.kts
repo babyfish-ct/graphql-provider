@@ -20,6 +20,7 @@ dependencies {
 
     implementation("org.springframework:spring-core:5.3.14")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
 
     testImplementation(kotlin("test"))
 
