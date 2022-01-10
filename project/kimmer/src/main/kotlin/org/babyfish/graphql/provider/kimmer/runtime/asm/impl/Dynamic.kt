@@ -26,25 +26,6 @@ internal fun ClassVisitor.writeLoaded(type: ImmutableType) {
     }
 }
 
-internal fun ClassVisitor.writeThrowable(type: ImmutableType) {
-    writeMethod(
-        Opcodes.ACC_PUBLIC,
-        "{throwable}",
-        "(Ljava/lang/String;)Ljava/lang/Throwable;"
-    ) {
-        visitPropNameSwitch(type, { visitVarInsn(Opcodes.ALOAD, 1)}) { prop, _ ->
-            visitVarInsn(Opcodes.ALOAD, 0)
-            visitFieldInsn(
-                Opcodes.GETFIELD,
-                implInternalName(type),
-                throwableName(prop),
-                "Ljava/lang/Throwable;"
-            )
-            visitInsn(Opcodes.ARETURN)
-        }
-    }
-}
-
 internal fun ClassVisitor.writeValue(type: ImmutableType) {
     writeMethod(
         Opcodes.ACC_PUBLIC,

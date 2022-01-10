@@ -44,7 +44,6 @@ internal fun ClassVisitor.writeType(args: GeneratorArgs) {
     }
 
     writeRuntimeType(args)
-    writeThrowable(args)
     writeLoaded(args)
     writeValue(args)
 
@@ -53,6 +52,8 @@ internal fun ClassVisitor.writeType(args: GeneratorArgs) {
 
     writeContext(args)
     writeResolve(args)
+
+    writeUnload(args)
 
     visitEnd()
 }

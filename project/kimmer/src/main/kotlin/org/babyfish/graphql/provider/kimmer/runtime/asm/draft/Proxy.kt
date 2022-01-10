@@ -28,27 +28,6 @@ internal fun ClassVisitor.writeRuntimeType(args: GeneratorArgs) {
     }
 }
 
-internal fun ClassVisitor.writeThrowable(args: GeneratorArgs) {
-    val spiInternalName = Type.getInternalName(ImmutableSpi::class.java)
-    writeMethod(
-        Opcodes.ACC_PUBLIC,
-        "{throwable}",
-        "(Ljava/lang/String;)Ljava/lang/Throwable;"
-    ) {
-        visitModelGetter(args)
-        visitTypeInsn(Opcodes.CHECKCAST, spiInternalName)
-        visitVarInsn(Opcodes.ALOAD, 1)
-        visitMethodInsn(
-            Opcodes.INVOKEINTERFACE,
-            spiInternalName,
-            "{throwable}",
-            "(Ljava/lang/String;)Ljava/lang/Throwable;",
-            true
-        )
-        visitInsn(Opcodes.ARETURN)
-    }
-}
-
 internal fun ClassVisitor.writeLoaded(args: GeneratorArgs) {
     val spiInternalName = Type.getInternalName(ImmutableSpi::class.java)
     writeMethod(

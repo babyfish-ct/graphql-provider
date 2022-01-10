@@ -40,25 +40,15 @@ internal fun ClassVisitor.writeCreator(prop: ImmutableProp, args: GeneratorArgs)
         visitFieldInsn(
             Opcodes.GETFIELD,
             args.modelImplInternalName,
-            throwableName(prop),
-            "Ljava/lang/Throwable;"
+            loadedName(prop),
+            "Z"
         )
-        visitCond(Opcodes.IFNONNULL) {
+        visitCond(Opcodes.IFEQ) {
 
-            visitVarInsn(Opcodes.ALOAD, modifiedLocal)
-            visitFieldInsn(
-                Opcodes.GETFIELD,
-                args.modelImplInternalName,
-                loadedName(prop),
-                "Z"
-            )
-            visitCond(Opcodes.IFEQ) {
-
-                loadMutableValue()
-                visitCond(Opcodes.IFNULL) {
-                    visitToDraft(prop, args, loadMutableValue)
-                    visitInsn(Opcodes.ARETURN)
-                }
+            loadMutableValue()
+            visitCond(Opcodes.IFNULL) {
+                visitToDraft(prop, args, loadMutableValue)
+                visitInsn(Opcodes.ARETURN)
             }
         }
 

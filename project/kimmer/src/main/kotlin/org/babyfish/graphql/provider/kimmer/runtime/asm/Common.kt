@@ -18,9 +18,6 @@ internal inline fun syncDraftImplInternalName(immutableType: ImmutableType): Str
 internal inline fun loadedName(type: ImmutableProp): String =
     "${type.name}{Loaded}"
 
-internal inline fun throwableName(type: ImmutableProp): String =
-    "${type.name}{Throwable}"
-
 internal inline fun draftContextName(): String =
     "{draftContext}"
 

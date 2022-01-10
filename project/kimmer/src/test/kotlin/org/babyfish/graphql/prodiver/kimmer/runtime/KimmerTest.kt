@@ -30,13 +30,12 @@ class KimmerTest {
             authors[1].name = "Kate!"
             authors[1].name = "Kate"
         }
-        val book3 = new(BookDraft.Sync::class, book) {
+        val book3 = new(BookDraft.Sync::class, book2) {
             name += "!"
             store().name += "!"
             for (author in authors) {
                 author.name += "!"
             }
-            println(this)
         }
         expect("book") {
             book.name

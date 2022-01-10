@@ -39,7 +39,6 @@ internal fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
         "(L$itfInternalName;)V"
     ) {
 
-        val throwableDesc = Type.getDescriptor(Throwable::class.java)
         val implItfInternalName = Type.getInternalName(ImmutableSpi::class.java)
 
         visitVarInsn(Opcodes.ALOAD, 0)
@@ -51,31 +50,11 @@ internal fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
             false
         )
 
-        val throwableSlot = 2
-        val loadedSlot = 3
+        val loadedSlot = 2
+
         for (prop in type.props.values) {
 
             var getter = prop.kotlinProp.getter.javaMethod!!
-
-            visitVarInsn(Opcodes.ALOAD, 1)
-            visitTypeInsn(Opcodes.CHECKCAST, implItfInternalName)
-            visitLdcInsn(prop.name)
-            visitMethodInsn(
-                Opcodes.INVOKEINTERFACE,
-                implItfInternalName,
-                "{throwable}",
-                "(Ljava/lang/String;)$throwableDesc",
-                true
-            )
-            visitVarInsn(Opcodes.ASTORE, throwableSlot)
-            visitVarInsn(Opcodes.ALOAD, 0)
-            visitVarInsn(Opcodes.ALOAD, throwableSlot)
-            visitFieldInsn(
-                Opcodes.PUTFIELD,
-                implInternalName,
-                throwableName(prop),
-                throwableDesc
-            )
 
             visitVarInsn(Opcodes.ALOAD, 1)
             visitTypeInsn(Opcodes.CHECKCAST, implItfInternalName)
@@ -97,29 +76,24 @@ internal fun ClassVisitor.writeCopyConstructor(type: ImmutableType) {
                 "Z"
             )
 
-            val endPropLabel = Label()
-            visitVarInsn(Opcodes.ALOAD, throwableSlot)
-            visitJumpInsn(Opcodes.IFNONNULL, endPropLabel)
             visitVarInsn(Opcodes.ILOAD, loadedSlot)
-            visitJumpInsn(Opcodes.IFEQ, endPropLabel)
-
-            visitVarInsn(Opcodes.ALOAD, 0)
-            visitVarInsn(Opcodes.ALOAD, 1)
-            visitMethodInsn(
-                Opcodes.INVOKEINTERFACE,
-                itfInternalName,
-                getter.name,
-                Type.getMethodDescriptor(getter),
-                true
-            )
-            visitFieldInsn(
-                Opcodes.PUTFIELD,
-                implInternalName,
-                prop.name,
-                Type.getDescriptor(getter.returnType)
-            )
-
-            visitLabel(endPropLabel)
+            visitCond(Opcodes.IFEQ) {
+                visitVarInsn(Opcodes.ALOAD, 0)
+                visitVarInsn(Opcodes.ALOAD, 1)
+                visitMethodInsn(
+                    Opcodes.INVOKEINTERFACE,
+                    itfInternalName,
+                    getter.name,
+                    Type.getMethodDescriptor(getter),
+                    true
+                )
+                visitFieldInsn(
+                    Opcodes.PUTFIELD,
+                    implInternalName,
+                    prop.name,
+                    Type.getDescriptor(getter.returnType)
+                )
+            }
         }
         visitInsn(Opcodes.RETURN)
     }

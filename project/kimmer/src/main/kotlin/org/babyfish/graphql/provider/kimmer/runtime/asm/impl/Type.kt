@@ -29,7 +29,6 @@ internal fun ClassVisitor.writeType(type: ImmutableType) {
 
     writeRuntimeType(type)
     writeLoaded(type)
-    writeThrowable(type)
     writeValue(type)
 
     writeHashCode(type)

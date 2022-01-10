@@ -47,14 +47,6 @@ internal fun MethodVisitor.visitSetter(
     valueBlocK: MethodVisitor.() -> Unit
 ) {
     visitVarInsn(Opcodes.ALOAD, modifiedLocal)
-    visitInsn(Opcodes.ACONST_NULL)
-    visitFieldInsn(
-        Opcodes.PUTFIELD,
-        args.modelImplInternalName,
-        throwableName(prop),
-        "Ljava/lang/Throwable;"
-    )
-    visitVarInsn(Opcodes.ALOAD, modifiedLocal)
     visitInsn(Opcodes.ICONST_1)
     visitFieldInsn(
         Opcodes.PUTFIELD,

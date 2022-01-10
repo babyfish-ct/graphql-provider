@@ -19,11 +19,6 @@ interface Immutable {
         }
 
         @JvmStatic
-        fun <T: Immutable> getThrowable(o: T, prop: KProperty1<T, *>): Throwable? {
-            return (o as ImmutableSpi).`{throwable}`(prop.name)
-        }
-
-        @JvmStatic
         fun <T: Immutable> get(o: T, prop: KProperty1<T, *>): Any? {
             return (o as ImmutableSpi).`{value}`(prop.name)
         }
@@ -76,11 +71,6 @@ interface Draft<out T: Immutable> {
         @JvmStatic
         fun <T: Immutable> unload(draft: Draft<T>, prop: KProperty1<T, *>) {
             (draft as DraftSpi).`{unload}`(prop.name)
-        }
-
-        @JvmStatic
-        fun <T: Immutable> error(draft: Draft<T>, prop: KProperty1<T, *>, throwable: Throwable) {
-            (draft as DraftSpi).`{throwable}`(prop.name, throwable)
         }
     }
 }

@@ -12,8 +12,6 @@ internal fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Stri
 
     val desc = Type.getDescriptor(prop.returnType.java)
     val loadedName = loadedName(prop)
-    val throwableName = throwableName(prop)
-    val throwableDesc = Type.getDescriptor(Throwable::class.java)
 
     writeField(
         Opcodes.ACC_PROTECTED,
@@ -27,28 +25,12 @@ internal fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Stri
         "Z"
     )
 
-    writeField(
-        Opcodes.ACC_PROTECTED,
-        throwableName,
-        throwableDesc
-    )
-
     val javaGetter = prop.kotlinProp.getter.javaMethod!!
     writeMethod(
         Opcodes.ACC_PUBLIC,
         javaGetter.name,
         Type.getMethodDescriptor(javaGetter)
     ) {
-
-        visitVarInsn(Opcodes.ALOAD, 0)
-        visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, throwableName, throwableDesc)
-        visitCond(
-            Opcodes.IFNULL
-        ) {
-            visitVarInsn(Opcodes.ALOAD, 0)
-            visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, throwableName, throwableDesc)
-            visitInsn(Opcodes.ATHROW)
-        }
 
         visitVarInsn(Opcodes.ALOAD, 0)
         visitFieldInsn(Opcodes.GETFIELD, ownerInternalName, loadedName, "Z")
