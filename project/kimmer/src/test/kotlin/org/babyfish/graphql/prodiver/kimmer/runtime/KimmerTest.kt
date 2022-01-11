@@ -1,8 +1,8 @@
 package org.babyfish.graphql.prodiver.kimmer.runtime
 
-import org.babyfish.graphql.prodiver.kimmer.meta.AuthorDraft
-import org.babyfish.graphql.prodiver.kimmer.meta.Book
-import org.babyfish.graphql.prodiver.kimmer.meta.BookDraft
+import org.babyfish.graphql.prodiver.kimmer.AuthorDraft
+import org.babyfish.graphql.prodiver.kimmer.Book
+import org.babyfish.graphql.prodiver.kimmer.BookDraft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.jackson.immutableObjectMapper
 import org.babyfish.graphql.provider.kimmer.new

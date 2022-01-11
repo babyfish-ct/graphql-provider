@@ -1,9 +1,6 @@
-package org.babyfish.graphql.prodiver.kimmer.meta
+package org.babyfish.graphql.prodiver.kimmer
 
-import org.babyfish.graphql.provider.kimmer.AsyncDraft
-import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
-import org.babyfish.graphql.provider.kimmer.SyncDraft
 import java.math.BigDecimal
 
 interface Node: Immutable {
@@ -22,6 +19,10 @@ interface Book: Node {
     val store: BookStore?
     val authors: List<Author>
 }
+
+interface ElectronicBook: Book
+
+interface PaperBook: Book
 
 interface Author: Node {
     val name: String
