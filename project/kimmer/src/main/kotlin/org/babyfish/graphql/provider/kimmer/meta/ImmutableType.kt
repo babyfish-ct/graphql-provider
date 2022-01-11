@@ -19,6 +19,8 @@ interface ImmutableType {
     val name: String
         get() = kotlinType.qualifiedName!!
 
+    val isAbstract: Boolean
+
     val superTypes: Set<ImmutableType>
 
     val declaredProps: Map<String, ImmutableProp>
@@ -88,8 +90,8 @@ interface ImmutableType {
 
 class DraftInfo(
     val abstractType: Class<out Draft<*>>,
-    val syncType: Class<out SyncDraft<*>>,
-    val asyncType: Class<out AsyncDraft<*>>
+    val syncType: Class<out SyncDraft<*>>?,
+    val asyncType: Class<out AsyncDraft<*>>?
 )
 
 private val cacheMap = WeakHashMap<Class<*>, TypeImpl>()

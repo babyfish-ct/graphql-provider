@@ -73,7 +73,11 @@ class DraftGenerator(
                 for (prop in classDeclaration.getDeclaredProperties()) {
                     addMembers(prop)
                 }
-                addNestedTypes(classDeclaration)
+                if (!classDeclaration.annotations.any {
+                        it.annotationType.resolve().declaration.qualifiedName?.asString() == "$KIMMER_PACKAGE.Abstract"
+                }) {
+                    addNestedTypes(classDeclaration)
+                }
             }.build()
         )
     }

@@ -1,8 +1,6 @@
 package org.babyfish.graphql.prodiver.kimmer.runtime
 
-import org.babyfish.graphql.prodiver.kimmer.AuthorDraft
-import org.babyfish.graphql.prodiver.kimmer.Book
-import org.babyfish.graphql.prodiver.kimmer.BookDraft
+import org.babyfish.graphql.prodiver.kimmer.*
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.jackson.immutableObjectMapper
 import org.babyfish.graphql.provider.kimmer.new
@@ -14,8 +12,8 @@ import kotlin.test.expect
 class KimmerTest {
 
     @Test
-    fun test() {
-        val book = new(BookDraft.Sync::class) {
+    fun testSimple() {
+        val book = new(ElectronicBookDraft.Sync::class) {
             name = "book"
             store().name = "store"
             authors() += new(AuthorDraft.Sync::class) {
@@ -25,8 +23,8 @@ class KimmerTest {
                 name = "Kate"
             }
         }
-        val book2 = new(BookDraft.Sync::class, book) {}
-        val book3 = new(BookDraft.Sync::class, book) {
+        val book2 = new(ElectronicBookDraft.Sync::class, book) {}
+        val book3 = new(ElectronicBookDraft.Sync::class, book2) {
             name = "book!"
             name = "book"
             store().name = "store!"
@@ -36,7 +34,7 @@ class KimmerTest {
             authors[1].name = "Kate!"
             authors[1].name = "Kate"
         }
-        val book4 = new(BookDraft.Sync::class, book3) {
+        val book4 = new(ElectronicBookDraft.Sync::class, book3) {
             name += "!"
             store().name += "!"
             for (author in authors) {
@@ -86,10 +84,26 @@ class KimmerTest {
             immutableObjectMapper().writeValueAsString(book4)
         }
         expect(book4) {
-            Immutable.fromString(json, Book::class)
+            Immutable.fromString(json, ElectronicBook::class)
         }
         expect(book4) {
-            immutableObjectMapper().readValue(json, Book::class.java)
+            immutableObjectMapper().readValue(json, ElectronicBook::class.java)
         }
+    }
+
+    @Test
+    fun testPolymorphic() {
+        val store = new(BookStoreDraft.Sync::class) {
+            name = "store"
+            books = mutableListOf(
+                new(ElectronicBookDraft.Sync::class) {
+                    name = "book-1"
+                },
+                new(PaperBookDraft.Sync::class) {
+                    name = "book-1"
+                }
+            )
+        }
+        println(store.toString())
     }
 }

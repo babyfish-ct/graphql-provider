@@ -1,5 +1,6 @@
 package org.babyfish.graphql.prodiver.kimmer
 
+import org.babyfish.graphql.provider.kimmer.Abstract
 import org.babyfish.graphql.provider.kimmer.Immutable
 import java.math.BigDecimal
 
@@ -13,6 +14,7 @@ interface BookStore: Node {
     val avgPrice: BigDecimal
 }
 
+@Abstract
 interface Book: Node {
     val name: String
     val price: BigDecimal

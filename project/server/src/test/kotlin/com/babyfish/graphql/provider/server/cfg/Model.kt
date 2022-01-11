@@ -22,6 +22,7 @@ interface BookStore: Node {
     val avgPrice: BigDecimal
 }
 
+@Abstract
 interface Book: Node {
     val name: String
     val price: BigDecimal

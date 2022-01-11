@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.kimmer.runtime.asm.draft
 
+import org.babyfish.graphql.provider.kimmer.Abstract
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
@@ -28,6 +29,9 @@ private class DraftImplementationCreator(
     val tmpMap = mutableMapOf<Class<out Immutable>, Class<out Draft<*>>?>()
 
     fun create(modelType: Class<out Immutable>): Class<out Draft<*>> {
+        if (modelType.isAnnotationPresent(Abstract::class.java)) {
+            throw IllegalArgumentException("The immutable type '${modelType.name}' is abstract")
+        }
         return createImpl(ImmutableType.of(modelType))
     }
 

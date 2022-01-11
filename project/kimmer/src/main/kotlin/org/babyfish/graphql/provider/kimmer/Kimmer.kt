@@ -71,6 +71,9 @@ interface Connection<N>: Immutable {
     }
 }
 
+@Target(AnnotationTarget.CLASS)
+annotation class Abstract
+
 @DslMarker
 @Target(AnnotationTarget.CLASS)
 annotation class DraftDsl
@@ -114,7 +117,7 @@ interface SyncDraft<out T: Immutable>: Draft<T> {
 @DraftDsl
 interface AsyncDraft<out T: Immutable>: Draft<T> {
 
-    suspend fun <X: Immutable, D: AsyncDraft<X>> new(
+    suspend fun <X: Immutable, D: AsyncDraft<X>> newAsync(
         draftType: KClass<D>,
         base: X? = null,
         block: suspend D.() -> Unit
@@ -132,7 +135,7 @@ fun <T: Immutable, D: SyncDraft<T>> new(
     return (draft as DraftSpi).`{resolve}`() as T
 }
 
-suspend fun <T: Immutable, D: AsyncDraft<T>> new(
+suspend fun <T: Immutable, D: AsyncDraft<T>> newAsync(
     draftType: KClass<D>,
     base: T? = null,
     block: suspend D.() -> Unit

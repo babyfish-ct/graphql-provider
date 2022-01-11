@@ -94,10 +94,16 @@ internal abstract class AbstractDraftContext: DraftContext {
 internal class SyncDraftContext: AbstractDraftContext() {
 
     override fun createFactory(immutableType: ImmutableType): Factory<*> =
-        Factory.of(immutableType.draftInfo.syncType)
+        Factory.of(
+            immutableType.draftInfo.syncType
+                ?: throw IllegalArgumentException("The immutable type '${immutableType.kotlinType.qualifiedName}' is abstract")
+        )
 }
 
 internal class AsyncDraftContext: AbstractDraftContext() {
     override fun createFactory(immutableType: ImmutableType): Factory<*> =
-        Factory.of(immutableType.draftInfo.asyncType)
+        Factory.of(
+            immutableType.draftInfo.asyncType
+                ?: throw IllegalArgumentException("The immutable type '${immutableType.kotlinType.qualifiedName}' is abstract")
+        )
 }

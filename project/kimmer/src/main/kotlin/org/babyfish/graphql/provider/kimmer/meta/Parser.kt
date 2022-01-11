@@ -68,6 +68,8 @@ internal class TypeImpl(
 
     private var _props: Map<String, PropImpl>? = null
 
+    override val isAbstract = kotlinType.java.isAnnotationPresent(Abstract::class.java)
+
     override val superTypes: Set<ImmutableType>
         get() = _superTypes
 
@@ -152,10 +154,14 @@ internal class TypeImpl(
         val abstractDraftType = getAbstractDraftType(this)
         val syncDraftType = getFinalDraftType(abstractDraftType, SyncDraft::class.java) as Class<out SyncDraft<*>>?
         val asyncDraftType = getFinalDraftType(abstractDraftType, AsyncDraft::class.java) as Class<out AsyncDraft<*>>?
+        if (!isAbstract) {
+            asyncDraftType ?: error("No nested interface 'sync' for non-abstract immutable type '${abstractDraftType::class.qualifiedName}'")
+            asyncDraftType ?: error("No nested interface 'sync' for non-abstract immutable type '${abstractDraftType::class.qualifiedName}'")
+        }
         DraftInfo(
             abstractDraftType,
-            syncDraftType ?: error("No nested interface 'sync' for '${abstractDraftType::class.qualifiedName}'"),
-            asyncDraftType ?: error("No nested interface 'sync' for '${abstractDraftType::class.qualifiedName}'")
+            syncDraftType,
+            asyncDraftType
         )
     }
 }
