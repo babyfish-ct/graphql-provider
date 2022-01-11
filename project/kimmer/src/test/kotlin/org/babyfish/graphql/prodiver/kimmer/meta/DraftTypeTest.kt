@@ -41,6 +41,12 @@ class DraftTypeTest {
         expect(immutableType) {
             ImmutableType.fromDraftType(BookDraft::class)
         }
+        expect(immutableType) {
+            ImmutableType.fromDraftType(BookDraft.Sync::class)
+        }
+        expect(immutableType) {
+            ImmutableType.fromDraftType(BookDraft.Async::class)
+        }
     }
 
     @Test

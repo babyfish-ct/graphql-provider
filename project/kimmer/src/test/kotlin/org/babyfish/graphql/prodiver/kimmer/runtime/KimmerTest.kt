@@ -13,7 +13,7 @@ class KimmerTest {
 
     @Test
     fun testSimple() {
-        val book = new(ElectronicBookDraft.Sync::class) {
+        val book = new(BookDraft.Sync::class) {
             name = "book"
             store().name = "store"
             authors() += new(AuthorDraft.Sync::class) {
@@ -23,8 +23,8 @@ class KimmerTest {
                 name = "Kate"
             }
         }
-        val book2 = new(ElectronicBookDraft.Sync::class, book) {}
-        val book3 = new(ElectronicBookDraft.Sync::class, book2) {
+        val book2 = new(BookDraft.Sync::class, book) {}
+        val book3 = new(BookDraft.Sync::class, book2) {
             name = "book!"
             name = "book"
             store().name = "store!"
@@ -34,7 +34,7 @@ class KimmerTest {
             authors[1].name = "Kate!"
             authors[1].name = "Kate"
         }
-        val book4 = new(ElectronicBookDraft.Sync::class, book3) {
+        val book4 = new(BookDraft.Sync::class, book3) {
             name += "!"
             store().name += "!"
             for (author in authors) {
@@ -84,26 +84,15 @@ class KimmerTest {
             immutableObjectMapper().writeValueAsString(book4)
         }
         expect(book4) {
-            Immutable.fromString(json, ElectronicBook::class)
+            Immutable.fromString(json, Book::class)
         }
         expect(book4) {
-            immutableObjectMapper().readValue(json, ElectronicBook::class.java)
+            immutableObjectMapper().readValue(json, Book::class.java)
         }
     }
 
     @Test
     fun testPolymorphic() {
-        val store = new(BookStoreDraft.Sync::class) {
-            name = "store"
-            books = mutableListOf(
-                new(ElectronicBookDraft.Sync::class) {
-                    name = "book-1"
-                },
-                new(PaperBookDraft.Sync::class) {
-                    name = "book-1"
-                }
-            )
-        }
-        println(store.toString())
+
     }
 }
