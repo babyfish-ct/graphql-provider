@@ -34,6 +34,14 @@ class DraftGenerator(
                     file.packageName.asString(),
                     draftFileName
                 ).apply {
+                    addAnnotation(
+                        AnnotationSpec
+                            .builder(Suppress::class)
+                            .apply {
+                                addMember("\"RedundantVisibilityModifier\"")
+                            }
+                            .build()
+                    )
                     for (classDeclaration in modelClassDeclarations) {
                         addType(classDeclaration)
                     }
