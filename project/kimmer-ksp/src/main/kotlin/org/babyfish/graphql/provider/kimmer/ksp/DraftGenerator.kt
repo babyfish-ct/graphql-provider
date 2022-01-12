@@ -91,7 +91,7 @@ class DraftGenerator(
         addProperty(
             PropertySpec.builder(
                 prop.simpleName.asString(),
-                meta.nullableReturnType,
+                meta.returnType,
                 KModifier.OVERRIDE
             ).apply {
                 mutable(true)
@@ -104,7 +104,7 @@ class DraftGenerator(
                     .builder(prop.simpleName.asString())
                     .apply {
                         modifiers += KModifier.ABSTRACT
-                        returns(meta.nonNullReturnType)
+                        returns(meta.funReturnType)
                     }
                     .build()
             )
@@ -237,7 +237,18 @@ private data class PropMeta(
     val isList: Boolean = false,
     val isTargetNullable: Boolean = false
 ) {
-    val nonNullReturnType: TypeName by lazy {
+    val returnType: TypeName by lazy {
+        if (isList) {
+            ClassName("kotlin.collections", "MutableList")
+                .parameterizedBy(
+                    targetDeclaration!!.asClassName()
+                )
+        } else {
+            scalarTypeName
+        }
+    }
+
+    val funReturnType: TypeName by lazy {
         targetDeclaration
             ?.run {
                 val draftTypeName = asClassName {
@@ -252,32 +263,14 @@ private data class PropMeta(
                     draftTypeName
                 }
             }
-            ?: (
-                prop.type.resolve().declaration as? KSClassDeclaration
-                    ?: throw GeneratorException("The property '${prop}' must returns class/interface type")
-                ).asClassName()
+            ?: scalarTypeName
     }
 
-    val nullableReturnType: TypeName by lazy {
-        targetDeclaration
-            ?.run {
-                val draftTypeName = asClassName {
-                    "$it$DRAFT_SUFFIX"
-                }.parameterizedBy(
-                    WildcardTypeName.producerOf(asClassName())
-                ).copy(nullable = isTargetNullable)
-                if (isList) {
-                    ClassName("kotlin.collections", "MutableList")
-                        .parameterizedBy(draftTypeName)
-                } else {
-                    draftTypeName
-                }
-            }
-            ?: (
-                prop.type.resolve().declaration as? KSClassDeclaration
-                    ?: throw GeneratorException("The property '${prop}' must returns class/interface type")
-                ).asClassName().copy(nullable = isTargetNullable)
-    }
+    private val scalarTypeName: TypeName
+        get() = (
+            prop.type.resolve().declaration as? KSClassDeclaration
+                ?: throw GeneratorException("The property '${prop}' must returns class/interface type")
+        ).asClassName().copy(nullable = isTargetNullable)
 }
 
 private val finalDraftPrefixes = listOf("Sync", "Async")

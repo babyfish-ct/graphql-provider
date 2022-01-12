@@ -30,15 +30,15 @@ class KimmerTest {
             name = "book"
             store().name = "store!"
             store().name = "store"
-            authors[0].name = "Jim!"
-            authors[0].name = "Jim"
-            authors[1].name = "Kate!"
-            authors[1].name = "Kate"
+            authors()[0].name = "Jim!"
+            authors()[0].name = "Jim"
+            authors()[1].name = "Kate!"
+            authors()[1].name = "Kate"
         }
         val book4 = new(BookDraft.Sync::class, book3) {
             name += "!"
             store().name += "!"
-            for (author in authors) {
+            for (author in authors()) {
                 author.name += "!"
             }
         }

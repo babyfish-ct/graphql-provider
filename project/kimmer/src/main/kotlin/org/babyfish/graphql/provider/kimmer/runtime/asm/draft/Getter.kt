@@ -12,33 +12,13 @@ import kotlin.reflect.jvm.javaMethod
 
 internal fun ClassVisitor.writeGetter(prop: ImmutableProp, args: GeneratorArgs) {
     val getter = prop.kotlinProp.getter.javaMethod!!
-    val returnType = prop.targetType?.draftInfo?.abstractType ?: prop.returnType.java
+    val returnType = prop.returnType.java
     writeMethod(
         Opcodes.ACC_PUBLIC,
         getter.name,
         "()${Type.getDescriptor(returnType)}"
     ) {
         visitGetter(prop, args)
-    }
-    if (returnType !== prop.returnType.java) {
-        val signature = prop.targetType?.takeIf { prop.isList }?.let {
-            "()Ljava/util/List<${Type.getDescriptor(it.kotlinType.java)}>;"
-        }
-        writeMethod(
-            Opcodes.ACC_PUBLIC or Opcodes.ACC_BRIDGE,
-            getter.name,
-            "()${Type.getDescriptor(prop.returnType.java)}"
-        ) {
-            visitVarInsn(Opcodes.ALOAD, 0)
-            visitMethodInsn(
-                Opcodes.INVOKEVIRTUAL,
-                args.draftImplInternalName,
-                getter.name,
-                "()${Type.getDescriptor(returnType)}",
-                false
-            )
-            visitReturn(returnType)
-        }
     }
 }
 
