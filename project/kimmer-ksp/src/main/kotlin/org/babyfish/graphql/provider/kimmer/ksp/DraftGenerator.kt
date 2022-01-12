@@ -239,7 +239,7 @@ private data class PropMeta(
 ) {
     val returnType: TypeName by lazy {
         if (isList) {
-            ClassName("kotlin.collections", "MutableList")
+            ClassName("kotlin.collections", "List")
                 .parameterizedBy(
                     targetDeclaration!!.asClassName()
                 )
