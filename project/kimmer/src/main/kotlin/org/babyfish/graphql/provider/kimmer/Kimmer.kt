@@ -2,6 +2,7 @@ package org.babyfish.graphql.provider.kimmer
 
 import org.babyfish.graphql.provider.kimmer.jackson.immutableObjectMapper
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
+import org.babyfish.graphql.provider.kimmer.runtime.AsyncDraftContext
 import org.babyfish.graphql.provider.kimmer.runtime.DraftSpi
 import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
 import org.babyfish.graphql.provider.kimmer.runtime.SyncDraftContext
@@ -140,7 +141,10 @@ suspend fun <T: Immutable, D: AsyncDraft<T>> newAsync(
     base: T? = null,
     block: suspend D.() -> Unit
 ): T {
-    error("'new' with async draft is not supported in this version")
+    val ctx = AsyncDraftContext()
+    val draft = ctx.createDraft(draftType, base) as D
+    draft.block()
+    return (draft as DraftSpi).`{resolve}`() as T
 }
 
 private val objectMapper = immutableObjectMapper()

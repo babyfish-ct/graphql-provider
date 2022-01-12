@@ -5,6 +5,8 @@ import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import java.util.*
+import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.reflect.KClass
 
 internal interface DraftContext {
@@ -112,6 +114,9 @@ internal class SyncDraftContext: AbstractDraftContext() {
 }
 
 internal class AsyncDraftContext: AbstractDraftContext() {
+
+    private val readWriteLock: ReadWriteLock = ReentrantReadWriteLock()
+
     override fun createFactory(immutableType: ImmutableType): Factory<*> =
         Factory.of(
             immutableType.draftInfo.asyncType
