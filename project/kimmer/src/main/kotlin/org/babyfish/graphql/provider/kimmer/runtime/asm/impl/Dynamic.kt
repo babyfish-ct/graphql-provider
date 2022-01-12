@@ -43,7 +43,7 @@ internal fun ClassVisitor.writeValue(type: ImmutableType) {
                 false
             )
             visitBox(getter.returnType)
-            visitReturn(getter.returnType)
+            visitInsn(Opcodes.ARETURN)
         }
     }
 }

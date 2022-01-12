@@ -46,7 +46,8 @@ internal val OBJECT_INTERNAL_NAME = Type.getInternalName(Object::class.java)
 internal fun ClassVisitor.writeField(
     access: Int,
     name: String,
-    desc: String
+    desc: String,
+    signature: String? = null
 ) {
     visitField(
         access,
@@ -61,13 +62,14 @@ internal fun ClassVisitor.writeMethod(
     access: Int,
     name: String,
     desc: String,
+    signature: String? = null,
     block: MethodVisitor.() -> Unit
 ) {
     visitMethod(
         access,
         name,
         desc,
-        null,
+        signature,
         null
     ).apply {
         visitCode()
@@ -304,16 +306,20 @@ internal fun MethodVisitor.visitUnbox(type: Class<*>) {
     val (primitiveName, boxName) = primitiveTuples(type)
     if (primitiveName != "") {
         val boxSimpleName = boxName.substring(boxName.lastIndexOf('/') + 1)
-        val methodName = if (boxSimpleName === "Integer") {
-            "intValue"
-        } else {
-            "${boxSimpleName.lowercase()}Value"
+        val methodName = when (type) {
+            kotlin.Char::class.javaPrimitiveType -> "charValue"
+            kotlin.Int::class.javaPrimitiveType -> "intValue"
+            else -> "${boxSimpleName.lowercase()}Value"
         }
+        visitTypeInsn(
+            Opcodes.CHECKCAST,
+            boxName
+        )
         visitMethodInsn(
             Opcodes.INVOKEVIRTUAL,
             boxName,
             methodName,
-            "()L$primitiveName;",
+            "()$primitiveName",
             false
         )
     } else {

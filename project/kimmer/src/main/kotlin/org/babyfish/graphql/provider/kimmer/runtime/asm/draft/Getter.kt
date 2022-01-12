@@ -21,6 +21,9 @@ internal fun ClassVisitor.writeGetter(prop: ImmutableProp, args: GeneratorArgs) 
         visitGetter(prop, args)
     }
     if (returnType !== prop.returnType.java) {
+        val signature = prop.targetType?.takeIf { prop.isList }?.let {
+            "()Ljava/util/List<${Type.getDescriptor(it.kotlinType.java)}>;"
+        }
         writeMethod(
             Opcodes.ACC_PUBLIC or Opcodes.ACC_BRIDGE,
             getter.name,

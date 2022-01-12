@@ -16,7 +16,10 @@ interface ImmutableType {
 
     val kotlinType: KClass<out Immutable>
 
-    val name: String
+    val simpleName: String
+        get() = kotlinType.simpleName!!
+
+    val qualifiedName: String
         get() = kotlinType.qualifiedName!!
 
     val isAbstract: Boolean
@@ -61,13 +64,13 @@ interface ImmutableType {
                 ).`{type}`()
 
         @JvmStatic
-        fun fromAnyObject(o: Any): ImmutableType? =
+        fun fromAnyObject(o: Any?): ImmutableType? =
             (o as? ImmutableSpi)?.`{type}`()
 
         @JvmStatic
         fun fromAnyType(type: Class<*>): ImmutableType? {
-            if (type.isInterface && Immutable::class.java.isAssignableFrom(type)) {
-                if (!Draft::class.java.isAssignableFrom(type)) {
+            if (Immutable::class.java.isAssignableFrom(type)) {
+                if (type.isInterface && !Draft::class.java.isAssignableFrom(type)) {
                     return of(type as Class<out Immutable>)
                 }
                 val superFromClass = type.superclass?.let {

@@ -6,17 +6,19 @@ import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializationConfig
 import com.fasterxml.jackson.databind.ser.Serializers
 import org.babyfish.graphql.provider.kimmer.Immutable
+import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 
 class ImmutableSerializers: Serializers.Base() {
 
     override fun findSerializer(
-        config: SerializationConfig?,
-        type: JavaType?,
-        beanDesc: BeanDescription?
+        config: SerializationConfig,
+        type: JavaType,
+        beanDesc: BeanDescription
     ): JsonSerializer<*>? =
         type
-            .takeIf { Immutable::class.java.isAssignableFrom(type!!.rawClass) }
+            .rawClass
+            .let { ImmutableType.fromAnyType(it) }
             ?.let {
-                ImmutableSerializer()
+                ImmutableSerializer(it)
             }
 }

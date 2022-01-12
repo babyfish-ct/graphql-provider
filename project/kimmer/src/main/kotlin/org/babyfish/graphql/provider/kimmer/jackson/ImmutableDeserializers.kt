@@ -10,9 +10,9 @@ import org.babyfish.graphql.provider.kimmer.Immutable
 class ImmutableDeserializers: Deserializers.Base() {
 
     override fun findBeanDeserializer(
-        type: JavaType?,
-        config: DeserializationConfig?,
-        beanDesc: BeanDescription?
+        type: JavaType,
+        config: DeserializationConfig,
+        beanDesc: BeanDescription
     ): JsonDeserializer<*>? =
         type
             .takeIf { Immutable::class.java.isAssignableFrom(type!!.rawClass) }

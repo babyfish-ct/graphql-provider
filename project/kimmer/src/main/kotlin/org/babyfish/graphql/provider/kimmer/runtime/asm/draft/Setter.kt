@@ -9,6 +9,7 @@ import org.springframework.asm.Type
 import kotlin.reflect.jvm.javaMethod
 
 internal fun ClassVisitor.writeSetter(prop: ImmutableProp, args: GeneratorArgs) {
+    val parameterType = prop.targetType?.draftInfo?.abstractType ?: prop.returnType.java
     val getter = prop.kotlinProp.getter.javaMethod!!
     val setterName = getter.name.let {
         if (it.startsWith("is")) {
@@ -17,7 +18,7 @@ internal fun ClassVisitor.writeSetter(prop: ImmutableProp, args: GeneratorArgs) 
             "set${it.substring(3)}"
         }
     }
-    val typeDesc = Type.getDescriptor(getter.returnType)
+    val typeDesc = Type.getDescriptor(parameterType)
     writeMethod(
         Opcodes.ACC_PUBLIC,
         setterName,

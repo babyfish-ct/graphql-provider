@@ -28,7 +28,7 @@ internal abstract class AbstractDraftContext: DraftContext {
 
     override fun <T : Immutable> createDraft(draftType: KClass<out Draft<T>>, base: T?): Draft<T> {
         val raw = base
-            ?: this.createFactory(ImmutableType.fromDraftType(draftType))
+            ?: createFactory(ImmutableType.fromDraftType(draftType))
                 .let {
                     (it as Factory<T>).create()
                 }
@@ -74,7 +74,13 @@ internal abstract class AbstractDraftContext: DraftContext {
         if (draft === null) {
             return obj
         }
-        return (draft as DraftSpi).`{resolve}`() as T
+        val spi = draft as DraftSpi
+        if (spi.`{draftContext}`() !== this) {
+            throw IllegalArgumentException(
+                "Cannot resolve the draft object '${spi}' because it belong to another draft context"
+            )
+        }
+        return spi.`{resolve}`() as T
     }
 
     override fun <E : Immutable> resolve(list: List<E>?): List<E>? {
@@ -84,6 +90,11 @@ internal abstract class AbstractDraftContext: DraftContext {
         val draft = list as? ListDraft<*> ?: listDraftMap[list]
         if (draft === null) {
             return list
+        }
+        if (draft.draftContext !== this) {
+            throw IllegalArgumentException(
+                "Cannot resolve the draft list '${list}' because it belong to another draft context"
+            )
         }
         return draft.resolve() as List<E>
     }

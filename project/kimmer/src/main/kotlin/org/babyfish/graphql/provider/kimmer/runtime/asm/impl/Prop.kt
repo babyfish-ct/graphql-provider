@@ -12,11 +12,15 @@ internal fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Stri
 
     val desc = Type.getDescriptor(prop.returnType.java)
     val loadedName = loadedName(prop)
+    val signature = prop.targetType?.takeIf { prop.isList }?.let {
+        "Ljava/util/List<${Type.getDescriptor(it.kotlinType.java)}>;"
+    }
 
     writeField(
         Opcodes.ACC_PROTECTED,
         prop.name,
-        desc
+        desc,
+        signature
     )
 
     writeField(
@@ -29,7 +33,8 @@ internal fun ClassVisitor.writeProp(prop: ImmutableProp, ownerInternalName: Stri
     writeMethod(
         Opcodes.ACC_PUBLIC,
         javaGetter.name,
-        Type.getMethodDescriptor(javaGetter)
+        Type.getMethodDescriptor(javaGetter),
+        signature?.let { "()$signature" }
     ) {
 
         visitVarInsn(Opcodes.ALOAD, 0)

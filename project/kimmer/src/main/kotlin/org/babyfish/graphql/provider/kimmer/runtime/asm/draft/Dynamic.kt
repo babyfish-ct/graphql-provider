@@ -8,7 +8,6 @@ import org.springframework.asm.ClassVisitor
 import org.springframework.asm.Opcodes
 import org.springframework.asm.Type
 import java.lang.IllegalArgumentException
-import kotlin.reflect.jvm.javaMethod
 
 internal fun ClassVisitor.writeSetValue(args: GeneratorArgs) {
     writeMethod(

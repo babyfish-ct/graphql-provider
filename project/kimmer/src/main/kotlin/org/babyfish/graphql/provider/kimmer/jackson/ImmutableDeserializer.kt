@@ -25,25 +25,13 @@ class ImmutableDeserializer(type: Class<out Immutable>): StdDeserializer<Immutab
             ?: throw JsonMappingException(jp, "Cannot deserialize the object whose type is '${rawClass.name}'")
         val syncDraftType = type.draftInfo.syncType
             ?: throw JsonMappingException(jp, "The immutable type '${type.kotlinType.qualifiedName}' is abstract")
+
         val node: JsonNode = jp.codec.readTree(jp)
 
         return new(syncDraftType.kotlin) {
             for (prop in type.props.values) {
                 if (node.has(prop.name)) {
-                    val value = if (prop.isList) {
-                        ctx.readTreeAsValue(
-                            node[prop.name],
-                            CollectionType.construct(
-                                List::class.java,
-                                null,
-                                null,
-                                null,
-                                SimpleType.constructUnsafe(prop.targetType!!.kotlinType.java)
-                            )
-                        )
-                    } else {
-                        ctx.readTreeAsValue(node[prop.name], prop.returnType.java)
-                    }
+                    val value = ctx.readTreeAsValue<Any>(node[prop.name], prop.jacksonType)
                     Draft.set(this, prop, value)
                 }
             }

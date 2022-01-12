@@ -1,5 +1,6 @@
 package org.babyfish.graphql.prodiver.kimmer.runtime
 
+import com.fasterxml.jackson.core.type.TypeReference
 import org.babyfish.graphql.prodiver.kimmer.*
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.jackson.immutableObjectMapper
@@ -92,7 +93,105 @@ class KimmerTest {
     }
 
     @Test
-    fun testPolymorphic() {
+    fun testOneToManyPolymorphic() {
+        val zoo = new(SealedZooDraft.Sync::class) {
+            location = "city center"
+            animals() += new(TigerDraft.Sync::class) {
+                weight = 600
+            }
+            animals() += new(OtterDraft.Sync::class) {
+                length = 50
+            }
+        }
+        val json = """{"__typename":"SealedZoo","location":"city center","animals":[{"__typename":"Tiger","weight":600},{"__typename":"Otter","length":50}]}"""
+        expect(json) {
+            zoo.toString()
+        }
+        val deserializedZoo = Immutable.fromString(json, SealedZoo::class)
+        expect(false) {
+            zoo === deserializedZoo
+        }
+        expect(zoo) {
+            deserializedZoo
+        }
+        expect(true) {
+            deserializedZoo.animals[0] is Tiger
+        }
+        expect(600) {
+            (deserializedZoo.animals[0] as Tiger).weight
+        }
+        expect(true) {
+            deserializedZoo.animals[1] is Otter
+        }
+        expect(50) {
+            (deserializedZoo.animals[1] as Otter).length
+        }
+    }
 
+    @Test
+    fun testManyToOnePolymorphic() {
+        val typeReference = object: TypeReference<List<Animal>>() {}
+        val animals = listOf(
+            new(TigerDraft.Sync::class) {
+                weight = 600
+                zoo = new(SealedZooDraft.Sync::class) {
+                    location = "city center"
+                }
+            },
+            new(OtterDraft.Sync::class) {
+                length = 50
+                zoo = new(WildZooDraft.Sync::class) {
+                    area = 3000
+                }
+            }
+        )
+        val json = """[{"__typename":"Tiger","weight":600,"zoo":{"__typename":"SealedZoo","location":"city center"}},{"__typename":"Otter","length":50,"zoo":{"__typename":"WildZoo","area":3000}}]"""
+        expect(json) {
+            immutableObjectMapper().writerFor(typeReference).writeValueAsString(animals)
+        }
+        val deserializedAnimals = immutableObjectMapper().readValue(json, typeReference)
+        expect(false) {
+            animals === deserializedAnimals
+        }
+        expect(animals) {
+            deserializedAnimals
+        }
+        expect(true) {
+            deserializedAnimals[0].zoo is SealedZoo
+        }
+        expect("city center") {
+            (deserializedAnimals[0].zoo as SealedZoo).location
+        }
+        expect(true) {
+            deserializedAnimals[1].zoo is WildZoo
+        }
+        expect(3000) {
+            (deserializedAnimals[1].zoo as WildZoo).area
+        }
+    }
+
+    @Test
+    fun testPrimitive() {
+        val primitiveInfo = new(PrimitiveInfoDraft.Sync::class) {
+            boolean = true
+            char = 'X'
+            byte = 23
+            short = 234
+            int = 2345
+            long = 23456
+            float = 23456.7F
+            double = 23456.78
+        }
+        val json = """{"boolean":true,"byte":23,"char":"X","double":23456.78,"float":23456.7,"int":2345,"long":23456,"short":234}"""
+        expect(json) {
+            primitiveInfo.toString()
+        }
+        val deserializedPrimitiveInfo = Immutable.fromString(json, PrimitiveInfo::class)
+        expect(false) {
+            primitiveInfo === deserializedPrimitiveInfo
+        }
+        expect(primitiveInfo) {
+            deserializedPrimitiveInfo
+        }
     }
 }

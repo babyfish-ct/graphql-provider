@@ -1,7 +1,6 @@
 package org.babyfish.graphql.provider.kimmer.jackson
 
 import com.fasterxml.jackson.databind.module.SimpleModule
-import org.babyfish.graphql.provider.kimmer.Immutable
 
 class ImmutableModule: SimpleModule() {
 
