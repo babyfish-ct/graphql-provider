@@ -25,84 +25,62 @@ import kotlin.reflect.KClass
 
 internal interface Factory<T: Immutable> {
     fun create(): T
-    fun createDraft(ctx: DraftContext, o: T?): Draft<T>
+    fun createDraft(ctx: SyncDraftContext, o: T?): Draft<T>
+    fun createDraft(ctx: AsyncDraftContext, o: T?): Draft<T>
 
     companion object {
 
         @JvmStatic
-        fun <T: Immutable> of(draftType: KClass<out Draft<T>>): Factory<T> =
-            factoryOf(draftType.java) as Factory<T>
+        fun <T: Immutable> of(type: KClass<T>): Factory<T> =
+            factoryOf(type.java) as Factory<T>
 
         @JvmStatic
-        fun <T: Immutable> of(draftType: Class<out Draft<T>>): Factory<T> =
-            factoryOf(draftType) as Factory<T>
+        fun <T: Immutable> of(type: Class<T>): Factory<T> =
+            factoryOf(type) as Factory<T>
     }
 }
 
-private val cacheMap = mutableMapOf<Class<*>, Factory<*>>()
+private val cacheMap = mutableMapOf<Class<out Immutable>, Factory<out Immutable>>()
 
 private val cacheLock = ReentrantReadWriteLock()
 
-private fun factoryOf(draftType: Class<*>): Factory<*> =
+private fun factoryOf(type: Class<out Immutable>): Factory<out Immutable> =
     cacheLock.read {
-        cacheMap[draftType]
+        cacheMap[type]
     } ?: cacheLock.write {
-        cacheMap[draftType]
-            ?: createFactory(draftType).also {
-                cacheMap[draftType] = it
+        cacheMap[type]
+            ?: createFactory(type).also {
+                cacheMap[type] = it
             }
     }
 
-private fun createFactory(draftType: Class<*>): Factory<*> {
-    val immutableType = ImmutableType.fromDraftType(draftType as Class<out Draft<*>>)
-    val isSync = SyncDraft::class.java.isAssignableFrom(draftType)
-    val isAsync = AsyncDraft::class.java.isAssignableFrom(draftType)
-    if (isSync && isAsync) {
-        throw IllegalArgumentException(
-            "draftType cannot be subtype of both ${SyncDraft::class.qualifiedName} " +
-                "or ${AsyncDraft::class.qualifiedName}"
-        )
-    } else if (!isSync && !isAsync) {
-        throw IllegalArgumentException(
-            "draftType must be subtype of ${SyncDraft::class.qualifiedName} " +
-                "or ${AsyncDraft::class.qualifiedName}"
-        )
-    }
+private fun createFactory(type: Class<out Immutable>): Factory<out Immutable> {
+    val immutableType = ImmutableType.of(type)
     implementationOf(immutableType.kotlinType.java)
     draftImplementationOf(immutableType.kotlinType.java)
-    if (isAsync) {
-        asyncDraftImplementationOf(immutableType.kotlinType.java)
-    } else {
-        syncDraftImplementationOf(immutableType.kotlinType.java)
-    }
-
-    val factoryType = createFactoryImplType(immutableType, isAsync)
-    return factoryType.getConstructor().newInstance() as Factory<*>
+    syncDraftImplementationOf(immutableType.kotlinType.java)
+    asyncDraftImplementationOf(immutableType.kotlinType.java)
+    val factoryType = createFactoryImplType(immutableType)
+    return factoryType.getConstructor().newInstance() as Factory<out Immutable>
 }
 
 private fun createFactoryImplType(
-    immutableType: ImmutableType,
-    isAsync: Boolean
+    immutableType: ImmutableType
 ): Class<*> =
     ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
         .apply {
             visit(
                 BYTECODE_VERSION,
                 Opcodes.ACC_PUBLIC,
-                "${Type.getInternalName(immutableType.kotlinType.java)}${
-                    if (isAsync) {
-                        "Async"
-                    } else {
-                        "Sync"
-                    }
-                }{Factory}",
+                "${Type.getInternalName(immutableType.kotlinType.java)}{Factory}",
                 null,
                 "java/lang/Object",
                 arrayOf(Type.getInternalName(Factory::class.java))
             )
             writeConstructor()
             writeCreate(immutableType)
-            writeCreateDraft(immutableType, isAsync)
+            writeCreateDraft(immutableType, true)
+            writeCreateDraft(immutableType, false)
             visitEnd()
         }
         .toByteArray()
@@ -130,18 +108,18 @@ private fun ClassVisitor.writeConstructor() {
 
 private fun ClassVisitor.writeCreate(immutableType: ImmutableType) {
 
-    val internalName = implInternalName(immutableType)
+    val implInternalName = implInternalName(immutableType)
 
     writeMethod(
         Opcodes.ACC_PUBLIC,
         "create",
         "()${Type.getDescriptor(Immutable::class.java)}"
     ) {
-        visitTypeInsn(Opcodes.NEW, internalName)
+        visitTypeInsn(Opcodes.NEW, implInternalName)
         visitInsn(Opcodes.DUP)
         visitMethodInsn(
             Opcodes.INVOKESPECIAL,
-            internalName,
+            implInternalName,
             "<init>",
             "()V",
             false
@@ -164,12 +142,17 @@ private fun ClassVisitor.writeCreateDraft(
     } else {
         SYNC_DRAFT_CONTEXT_INTERNAL_NAME
     }
+    val targetDraftContextDescriptor = if (isAsync) {
+        ASYNC_DRAFT_CONTEXT_DESCRIPTOR
+    } else {
+        SYNC_DRAFT_CONTEXT_DESCRIPTOR
+    }
     val modelInternalName = Type.getInternalName(immutableType.kotlinType.java)
 
     writeMethod(
         Opcodes.ACC_PUBLIC,
         "createDraft",
-        "($DRAFT_CONTEXT_DESCRIPTOR$IMMUTABLE_DESCRIPTOR)$DRAFT_DESCRIPTOR"
+        "($targetDraftContextDescriptor$IMMUTABLE_DESCRIPTOR)$DRAFT_DESCRIPTOR"
     ) {
 
         visitTypeInsn(Opcodes.NEW, internalName)
@@ -189,3 +172,9 @@ private fun ClassVisitor.writeCreateDraft(
     }
 }
 
+private fun prefix(async: Boolean): String =
+    if (async) {
+        "Async"
+    } else {
+        "Sync"
+    }

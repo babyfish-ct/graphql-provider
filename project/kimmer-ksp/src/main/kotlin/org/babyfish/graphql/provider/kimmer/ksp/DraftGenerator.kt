@@ -44,6 +44,12 @@ class DraftGenerator(
                     )
                     for (classDeclaration in modelClassDeclarations) {
                         addType(classDeclaration)
+                        if (!classDeclaration.isImmutableAbstract) {
+                            addNewFun(classDeclaration, isAsync = false, forDraft = false)
+                            addNewFun(classDeclaration, isAsync = true, forDraft = false)
+                            addNewFun(classDeclaration, isAsync = false, forDraft = true)
+                            addNewFun(classDeclaration, isAsync = true, forDraft = true)
+                        }
                     }
                 }.build()
             val writer = OutputStreamWriter(it, Charsets.UTF_8)
@@ -81,9 +87,7 @@ class DraftGenerator(
                 for (prop in classDeclaration.getDeclaredProperties()) {
                     addMembers(prop)
                 }
-                if (!classDeclaration.annotations.any {
-                        it.annotationType.resolve().declaration.qualifiedName?.asString() == "$KIMMER_PACKAGE.Abstract"
-                }) {
+                if (!classDeclaration.isImmutableAbstract) {
                     addNestedTypes(classDeclaration)
                 }
             }.build()
@@ -228,6 +232,69 @@ class DraftGenerator(
             )
         }
     }
+
+    private fun FileSpec.Builder.addNewFun(
+        declaration: KSClassDeclaration,
+        isAsync: Boolean,
+        forDraft: Boolean
+    ) {
+        val mode = if (isAsync) "Async" else "Sync"
+        val draftName = if (forDraft) "Draft" else ""
+        addFunction(
+            FunSpec
+                .builder("by")
+                .apply {
+                    if (isAsync) {
+                        modifiers += KModifier.SUSPEND
+                    }
+                    receiver(
+                        ClassName(KIMMER_PACKAGE, "${mode}${draftName}Creator")
+                            .parameterizedBy(
+                                declaration.asClassName()
+                            )
+                    )
+                    addParameter(
+                        ParameterSpec
+                            .builder(
+                                "base",
+                                declaration.asClassName().copy(nullable = true)
+                            )
+                            .apply {
+                                defaultValue("null")
+                            }
+                            .build()
+                    )
+                    addParameter(
+                        "block",
+                        LambdaTypeName.get(
+                            declaration
+                                .asClassName { "${it}Draft.$mode" },
+                            emptyList(),
+                            ClassName("kotlin", "Unit")
+                        ).copy(suspending = isAsync)
+                    )
+                    if (forDraft) {
+                        returns(
+                            ClassName(
+                                declaration.packageName.asString(),
+                                "${declaration.simpleName.asString()}Draft",
+                                mode
+                            )
+                        )
+                    } else {
+                        returns(declaration.asClassName())
+                    }
+                    val simpleName = declaration.simpleName.asString()
+                    val suffix = if (isAsync) "Async" else ""
+                    if (forDraft) {
+                        addCode("return $KIMMER_PACKAGE.produceDraft${suffix}(type, base, block)")
+                    } else {
+                        addCode("return $KIMMER_PACKAGE.produce${suffix}(type, base) { (this as ${simpleName}Draft.$mode).block() }")
+                    }
+                }
+                .build()
+        )
+    }
 }
 
 private fun KSClassDeclaration.asClassName(simpleNameMapper: ((String) -> String)? = null): ClassName {
@@ -237,6 +304,12 @@ private fun KSClassDeclaration.asClassName(simpleNameMapper: ((String) -> String
     }
     return ClassName(packageName.asString(), simpleNameMapper(simpleName))
 }
+
+private val KSClassDeclaration.isImmutableAbstract: Boolean
+    get() = this.annotations.any {
+        it.annotationType.resolve().declaration.qualifiedName?.asString() ==
+            "$KIMMER_PACKAGE.Abstract"
+    }
 
 private data class PropMeta(
     val prop: KSPropertyDeclaration,

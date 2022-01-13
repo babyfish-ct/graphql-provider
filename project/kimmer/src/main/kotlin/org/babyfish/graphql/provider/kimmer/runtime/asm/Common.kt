@@ -396,6 +396,26 @@ internal fun MethodVisitor.visitChanged(
     }
 }
 
+internal fun MethodVisitor.visitTryFinally(
+    tryBlock: MethodVisitor.() -> Unit,
+    finallyBlock: MethodVisitor.() -> Unit,
+    catchSlot: Int
+) {
+    val startLabel = Label()
+    val endLabel = Label()
+    val handleLabel = Label()
+    visitTryCatchBlock(startLabel, endLabel, handleLabel, "java/lang/Throwable")
+    visitLabel(startLabel)
+    tryBlock()
+    visitJumpInsn(Opcodes.GOTO, endLabel)
+    visitLabel(handleLabel)
+    visitVarInsn(Opcodes.ASTORE, catchSlot)
+    finallyBlock()
+    visitVarInsn(Opcodes.ALOAD, catchSlot)
+    visitInsn(Opcodes.ATHROW)
+    visitLabel(endLabel)
+}
+
 interface Shallow {
     companion object {
         fun dynamic(block: MethodVisitor.() -> Unit) = Dynamic(block)

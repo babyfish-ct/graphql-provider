@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 internal interface DraftContext {
 
-    fun <T: Immutable> createDraft(draftType: KClass<out Draft<T>>, base: T?): Draft<T>
+    fun <T: Immutable> createDraft(type: KClass<T>, base: T?): Draft<T>
 
     fun <T: Immutable> toDraft(obj: T?): Draft<T>?
 
@@ -29,12 +29,9 @@ internal abstract class AbstractDraftContext: DraftContext {
 
     private val listDraftMap = IdentityHashMap<List<*>, ListDraft<*>>()
 
-    override fun <T : Immutable> createDraft(draftType: KClass<out Draft<T>>, base: T?): Draft<T> {
+    override fun <T : Immutable> createDraft(type: KClass<T>, base: T?): Draft<T> {
         val raw = base
-            ?: createFactory(ImmutableType.fromDraftType(draftType))
-                .let {
-                    (it as Factory<T>).create()
-                }
+            ?: Factory.of(type).create()
         return toDraft(raw)!!
     }
 
@@ -49,8 +46,7 @@ internal abstract class AbstractDraftContext: DraftContext {
             return obj as Draft<T>
         }
         return objDraftMap.computeIfAbsent(obj) {
-            val factory = this.createFactory(ImmutableType.fromInstance(obj)) as Factory<T>
-            factory.createDraft(this, obj)
+            createObjectDraft(obj)
         } as Draft<T>
     }
 
@@ -102,18 +98,17 @@ internal abstract class AbstractDraftContext: DraftContext {
         return draft.resolve() as List<E>
     }
 
-    protected abstract fun createFactory(immutableType: ImmutableType): Factory<*>
+    protected abstract fun createObjectDraft(obj: Immutable): Draft<*>
 
     protected abstract fun createListDraft(list: List<*>): ListDraft<*>
 }
 
 internal class SyncDraftContext: AbstractDraftContext() {
 
-    override fun createFactory(immutableType: ImmutableType): Factory<*> =
-        Factory.of(
-            immutableType.draftInfo.syncType
-                ?: throw IllegalArgumentException("The immutable type '${immutableType.kotlinType.qualifiedName}' is abstract")
-        )
+    override fun createObjectDraft(obj: Immutable): Draft<*> =
+        Factory
+            .of(ImmutableType.fromInstance(obj).kotlinType.java as Class<Immutable>)
+            .createDraft(this, obj)
 
     override fun createListDraft(list: List<*>): ListDraft<*> =
         SimpleListDraft(this, list as List<Immutable>)
@@ -123,11 +118,10 @@ internal class AsyncDraftContext: AbstractDraftContext() {
 
     internal val readWriteLock = ReentrantReadWriteLock()
 
-    override fun createFactory(immutableType: ImmutableType): Factory<*> =
-        Factory.of(
-            immutableType.draftInfo.asyncType
-                ?: throw IllegalArgumentException("The immutable type '${immutableType.kotlinType.qualifiedName}' is abstract")
-        )
+    override fun createObjectDraft(obj: Immutable): Draft<*> =
+        Factory
+            .of(ImmutableType.fromInstance(obj).kotlinType.java as Class<Immutable>)
+            .createDraft(this, obj)
 
     override fun createListDraft(list: List<*>): ListDraft<*> {
         return LockedListDraft(this, list as List<Immutable>)

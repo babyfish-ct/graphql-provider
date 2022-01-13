@@ -2,10 +2,8 @@ package org.babyfish.graphql.provider.kimmer
 
 import org.babyfish.graphql.provider.kimmer.jackson.immutableObjectMapper
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
-import org.babyfish.graphql.provider.kimmer.runtime.AsyncDraftContext
 import org.babyfish.graphql.provider.kimmer.runtime.DraftSpi
 import org.babyfish.graphql.provider.kimmer.runtime.ImmutableSpi
-import org.babyfish.graphql.provider.kimmer.runtime.SyncDraftContext
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -107,44 +105,14 @@ interface Draft<out T: Immutable> {
 }
 
 interface SyncDraft<out T: Immutable>: Draft<T> {
-
-    fun <X: Immutable, D: SyncDraft<X>> new(
-        draftType: KClass<D>,
-        base: X? = null,
-        block: D.() -> Unit
-    ): D
+    fun <X: Immutable> new(type: KClass<X>): SyncDraftCreator<X> =
+        SyncDraftCreator(type)
 }
 
-@DraftDsl
 interface AsyncDraft<out T: Immutable>: Draft<T> {
-
-    suspend fun <X: Immutable, D: AsyncDraft<X>> newAsync(
-        draftType: KClass<D>,
-        base: X? = null,
-        block: suspend D.() -> Unit
-    ): D
-}
-
-fun <T: Immutable, D: SyncDraft<T>> new(
-    draftType: KClass<D>,
-    base: T? = null,
-    block: D.() -> Unit
-): T {
-    val ctx = SyncDraftContext()
-    val draft = ctx.createDraft(draftType, base) as D
-    draft.block()
-    return (draft as DraftSpi).`{resolve}`() as T
-}
-
-suspend fun <T: Immutable, D: AsyncDraft<T>> newAsync(
-    draftType: KClass<D>,
-    base: T? = null,
-    block: suspend D.() -> Unit
-): T {
-    val ctx = AsyncDraftContext()
-    val draft = ctx.createDraft(draftType, base) as D
-    draft.block()
-    return (draft as DraftSpi).`{resolve}`() as T
+    fun <X: Immutable> newAsync(type: KClass<X>) =
+        AsyncDraftCreator(type)
 }
 
 private val objectMapper = immutableObjectMapper()
+

@@ -11,6 +11,7 @@ import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import org.babyfish.graphql.provider.kimmer.new
+import org.babyfish.graphql.provider.kimmer.produce
 
 
 class ImmutableDeserializer(type: Class<out Immutable>): StdDeserializer<Immutable>(type) {
@@ -23,12 +24,10 @@ class ImmutableDeserializer(type: Class<out Immutable>): StdDeserializer<Immutab
         val rawClass = handledType()
         val type = ImmutableType.fromAnyType(rawClass)
             ?: throw JsonMappingException(jp, "Cannot deserialize the object whose type is '${rawClass.name}'")
-        val syncDraftType = type.draftInfo.syncType
-            ?: throw JsonMappingException(jp, "The immutable type '${type.kotlinType.qualifiedName}' is abstract")
 
         val node: JsonNode = jp.codec.readTree(jp)
 
-        return new(syncDraftType.kotlin) {
+        return produce(type.kotlinType) {
             for (prop in type.props.values) {
                 if (node.has(prop.name)) {
                     val value = ctx.readTreeAsValue<Any>(node[prop.name], prop.jacksonType)

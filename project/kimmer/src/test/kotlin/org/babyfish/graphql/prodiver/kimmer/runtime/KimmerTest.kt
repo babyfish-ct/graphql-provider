@@ -1,10 +1,10 @@
 package org.babyfish.graphql.prodiver.kimmer.runtime
 
 import com.fasterxml.jackson.core.type.TypeReference
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.babyfish.graphql.prodiver.kimmer.*
 import org.babyfish.graphql.provider.kimmer.Immutable
+import org.babyfish.graphql.provider.kimmer.SyncCreator
 import org.babyfish.graphql.provider.kimmer.jackson.immutableObjectMapper
 import org.babyfish.graphql.provider.kimmer.new
 import org.babyfish.graphql.provider.kimmer.newAsync
@@ -17,18 +17,18 @@ class KimmerTest {
 
     @Test
     fun testSimple() {
-        val book = new(BookDraft.Sync::class) {
+        val book = new(Book::class).by {
             name = "book"
             store().name = "store"
-            authors() += new(AuthorDraft.Sync::class) {
+            authors() += new(Author::class).by {
                 name = "Jim"
             }
-            authors() += new(AuthorDraft.Sync::class) {
+            authors() += new(Author::class).by {
                 name = "Kate"
             }
         }
-        val book2 = new(BookDraft.Sync::class, book) {}
-        val book3 = new(BookDraft.Sync::class, book2) {
+        val book2 = new(Book::class).by(book) {}
+        val book3 = new(Book::class).by(book2) {
             name = "book!"
             name = "book"
             store().name = "store!"
@@ -38,7 +38,7 @@ class KimmerTest {
             authors()[1].name = "Kate!"
             authors()[1].name = "Kate"
         }
-        val book4 = new(BookDraft.Sync::class, book3) {
+        val book4 = new(Book::class).by(book3) {
             name += "!"
             store().name += "!"
             for (author in authors()) {
@@ -97,12 +97,12 @@ class KimmerTest {
 
     @Test
     fun testOneToManyPolymorphic() {
-        val zoo = new(SealedZooDraft.Sync::class) {
+        val zoo = new(SealedZoo::class).by {
             location = "city center"
-            animals() += new(TigerDraft.Sync::class) {
+            animals() += new(Tiger::class).by {
                 weight = 600
             }
-            animals() += new(OtterDraft.Sync::class) {
+            animals() += new(Otter::class).by {
                 length = 50
             }
         }
@@ -135,15 +135,15 @@ class KimmerTest {
     fun testManyToOnePolymorphic() {
         val typeReference = object: TypeReference<List<Animal>>() {}
         val animals = listOf(
-            new(TigerDraft.Sync::class) {
+            new(Tiger::class).by {
                 weight = 600
-                zoo = new(SealedZooDraft.Sync::class) {
+                zoo = new(SealedZoo::class).by {
                     location = "city center"
                 }
             },
-            new(OtterDraft.Sync::class) {
+            new(Otter::class).by {
                 length = 50
-                zoo = new(WildZooDraft.Sync::class) {
+                zoo = new(WildZoo::class).by {
                     area = 3000
                 }
             }
@@ -175,7 +175,7 @@ class KimmerTest {
 
     @Test
     fun testPrimitive() {
-        val primitiveInfo = new(PrimitiveInfoDraft.Sync::class) {
+        val primitiveInfo = new(PrimitiveInfo::class).by {
             boolean = true
             char = 'X'
             byte = 23
@@ -198,18 +198,20 @@ class KimmerTest {
         }
     }
 
+
+
     @Test
     fun testAsync() {
         val (book, time) = executeAndCollectTime {
-            newAsync(BookDraft.Async::class) {
+            newAsync(Book::class).by {
                 delay(500)
                 name = "The book"
                 store().name = "The store"
-                authors() += newAsync(AuthorDraft.Async::class) {
+                authors() += newAsync(Author::class).by {
                     delay(500)
                     name = "Jim"
                 }
-                authors() += newAsync(AuthorDraft.Async::class) {
+                authors() += newAsync(Author::class).by {
                     delay(500)
                     name = "Kate"
                 }
@@ -222,7 +224,7 @@ class KimmerTest {
             book.toString()
         }
         val (book2, time2) = executeAndCollectTime {
-            newAsync(BookDraft.Async::class, book) {
+            newAsync(Book::class).by(book) {
                 name += "!"
                 store().name += "!"
                 delay(500)

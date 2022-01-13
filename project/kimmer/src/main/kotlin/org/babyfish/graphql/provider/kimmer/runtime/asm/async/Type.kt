@@ -32,7 +32,7 @@ internal fun ClassVisitor.writeType(type: ImmutableType) {
 
     writeConstructor(args)
     writeProxyMethods(args)
-    writeNewAsync(args)
+    writeNew()
 
     visitEnd()
 }

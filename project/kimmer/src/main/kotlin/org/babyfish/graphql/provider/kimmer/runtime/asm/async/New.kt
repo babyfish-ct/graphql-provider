@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.kimmer.runtime.asm.sync
+package org.babyfish.graphql.provider.kimmer.runtime.asm.async
 
 import org.babyfish.graphql.provider.kimmer.runtime.asm.KCLASS_DESCRIPTOR
 import org.babyfish.graphql.provider.kimmer.runtime.asm.writeMethod
@@ -9,7 +9,7 @@ internal fun ClassVisitor.writeNew() {
 
     writeMethod(
         Opcodes.ACC_PUBLIC,
-        "new-IaNvmcQ",
+        "newAsync-9k1ZQyY",
         "($KCLASS_DESCRIPTOR)$KCLASS_DESCRIPTOR"
     ) {
         visitVarInsn(Opcodes.ALOAD, 1)
