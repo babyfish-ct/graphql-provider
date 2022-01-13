@@ -44,12 +44,17 @@ fun <T: Immutable> produce(
     draftContextLocal
         .get()
         ?.let {
-            produce(it, type, base, block)
+            it.createDraft(type, base).apply {
+                block()
+            } as T
         } ?: SyncDraftContext()
         .let {
             draftContextLocal.set(it)
             try {
-                produce(it, type, base, block)
+                it.createDraft(type, base).let { draft ->
+                    draft.block()
+                    (draft as DraftSpi).`{resolve}`() as T
+                } as T
             } finally {
                 draftContextLocal.remove()
             }
@@ -70,17 +75,6 @@ fun <T: Immutable, D: SyncDraft<T>> produceDraft(
             "'produceDraft' can only be used in the lambda of 'produce'"
         )
 
-private inline fun <T: Immutable> produce(
-    ctx: SyncDraftContext,
-    type: KClass<T>,
-    base: T?,
-    block: Draft<T>.() -> Unit
-): T {
-    val draft = ctx.createDraft(type, base)
-    draft.block()
-    return (draft as DraftSpi).`{resolve}`() as T
-}
-
 private val draftContextLocal = ThreadLocal<SyncDraftContext>()
 
 suspend fun <T: Immutable> produceAsync(
@@ -89,10 +83,15 @@ suspend fun <T: Immutable> produceAsync(
     block: suspend Draft<T>.() -> Unit
 ): T =
     currentCoroutineContext()[DraftContextElement]?.ctx?.let {
-        produceAsync(it, type, base, block)
+        it.createDraft(type, base).apply {
+            block()
+        } as T
     } ?: AsyncDraftContext().let {
         withContext(DraftContextElement(it)) {
-            produceAsync(it, type, base, block)
+            it.createDraft(type, base).let { draft ->
+                draft.block()
+                (draft as DraftSpi).`{resolve}`() as T
+            }
         }
     }
 
@@ -110,17 +109,6 @@ suspend fun <T: Immutable, D: AsyncDraft<T>> produceDraftAsync(
         } ?: throw UnsupportedOperationException(
         "'produceDraftAsync' can only be used in the lambda of 'produceAsync'"
     )
-
-private suspend inline fun <T: Immutable> produceAsync(
-    ctx: AsyncDraftContext,
-    type: KClass<T>,
-    base: T?,
-    block: suspend Draft<T>.() -> Unit
-): T {
-    val draft = ctx.createDraft(type, base)
-    draft.block()
-    return (draft as DraftSpi).`{resolve}`() as T
-}
 
 private data class DraftContextElement(
     val ctx: AsyncDraftContext
