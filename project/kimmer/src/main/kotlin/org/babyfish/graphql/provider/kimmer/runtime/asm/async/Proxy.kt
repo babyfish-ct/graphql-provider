@@ -4,7 +4,6 @@ import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.kimmer.runtime.DraftSpi
 import org.babyfish.graphql.provider.kimmer.runtime.asm.*
 import org.babyfish.graphql.provider.kimmer.runtime.asm.DRAFT_SPI_INTERNAL_NAME
-import org.babyfish.graphql.provider.kimmer.runtime.asm.rawDraftName
 import org.babyfish.graphql.provider.kimmer.runtime.asm.visitLoad
 import org.babyfish.graphql.provider.kimmer.runtime.asm.writeMethod
 import org.springframework.asm.ClassVisitor
@@ -59,14 +58,20 @@ private fun ClassVisitor.writeProxyProp(
         getterDesc,
         getterSignature
     ) {
-        visitGetRawDraft(args)
-        visitMethodInsn(
-            Opcodes.INVOKEVIRTUAL,
-            args.rawDraftImplInternalName,
-            getter.name,
-            getterDesc,
-            false
-        )
+        val lockSlot = 1
+        val resultSlot = 2
+        visitLock(lockSlot, args) {
+            visitGetRawDraft(args)
+            visitMethodInsn(
+                Opcodes.INVOKEVIRTUAL,
+                args.rawDraftImplInternalName,
+                getter.name,
+                getterDesc,
+                false
+            )
+            visitStore(prop.returnType.java, resultSlot)
+        }
+        visitLoad(prop.returnType.java, resultSlot)
         visitReturn(prop.returnType.java)
     }
 
@@ -76,15 +81,18 @@ private fun ClassVisitor.writeProxyProp(
         setterDesc,
         setterSignature
     ) {
-        visitGetRawDraft(args)
-        visitLoad(prop.returnType.java, 1)
-        visitMethodInsn(
-            Opcodes.INVOKEVIRTUAL,
-            args.rawDraftImplInternalName,
-            setterName,
-            setterDesc,
-            false
-        )
+        val lockSlot = 2
+        visitLock(lockSlot, args) {
+            visitGetRawDraft(args)
+            visitLoad(prop.returnType.java, 1)
+            visitMethodInsn(
+                Opcodes.INVOKEVIRTUAL,
+                args.rawDraftImplInternalName,
+                setterName,
+                setterDesc,
+                false
+            )
+        }
         visitInsn(Opcodes.RETURN)
     }
 
@@ -104,14 +112,20 @@ private fun ClassVisitor.writeProxyProp(
             funDesc,
             funSignature
         ) {
-            visitGetRawDraft(args)
-            visitMethodInsn(
-                Opcodes.INVOKEVIRTUAL,
-                args.rawDraftImplInternalName,
-                prop.name,
-                funDesc,
-                false
-            )
+            val lockSlot = 1
+            val resultSlot = 2
+            visitLock(lockSlot, args) {
+                visitGetRawDraft(args)
+                visitMethodInsn(
+                    Opcodes.INVOKEVIRTUAL,
+                    args.rawDraftImplInternalName,
+                    prop.name,
+                    funDesc,
+                    false
+                )
+                visitStore(prop.returnType.java, resultSlot)
+            }
+            visitLoad(prop.returnType.java, resultSlot)
             visitReturn(prop.returnType.java)
         }
     }
@@ -128,36 +142,60 @@ private fun ClassVisitor.writeProxyMethod(
         method.name,
         desc
     ) {
-        visitGetRawDraft(args)
-        if (rawType !== null) {
-            visitTypeInsn(Opcodes.CHECKCAST, rawType.internalName)
+        val lockSlot = Type.getArgumentsAndReturnSizes(desc) shr 2
+        val resultSlot = lockSlot + 1
+        visitLock(lockSlot, args) {
+            visitGetRawDraft(args)
+            if (rawType !== null) {
+                visitTypeInsn(Opcodes.CHECKCAST, rawType.internalName)
+            }
+            var local = 1
+            for (parameterType in method.parameterTypes) {
+                visitLoad(parameterType, local)
+                local += parameterType.bytecodeSize
+            }
+            visitMethodInsn(
+                if (rawType?.itf == true) {
+                    Opcodes.INVOKEINTERFACE
+                } else {
+                    Opcodes.INVOKEVIRTUAL
+                },
+                rawType?.internalName ?: args.rawDraftImplInternalName,
+                method.name,
+                desc,
+                rawType?.itf === true
+            )
+            visitStore(method.returnType, resultSlot)
         }
-        var local = 1
-        for (parameterType in method.parameterTypes) {
-            visitLoad(parameterType, local)
-            local += parameterType.bytecodeSize
-        }
-        visitMethodInsn(
-            if (rawType?.itf == true) {
-                Opcodes.INVOKEINTERFACE
-            } else {
-                Opcodes.INVOKEVIRTUAL
-            },
-            rawType?.internalName ?: args.rawDraftImplInternalName,
-            method.name,
-            desc,
-            rawType?.itf === true
-        )
+        visitLoad(method.returnType, resultSlot)
         visitReturn(method.returnType)
     }
 }
 
 private fun MethodVisitor.visitLock(
     lockSlot: Int,
-    write: Boolean,
+    args: GeneratorArgs,
     block: MethodVisitor.() -> Unit
 ) {
+    visitGetRawDraft(args)
+    visitMethodInsn(
+        Opcodes.INVOKEVIRTUAL,
+        args.rawDraftImplInternalName,
+        "{draftContext}",
+        "()$DRAFT_CONTEXT_DESCRIPTOR",
+        false
+    )
+    visitVarInsn(Opcodes.ASTORE, lockSlot)
 
+    visitVarInsn(Opcodes.ALOAD, lockSlot)
+    visitInsn(Opcodes.MONITORENTER)
+    visitTryFinally(
+        lockSlot + 1,
+        block
+    ) {
+        visitVarInsn(Opcodes.ALOAD, lockSlot)
+        visitInsn(Opcodes.MONITOREXIT)
+    }
 }
 
 private val Class<*>.bytecodeSize: Int

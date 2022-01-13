@@ -198,8 +198,6 @@ class KimmerTest {
         }
     }
 
-
-
     @Test
     fun testAsync() {
         val (book, time) = executeAndCollectTime {

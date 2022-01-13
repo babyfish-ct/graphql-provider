@@ -27,8 +27,6 @@ internal val IMMUTABLE_TYPE_DESCRIPTOR = Type.getDescriptor(ImmutableType::class
 
 internal val DRAFT_DESCRIPTOR = Type.getDescriptor(Draft::class.java)
 
-internal val SYNC_DRAFT_DESCRIPTOR = Type.getDescriptor(SyncDraft::class.java)
-
 internal val DRAFT_SPI_INTERNAL_NAME = Type.getInternalName(DraftSpi::class.java)
 
 internal val DRAFT_CONTEXT_INTERNAL_NAME = Type.getInternalName(DraftContext::class.java)

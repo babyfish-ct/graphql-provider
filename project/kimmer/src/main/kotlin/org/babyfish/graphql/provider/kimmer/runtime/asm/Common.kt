@@ -137,38 +137,42 @@ internal fun MethodVisitor.visitThrow(
 }
 
 internal fun MethodVisitor.visitLoad(type: Class<*>, local: Int) {
-    visitVarInsn(
-        when {
-            type === Double::class.javaPrimitiveType -> Opcodes.DLOAD
-            type === Float::class.javaPrimitiveType -> Opcodes.FLOAD
-            type === Long::class.javaPrimitiveType -> Opcodes.LLOAD
-            type.isPrimitive -> Opcodes.ILOAD
-            else -> Opcodes.ALOAD
-        },
-        local
-    )
+    if (type !== Void::class.javaPrimitiveType) {
+        visitVarInsn(
+            when {
+                type === Double::class.javaPrimitiveType -> Opcodes.DLOAD
+                type === Float::class.javaPrimitiveType -> Opcodes.FLOAD
+                type === Long::class.javaPrimitiveType -> Opcodes.LLOAD
+                type.isPrimitive -> Opcodes.ILOAD
+                else -> Opcodes.ALOAD
+            },
+            local
+        )
+    }
 }
 
 internal fun MethodVisitor.visitStore(type: Class<*>, local: Int) {
-    visitVarInsn(
-        when {
-            type === Double::class.javaPrimitiveType -> Opcodes.DSTORE
-            type === Float::class.javaPrimitiveType -> Opcodes.FSTORE
-            type === Long::class.javaPrimitiveType -> Opcodes.LSTORE
-            type.isPrimitive -> Opcodes.ISTORE
-            else -> Opcodes.ASTORE
-        },
-        local
-    )
+    if (type !== Void::class.javaPrimitiveType) {
+        visitVarInsn(
+            when {
+                type === Double::class.javaPrimitiveType -> Opcodes.DSTORE
+                type === Float::class.javaPrimitiveType -> Opcodes.FSTORE
+                type === Long::class.javaPrimitiveType -> Opcodes.LSTORE
+                type.isPrimitive -> Opcodes.ISTORE
+                else -> Opcodes.ASTORE
+            },
+            local
+        )
+    }
 }
 
 internal fun MethodVisitor.visitReturn(type: Class<*>) {
     visitInsn(
         when {
+            type === Void::class.javaPrimitiveType -> Opcodes.RETURN
             type === Double::class.javaPrimitiveType -> Opcodes.DRETURN
             type === Float::class.javaPrimitiveType -> Opcodes.FRETURN
             type === Long::class.javaPrimitiveType -> Opcodes.LRETURN
-            type === Void::class.javaPrimitiveType -> Opcodes.RETURN
             type.isPrimitive -> Opcodes.IRETURN
             else -> Opcodes.ARETURN
         }
@@ -397,9 +401,9 @@ internal fun MethodVisitor.visitChanged(
 }
 
 internal fun MethodVisitor.visitTryFinally(
+    caughtExceptionSlot: Int = 1,
     tryBlock: MethodVisitor.() -> Unit,
     finallyBlock: MethodVisitor.() -> Unit,
-    catchSlot: Int
 ) {
     val startLabel = Label()
     val endLabel = Label()
@@ -409,11 +413,12 @@ internal fun MethodVisitor.visitTryFinally(
     tryBlock()
     visitJumpInsn(Opcodes.GOTO, endLabel)
     visitLabel(handleLabel)
-    visitVarInsn(Opcodes.ASTORE, catchSlot)
+    visitVarInsn(Opcodes.ASTORE, caughtExceptionSlot)
     finallyBlock()
-    visitVarInsn(Opcodes.ALOAD, catchSlot)
+    visitVarInsn(Opcodes.ALOAD, caughtExceptionSlot)
     visitInsn(Opcodes.ATHROW)
     visitLabel(endLabel)
+    finallyBlock()
 }
 
 interface Shallow {
