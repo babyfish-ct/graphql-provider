@@ -15,6 +15,9 @@ internal inline fun draftImplInternalName(immutableType: ImmutableType): String 
 internal inline fun syncDraftImplInternalName(immutableType: ImmutableType): String =
     "${Type.getInternalName(immutableType.kotlinType.java)}{SyncDraftImplementation}"
 
+internal inline fun asyncDraftImplInternalName(immutableType: ImmutableType): String =
+    "${Type.getInternalName(immutableType.kotlinType.java)}{AsyncDraftImplementation}"
+
 internal inline fun loadedName(type: ImmutableProp): String =
     "${type.name}{Loaded}"
 
@@ -26,6 +29,9 @@ internal inline fun baseName(): String =
 
 internal inline fun modifiedName(): String =
     "modified"
+
+internal inline fun rawDraftName(): String =
+    "rawDraft"
 
 internal fun ClassLoader.defineClass(bytecode: ByteArray): Class<*> =
     DEFINE_CLASS.invoke(this, bytecode, 0, bytecode.size) as Class<*>
@@ -162,8 +168,8 @@ internal fun MethodVisitor.visitReturn(type: Class<*>) {
             type === Double::class.javaPrimitiveType -> Opcodes.DRETURN
             type === Float::class.javaPrimitiveType -> Opcodes.FRETURN
             type === Long::class.javaPrimitiveType -> Opcodes.LRETURN
+            type === Void::class.javaPrimitiveType -> Opcodes.RETURN
             type.isPrimitive -> Opcodes.IRETURN
-            type === Void::class.java -> Opcodes.RETURN
             else -> Opcodes.ARETURN
         }
     )

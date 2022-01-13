@@ -1,11 +1,11 @@
-package org.babyfish.graphql.provider.kimmer.runtime
+package org.babyfish.graphql.provider.kimmer.runtime.list
 
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 open class LockedList<E>(
-    private val target: MutableList<E>,
+    protected val target: MutableList<E>,
     private val rwl: ReentrantReadWriteLock
 ): MutableList<E> {
 

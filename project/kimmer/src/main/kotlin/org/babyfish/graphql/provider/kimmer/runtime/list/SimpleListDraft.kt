@@ -1,10 +1,12 @@
-package org.babyfish.graphql.provider.kimmer.runtime
+package org.babyfish.graphql.provider.kimmer.runtime.list
 
 import org.babyfish.graphql.provider.kimmer.Immutable
+import org.babyfish.graphql.provider.kimmer.runtime.DraftContext
 import kotlin.reflect.full.isSubclassOf
 
-internal class ListDraft<E: Immutable>(
-    val draftContext: DraftContext, base: List<E>
+internal class SimpleListDraft<E: Immutable>(
+    override val draftContext: DraftContext,
+    base: List<E>
 ): ListProxy<E?>(
     base,
     object: ListElementHandler<E?> {
@@ -27,4 +29,4 @@ internal class ListDraft<E: Immutable>(
             return a !== b
         }
     }
-)
+), ListDraft<E>

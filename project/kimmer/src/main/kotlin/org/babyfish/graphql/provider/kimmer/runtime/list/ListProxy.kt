@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.kimmer.runtime
+package org.babyfish.graphql.provider.kimmer.runtime.list
 
 internal open class ListProxy<E>(
     private val base: List<E>,

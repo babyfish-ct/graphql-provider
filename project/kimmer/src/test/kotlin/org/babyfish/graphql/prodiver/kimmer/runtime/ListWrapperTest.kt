@@ -1,7 +1,7 @@
 package org.babyfish.graphql.prodiver.kimmer.runtime
 
-import org.babyfish.graphql.provider.kimmer.runtime.ListProxy
-import org.babyfish.graphql.provider.kimmer.runtime.LockedList
+import org.babyfish.graphql.provider.kimmer.runtime.list.ListProxy
+import org.babyfish.graphql.provider.kimmer.runtime.list.LockedList
 import org.junit.Test
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.test.assertFailsWith

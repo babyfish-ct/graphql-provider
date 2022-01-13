@@ -5,7 +5,7 @@ import org.babyfish.graphql.provider.kimmer.runtime.asm.*
 import org.babyfish.graphql.provider.kimmer.runtime.asm.DRAFT_CONTEXT_DESCRIPTOR
 import org.babyfish.graphql.provider.kimmer.runtime.asm.IMMUTABLE_DESCRIPTOR
 import org.babyfish.graphql.provider.kimmer.runtime.asm.KCLASS_DESCRIPTOR
-import org.babyfish.graphql.provider.kimmer.runtime.asm.KFUNCTION1_DESCRITPOR
+import org.babyfish.graphql.provider.kimmer.runtime.asm.KFUNCTION1_DESCRIPTOR
 import org.babyfish.graphql.provider.kimmer.runtime.asm.SYNC_DRAFT_DESCRIPTOR
 import org.babyfish.graphql.provider.kimmer.runtime.asm.writeMethod
 import org.springframework.asm.ClassVisitor
@@ -16,7 +16,7 @@ internal fun ClassVisitor.writeNew(type: ImmutableType) {
     writeMethod(
         Opcodes.ACC_PUBLIC,
         "new",
-        "($KCLASS_DESCRIPTOR$IMMUTABLE_DESCRIPTOR$KFUNCTION1_DESCRITPOR)$SYNC_DRAFT_DESCRIPTOR"
+        "($KCLASS_DESCRIPTOR$IMMUTABLE_DESCRIPTOR$KFUNCTION1_DESCRIPTOR)$SYNC_DRAFT_DESCRIPTOR"
     ) {
 
         val draftSlot = 4

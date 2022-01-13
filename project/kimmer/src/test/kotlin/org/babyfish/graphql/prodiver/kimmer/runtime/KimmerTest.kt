@@ -1,10 +1,13 @@
 package org.babyfish.graphql.prodiver.kimmer.runtime
 
 import com.fasterxml.jackson.core.type.TypeReference
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.babyfish.graphql.prodiver.kimmer.*
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.jackson.immutableObjectMapper
 import org.babyfish.graphql.provider.kimmer.new
+import org.babyfish.graphql.provider.kimmer.newAsync
 import org.babyfish.graphql.provider.kimmer.runtime.UnloadedException
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -193,5 +196,54 @@ class KimmerTest {
         expect(primitiveInfo) {
             deserializedPrimitiveInfo
         }
+    }
+
+    @Test
+    fun testAsync() {
+        val (book, time) = executeAndCollectTime {
+            newAsync(BookDraft.Async::class) {
+                delay(500)
+                name = "The book"
+                store().name = "The store"
+                authors() += newAsync(AuthorDraft.Async::class) {
+                    delay(500)
+                    name = "Jim"
+                }
+                authors() += newAsync(AuthorDraft.Async::class) {
+                    delay(500)
+                    name = "Kate"
+                }
+            }
+        }
+        expect(true) {
+            time >= 1500
+        }
+        expect("""{"authors":[{"name":"Jim"},{"name":"Kate"}],"name":"The book","store":{"name":"The store"}}""") {
+            book.toString()
+        }
+        val (book2, time2) = executeAndCollectTime {
+            newAsync(BookDraft.Async::class, book) {
+                name += "!"
+                store().name += "!"
+                delay(500)
+                for (author in authors()) {
+                    delay(500)
+                    author.name += "!"
+                }
+            }
+        }
+        expect(true) {
+            time2 >= 1500
+        }
+        expect("""{"authors":[{"name":"Jim!"},{"name":"Kate!"}],"name":"The book!","store":{"name":"The store!"}}""") {
+            book2.toString()
+        }
+    }
+
+    private fun <T> executeAndCollectTime(block: suspend () -> T): Pair<T, Long> {
+        val start = System.currentTimeMillis()
+        return runBlocking {
+            block()
+        } to System.currentTimeMillis() - start
     }
 }

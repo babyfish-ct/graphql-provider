@@ -7,6 +7,7 @@ import org.babyfish.graphql.provider.kimmer.SyncDraft
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
 import org.babyfish.graphql.provider.kimmer.runtime.asm.*
 import org.babyfish.graphql.provider.kimmer.runtime.asm.BYTECODE_VERSION
+import org.babyfish.graphql.provider.kimmer.runtime.asm.async.asyncDraftImplementationOf
 import org.babyfish.graphql.provider.kimmer.runtime.asm.draft.draftImplementationOf
 import org.babyfish.graphql.provider.kimmer.runtime.asm.impl.implementationOf
 import org.babyfish.graphql.provider.kimmer.runtime.asm.implInternalName
@@ -21,7 +22,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.reflect.KClass
-import kotlin.reflect.jvm.javaMethod
 
 internal interface Factory<T: Immutable> {
     fun create(): T
@@ -70,7 +70,11 @@ private fun createFactory(draftType: Class<*>): Factory<*> {
     }
     implementationOf(immutableType.kotlinType.java)
     draftImplementationOf(immutableType.kotlinType.java)
-    syncDraftImplementationOf(immutableType.kotlinType.java)
+    if (isAsync) {
+        asyncDraftImplementationOf(immutableType.kotlinType.java)
+    } else {
+        syncDraftImplementationOf(immutableType.kotlinType.java)
+    }
 
     val factoryType = createFactoryImplType(immutableType, isAsync)
     return factoryType.getConstructor().newInstance() as Factory<*>
@@ -85,7 +89,13 @@ private fun createFactoryImplType(
             visit(
                 BYTECODE_VERSION,
                 Opcodes.ACC_PUBLIC,
-                "${Type.getInternalName(immutableType.kotlinType.java)}{Factory}",
+                "${Type.getInternalName(immutableType.kotlinType.java)}${
+                    if (isAsync) {
+                        "Async"
+                    } else {
+                        "Sync"
+                    }
+                }{Factory}",
                 null,
                 "java/lang/Object",
                 arrayOf(Type.getInternalName(Factory::class.java))
@@ -145,7 +155,7 @@ private fun ClassVisitor.writeCreateDraft(
     isAsync: Boolean
 ) {
     val internalName = if (isAsync) {
-        ""
+        asyncDraftImplInternalName(immutableType)
     } else {
         syncDraftImplInternalName(immutableType)
     }

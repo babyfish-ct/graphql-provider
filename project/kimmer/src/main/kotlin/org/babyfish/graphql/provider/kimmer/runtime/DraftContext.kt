@@ -1,11 +1,12 @@
 package org.babyfish.graphql.provider.kimmer.runtime
 
-import org.babyfish.graphql.provider.kimmer.AsyncDraft
 import org.babyfish.graphql.provider.kimmer.Draft
 import org.babyfish.graphql.provider.kimmer.Immutable
 import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
+import org.babyfish.graphql.provider.kimmer.runtime.list.ListDraft
+import org.babyfish.graphql.provider.kimmer.runtime.list.LockedListDraft
+import org.babyfish.graphql.provider.kimmer.runtime.list.SimpleListDraft
 import java.util.*
-import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.reflect.KClass
 
@@ -64,7 +65,7 @@ internal abstract class AbstractDraftContext: DraftContext {
             return list as MutableList<E>
         }
         return listDraftMap.computeIfAbsent(list) {
-            ListDraft(this, list)
+            this.createListDraft(list)
         } as MutableList<E>
     }
 
@@ -102,6 +103,8 @@ internal abstract class AbstractDraftContext: DraftContext {
     }
 
     protected abstract fun createFactory(immutableType: ImmutableType): Factory<*>
+
+    protected abstract fun createListDraft(list: List<*>): ListDraft<*>
 }
 
 internal class SyncDraftContext: AbstractDraftContext() {
@@ -111,15 +114,22 @@ internal class SyncDraftContext: AbstractDraftContext() {
             immutableType.draftInfo.syncType
                 ?: throw IllegalArgumentException("The immutable type '${immutableType.kotlinType.qualifiedName}' is abstract")
         )
+
+    override fun createListDraft(list: List<*>): ListDraft<*> =
+        SimpleListDraft(this, list as List<Immutable>)
 }
 
 internal class AsyncDraftContext: AbstractDraftContext() {
 
-    private val readWriteLock: ReadWriteLock = ReentrantReadWriteLock()
+    internal val readWriteLock = ReentrantReadWriteLock()
 
     override fun createFactory(immutableType: ImmutableType): Factory<*> =
         Factory.of(
             immutableType.draftInfo.asyncType
                 ?: throw IllegalArgumentException("The immutable type '${immutableType.kotlinType.qualifiedName}' is abstract")
         )
+
+    override fun createListDraft(list: List<*>): ListDraft<*> {
+        return LockedListDraft(this, list as List<Immutable>)
+    }
 }
