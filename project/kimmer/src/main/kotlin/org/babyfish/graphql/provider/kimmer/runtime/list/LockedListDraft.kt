@@ -9,7 +9,7 @@ internal class LockedListDraft<E: Immutable>(
     base: List<E>
 ): LockedList<E?>(
     SimpleListDraft(draftContext, base),
-    draftContext.readWriteLock
+    draftContext
 ), ListDraft<E> {
 
     override val draftContext: DraftContext

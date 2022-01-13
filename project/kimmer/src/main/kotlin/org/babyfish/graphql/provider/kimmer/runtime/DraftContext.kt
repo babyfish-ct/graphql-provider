@@ -7,7 +7,6 @@ import org.babyfish.graphql.provider.kimmer.runtime.list.ListDraft
 import org.babyfish.graphql.provider.kimmer.runtime.list.LockedListDraft
 import org.babyfish.graphql.provider.kimmer.runtime.list.SimpleListDraft
 import java.util.*
-import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.reflect.KClass
 
 internal interface DraftContext {
@@ -115,8 +114,6 @@ internal class SyncDraftContext: AbstractDraftContext() {
 }
 
 internal class AsyncDraftContext: AbstractDraftContext() {
-
-    internal val readWriteLock = ReentrantReadWriteLock()
 
     override fun createObjectDraft(obj: Immutable): Draft<*> =
         Factory

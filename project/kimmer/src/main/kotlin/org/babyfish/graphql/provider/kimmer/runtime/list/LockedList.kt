@@ -1,131 +1,121 @@
 package org.babyfish.graphql.provider.kimmer.runtime.list
 
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
-
 open class LockedList<E>(
     protected val target: MutableList<E>,
-    private val rwl: ReentrantReadWriteLock
+    private val mutext: Any
 ): MutableList<E> {
 
-    override fun isEmpty(): Boolean = read {
+    override fun isEmpty(): Boolean = synchronized(mutext) {
         target.isEmpty()
     }
 
     override val size: Int
-        get() = read {
+        get() = synchronized(mutext) {
             target.size
         }
 
-    override fun contains(element: E): Boolean = read {
+    override fun contains(element: E): Boolean = synchronized(mutext) {
         target.contains(element)
     }
 
-    override fun containsAll(elements: Collection<E>): Boolean = read {
+    override fun containsAll(elements: Collection<E>): Boolean = synchronized(mutext) {
         target.containsAll(elements)
     }
 
-    override fun indexOf(element: E): Int = read {
+    override fun indexOf(element: E): Int = synchronized(mutext) {
         target.indexOf(element)
     }
 
-    override fun lastIndexOf(element: E): Int = read {
+    override fun lastIndexOf(element: E): Int = synchronized(mutext) {
         target.lastIndexOf(element)
     }
 
-    override fun get(index: Int): E = read {
+    override fun get(index: Int): E = synchronized(mutext) {
         target[index]
     }
 
-    override fun add(element: E): Boolean = write {
+    override fun add(element: E): Boolean = synchronized(mutext) {
         target.add(element)
     }
 
-    override fun add(index: Int, element: E) = write {
+    override fun add(index: Int, element: E) = synchronized(mutext) {
         target.add(index, element)
     }
 
-    override fun addAll(elements: Collection<E>): Boolean = write {
+    override fun addAll(elements: Collection<E>): Boolean = synchronized(mutext) {
         target.addAll(elements)
     }
 
-    override fun addAll(index: Int, elements: Collection<E>): Boolean = write {
+    override fun addAll(index: Int, elements: Collection<E>): Boolean = synchronized(mutext) {
         target.addAll(index, elements)
     }
 
-    override fun clear() = write {
+    override fun clear() = synchronized(mutext) {
         target.clear()
     }
 
-    override fun remove(element: E): Boolean = write {
+    override fun remove(element: E): Boolean = synchronized(mutext) {
         target.remove(element)
     }
 
-    override fun removeAt(index: Int): E = write {
+    override fun removeAt(index: Int): E = synchronized(mutext) {
         target.removeAt(index)
     }
 
-    override fun removeAll(elements: Collection<E>): Boolean = write {
+    override fun removeAll(elements: Collection<E>): Boolean = synchronized(mutext) {
         target.removeAll(elements)
     }
 
-    override fun retainAll(elements: Collection<E>): Boolean = write {
+    override fun retainAll(elements: Collection<E>): Boolean = synchronized(mutext) {
         target.retainAll(elements)
     }
 
-    override fun set(index: Int, element: E): E = write {
+    override fun set(index: Int, element: E): E = synchronized(mutext) {
         target.set(index, element)
     }
 
-    override fun iterator(): MutableIterator<E> = read {
-        Itr(target.iterator(), rwl)
+    override fun iterator(): MutableIterator<E> = synchronized(mutext) {
+        Itr(target.iterator(), mutext)
     }
 
-    override fun listIterator(): MutableListIterator<E> = read {
-        ListItr(target.listIterator(), rwl)
+    override fun listIterator(): MutableListIterator<E> = synchronized(mutext) {
+        ListItr(target.listIterator(), mutext)
     }
 
-    override fun listIterator(index: Int): MutableListIterator<E> = read {
-        ListItr(target.listIterator(index), rwl)
+    override fun listIterator(index: Int): MutableListIterator<E> = synchronized(mutext) {
+        ListItr(target.listIterator(index), mutext)
     }
 
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> = read {
-        SubList(target.subList(fromIndex, toIndex), rwl)
+    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> = synchronized(mutext) {
+        SubList(target.subList(fromIndex, toIndex), mutext)
     }
 
-    override fun hashCode(): Int = read {
+    override fun hashCode(): Int = synchronized(mutext) {
         target.hashCode()
     }
 
-    override fun equals(other: Any?): Boolean = read {
+    override fun equals(other: Any?): Boolean = synchronized(mutext) {
         target == other
     }
 
-    override fun toString(): String = read {
+    override fun toString(): String = synchronized(mutext) {
         target.toString()
     }
 
-    private inline fun <T> read(block: () -> T): T =
-        rwl.read(block)
-
-    private inline fun <T> write(block: () -> T): T =
-        rwl.write(block)
-
     private abstract class AbstractItr<E>(
-        private val rwl: ReentrantReadWriteLock
+        private val mutex: Any
     ): MutableIterator<E> {
 
-        override fun hasNext(): Boolean = rwl.read {
+        override fun hasNext(): Boolean = synchronized(mutex) {
             target.hasNext()
         }
 
-        override fun next(): E = rwl.write {
+        override fun next(): E = synchronized(mutex) {
             target.next()
         }
 
         override fun remove() {
-            rwl.write {
+            synchronized(mutex) {
                 target.remove()
             }
         }
@@ -135,41 +125,41 @@ open class LockedList<E>(
 
     private class Itr<E>(
         override val target: MutableIterator<E>,
-        private val rwl: ReentrantReadWriteLock
-    ): AbstractItr<E>(rwl)
+        private val mutex: Any
+    ): AbstractItr<E>(mutex)
 
     private class ListItr<E>(
         override val target: MutableListIterator<E>,
-        private val rwl: ReentrantReadWriteLock
-    ): AbstractItr<E>(rwl), MutableListIterator<E> {
+        private val mutex: Any
+    ): AbstractItr<E>(mutex), MutableListIterator<E> {
 
-        override fun nextIndex(): Int = rwl.read {
+        override fun nextIndex(): Int = synchronized(mutex) {
             target.nextIndex()
         }
 
-        override fun hasPrevious(): Boolean = rwl.read {
+        override fun hasPrevious(): Boolean = synchronized(mutex) {
             target.hasPrevious()
         }
 
-        override fun previous(): E = rwl.write {
+        override fun previous(): E = synchronized(mutex) {
             target.previous()
         }
 
-        override fun previousIndex(): Int = rwl.write {
+        override fun previousIndex(): Int = synchronized(mutex) {
             target.previousIndex()
         }
 
-        override fun add(element: E) = rwl.write {
+        override fun add(element: E) = synchronized(mutex) {
             target.add(element)
         }
 
-        override fun set(element: E) = rwl.write {
+        override fun set(element: E) = synchronized(mutex) {
             target.set(element)
         }
     }
 
     private class SubList<E>(
         target: MutableList<E>,
-        rwl: ReentrantReadWriteLock
-    ): LockedList<E>(target, rwl)
+        mutex: Any
+    ): LockedList<E>(target, mutex)
 }
