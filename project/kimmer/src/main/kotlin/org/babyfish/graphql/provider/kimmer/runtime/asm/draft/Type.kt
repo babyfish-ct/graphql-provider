@@ -34,6 +34,12 @@ internal fun ClassVisitor.writeType(args: GeneratorArgs) {
         args.modelImplDescriptor
     )
 
+    writeField(
+        Opcodes.ACC_PRIVATE,
+        resolvingName(),
+        "Z"
+    )
+
     writeConstructor(args)
     for (prop in args.immutableType.props.values) {
         writeGetter(prop, args)

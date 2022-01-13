@@ -33,6 +33,9 @@ internal inline fun modifiedName(): String =
 internal inline fun rawDraftName(): String =
     "rawDraft"
 
+internal inline fun resolvingName(): String =
+    "resolving"
+
 internal fun ClassLoader.defineClass(bytecode: ByteArray): Class<*> =
     DEFINE_CLASS.invoke(this, bytecode, 0, bytecode.size) as Class<*>
 
@@ -408,24 +411,36 @@ internal fun MethodVisitor.visitTryFinally(
     val startLabel = Label()
     val endLabel = Label()
     val handleLabel = Label()
-    visitTryCatchBlock(startLabel, endLabel, handleLabel, "java/lang/Throwable")
+
     visitLabel(startLabel)
-    tryBlock()
+    NonReturnableMethodVisitor(this).tryBlock()
     visitJumpInsn(Opcodes.GOTO, endLabel)
+
     visitLabel(handleLabel)
     visitVarInsn(Opcodes.ASTORE, caughtExceptionSlot)
     finallyBlock()
     visitVarInsn(Opcodes.ALOAD, caughtExceptionSlot)
     visitInsn(Opcodes.ATHROW)
     visitLabel(endLabel)
+
     finallyBlock()
+
+    visitTryCatchBlock(startLabel, handleLabel, handleLabel, "java/lang/Throwable")
 }
 
-interface Shallow {
+internal interface Shallow {
     companion object {
         fun dynamic(block: MethodVisitor.() -> Unit) = Dynamic(block)
         fun static(value: Boolean) = Static(value)
     }
     class Dynamic(val block: MethodVisitor.() -> Unit): Shallow
     class Static(val value: Boolean): Shallow
+}
+
+private class NonReturnableMethodVisitor(mv: MethodVisitor): MethodVisitor(Opcodes.ASM9, mv) {
+    override fun visitInsn(opcode: Int) {
+        if (opcode >= Opcodes.IRETURN && opcode <= Opcodes.RETURN) {
+            throw IllegalArgumentException("returning instrument is not support for the try block of visitTryFinally")
+        }
+    }
 }

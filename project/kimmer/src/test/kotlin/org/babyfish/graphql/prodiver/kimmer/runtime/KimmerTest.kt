@@ -8,6 +8,7 @@ import org.babyfish.graphql.provider.kimmer.SyncCreator
 import org.babyfish.graphql.provider.kimmer.jackson.immutableObjectMapper
 import org.babyfish.graphql.provider.kimmer.new
 import org.babyfish.graphql.provider.kimmer.newAsync
+import org.babyfish.graphql.provider.kimmer.runtime.CircularReferenceException
 import org.babyfish.graphql.provider.kimmer.runtime.UnloadedException
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -245,5 +246,61 @@ class KimmerTest {
         return runBlocking {
             block()
         } to System.currentTimeMillis() - start
+    }
+
+    @Test
+    fun testPrimitiveAsync() {
+        val primitiveInfo = runBlocking {
+            newAsync(PrimitiveInfo::class).by {
+                boolean = true
+                char = 'X'
+                byte = 23
+                short = 234
+                int = 2345
+                long = 23456
+                float = 23456.7F
+                double = 23456.78
+            }
+        }
+        val json = """{"boolean":true,"byte":23,"char":"X","double":23456.78,"float":23456.7,"int":2345,"long":23456,"short":234}"""
+        expect(json) {
+            primitiveInfo.toString()
+        }
+        val deserializedPrimitiveInfo = Immutable.fromString(json, PrimitiveInfo::class)
+        expect(false) {
+            primitiveInfo === deserializedPrimitiveInfo
+        }
+        expect(primitiveInfo) {
+            deserializedPrimitiveInfo
+        }
+    }
+
+    @Test
+    fun testCircularReference() {
+        assertFailsWith<CircularReferenceException> {
+            new(Employee::class).by {
+                supervisor = this
+            }
+        }
+
+        assertFailsWith<CircularReferenceException> {
+            new(Employee::class).by {
+                val self = this
+                supervisor = org.babyfish.graphql.provider.kimmer.new(Employee::class).by {
+                    supervisor = self
+                }
+            }
+        }
+
+        assertFailsWith<CircularReferenceException> {
+            new(Employee::class).by {
+                val self = this
+                supervisor = org.babyfish.graphql.provider.kimmer.new(Employee::class).by {
+                    supervisor = org.babyfish.graphql.provider.kimmer.new(Employee::class).by {
+                        supervisor = self
+                    }
+                }
+            }
+        }
     }
 }

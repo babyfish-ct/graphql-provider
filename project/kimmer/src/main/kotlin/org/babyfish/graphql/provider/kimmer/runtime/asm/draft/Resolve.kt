@@ -12,9 +12,85 @@ import kotlin.reflect.jvm.javaMethod
 
 internal fun ClassVisitor.writeResolve(args: GeneratorArgs) {
 
+    val desc = "()${Type.getDescriptor(Immutable::class.java)}"
     writeMethod(
         Opcodes.ACC_PUBLIC,
         "{resolve}",
+        desc
+    ) {
+
+        visitVarInsn(Opcodes.ALOAD, 0)
+        visitFieldInsn(
+            Opcodes.GETFIELD,
+            args.draftImplInternalName,
+            resolvingName(),
+            "Z"
+        )
+        visitCond(Opcodes.IFEQ) {
+            visitTypeInsn(Opcodes.NEW, CRE_INTERNAL_NAME)
+            visitInsn(Opcodes.DUP)
+            visitMethodInsn(
+                Opcodes.INVOKESPECIAL,
+                CRE_INTERNAL_NAME,
+                "<init>",
+                "()V",
+                false
+            )
+            visitInsn(Opcodes.ATHROW)
+        }
+
+        visitVarInsn(Opcodes.ALOAD, 0)
+        visitInsn(Opcodes.ICONST_1)
+        visitFieldInsn(
+            Opcodes.PUTFIELD,
+            args.draftImplInternalName,
+            resolvingName(),
+            "Z"
+        )
+
+        visitTryFinally(1, {
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitMethodInsn(
+                Opcodes.INVOKEVIRTUAL,
+                args.draftImplInternalName,
+                "{resolveImpl}",
+                desc,
+                false
+            )
+            visitVarInsn(Opcodes.ASTORE, 1)
+        }) {
+            visitVarInsn(Opcodes.ALOAD, 0)
+            visitInsn(Opcodes.ICONST_0)
+            visitFieldInsn(
+                Opcodes.PUTFIELD,
+                args.draftImplInternalName,
+                resolvingName(),
+                "Z"
+            )
+        }
+
+        visitVarInsn(Opcodes.ALOAD, 1)
+        visitInsn(Opcodes.ARETURN)
+
+        visitVarInsn(Opcodes.ALOAD, 0)
+        visitMethodInsn(
+            Opcodes.INVOKEVIRTUAL,
+            args.draftImplInternalName,
+            "{resolveImpl}",
+            desc,
+            false
+        )
+        visitInsn(Opcodes.ARETURN)
+    }
+
+    writeResolveImpl(args)
+}
+
+private fun ClassVisitor.writeResolveImpl(args: GeneratorArgs) {
+
+    writeMethod(
+        Opcodes.ACC_PRIVATE,
+        "{resolveImpl}",
         "()${Type.getDescriptor(Immutable::class.java)}"
     ) {
 

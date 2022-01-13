@@ -82,3 +82,9 @@ interface PrimitiveInfo : Immutable {
     val float: Float
     val double: Double
 }
+
+//////////////////////////////////
+
+interface Employee: Immutable {
+    val supervisor: Employee?
+}

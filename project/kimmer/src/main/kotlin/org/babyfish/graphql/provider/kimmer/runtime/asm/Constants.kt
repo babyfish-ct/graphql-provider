@@ -45,5 +45,5 @@ internal val OBJECT_MAPPER_INTERNAL_NAME = Type.getInternalName(ObjectMapper::cl
 
 internal val OBJECT_MAPPER_DESCRIPTOR = Type.getDescriptor(ObjectMapper::class.java)
 
-
+internal val CRE_INTERNAL_NAME = Type.getInternalName(CircularReferenceException::class.java)
 

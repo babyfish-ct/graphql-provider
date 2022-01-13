@@ -81,7 +81,7 @@ private fun ClassVisitor.writeProxyProp(
         setterDesc,
         setterSignature
     ) {
-        val lockSlot = 2
+        val lockSlot = 1 + Type.getArgumentsAndReturnSizes(setterDesc) shr 2
         visitLock(lockSlot, args) {
             visitGetRawDraft(args)
             visitLoad(prop.returnType.java, 1)
