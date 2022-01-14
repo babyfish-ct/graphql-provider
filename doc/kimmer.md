@@ -87,7 +87,7 @@ val book = new(Book::class).by {
 ```
 2. Create new data based on existing data
 ```kt
-val book2 = new(Book::class). by(book) {
+val book2 = new(Book::class).by(book) {
     name += "!"
     for (author in authors) {
         author.name += "!"
