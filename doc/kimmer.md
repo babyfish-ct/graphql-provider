@@ -30,37 +30,39 @@ interface Author: Node {
 
 ## 2. The gradle plugin of the framework generates mutable data model
 ```kt
-interface NodeDraft<T: Node>: Node, Draft<T> {
-    override var id: String
-    interface Sync: NodeDraft<Node>, SyncDraft<Node>
-    interface Async: NodeDraft<Node>, AsyncDraft<Node>
+public interface BookStoreDraft<T : BookStore> : BookStore, NodeDraft<T> {
+  public override var name: String
+  public override var books: List<Book>
+  public override var avgPrice: BigDecimal
+  public fun books(): MutableList<BookDraft<out Book>>
+  ... other members ...
 }
 
-interface BookStoreDraft<T: BookStore>: BookStore, NodeDraft<T> {
-    override var books: MutableList<BookDraft<out Book>>
-    override var avgPrice: BigDecimal
-    fun books(): MutableList<BookDraft<out Book>> // Get or create
-    interface Sync: BookStoreDraft<BookStore>, SyncDraft<BookStore>
-    interface Async: BookStoreDraft<BookStore>, AsyncDraft<BookStore>
+public interface BookDraft<T : Book> : Book, NodeDraft<T> {
+  public override var name: String
+  public override var price: BigDecimal
+  public override var store: BookStore?
+  public override var authors: List<Author>
+  public fun store(): BookStoreDraft<out BookStore>
+  public fun authors(): MutableList<AuthorDraft<out Author>>
+  ... other members ...
 }
 
-interface BookDraft<T: Book>: Book, NodeDraft<T> {
-    override var name: String
-    override var price: BigDecimal
-    override var store: BookStore?
-    override var authors: MutableList<AuthorDraft<out Author>>
-    fun store(): BookStore // Get or create
-    fun authors(): MutableList<AuthorDraft<out Book>> // Get or create
-    interface Sync: BookDraft<Book>, SyncDraft<Book>
-    interface Async: BookDraft<Book>, AsyncDraft<Book>
+public interface BookDraft<T : Book> : Book, NodeDraft<T> {
+  public override var name: String
+  public override var price: BigDecimal
+  public override var store: BookStore?
+  public override var authors: List<Author>
+  public fun store(): BookStoreDraft<out BookStore>
+  public fun authors(): MutableList<AuthorDraft<out Author>>
+  ... other members ...
 }
 
-interface AuthorDraft<T: Author>: Author, NodeDraft<T> {
-    override var name: String
-    override var books: MutableList<BookDraft<out Book>>
-    fun books(): MutableList<BookDraft<out Book>> // Get or create
-    interface Sync: AuthorDraft<Author>, SyncDraft<Author>
-    interface Async: AuthorDraft<Author>, AsyncDraft<Author>
+public interface AuthorDraft<T : Author> : Author, NodeDraft<T> {
+  public override var name: String
+  public override var books: List<Book>
+  public fun books(): MutableList<BookDraft<out Book>>
+  ... other members ...
 }
 ```
 
