@@ -72,7 +72,7 @@ public interface AuthorDraft<T : Author> : Author, NodeDraft<T> {
 ## 3. Usage
 1. Create new data from scratch
 ```kt
-val book = new(BookDraft.Sync::class) {
+val book = new(Book::class).by {
     id = "00001"
     name = "Learning GraphQL"
     authors() += new(AuthorDraft.Sync::class) {
@@ -87,7 +87,7 @@ val book = new(BookDraft.Sync::class) {
 ```
 2. Create new data based on existing data
 ```kt
-val book2 = new(BookDraft.Sync::class, book) {
+val book2 = new(Book::class). by(book) {
     name += "!"
     for (author in authors) {
         author.name += "!"
