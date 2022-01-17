@@ -1,8 +1,8 @@
 package org.babyfish.graphql.provider.server.meta
 
-import org.babyfish.graphql.provider.kimmer.Connection
-import org.babyfish.graphql.provider.kimmer.Immutable
-import org.babyfish.graphql.provider.kimmer.meta.ImmutableType
+import org.babyfish.kimmer.Connection
+import org.babyfish.kimmer.Immutable
+import org.babyfish.kimmer.meta.ImmutableType
 import org.babyfish.graphql.provider.server.EntityTypeProvider
 import java.lang.IllegalStateException
 import kotlin.reflect.KClass
@@ -70,7 +70,7 @@ internal class EntityTypeImpl(
     override val idProp: EntityProp by lazy {
         val props = declaredProps.values.filter { it.category == EntityProp.Category.ID }
         if (props.isEmpty()) {
-            throw IllegalStateException("No id property is configured for type '${immutableType.name}'")
+            throw IllegalStateException("No id property is configured for type '${immutableType.qualifiedName}'")
         }
         props[0]
     }

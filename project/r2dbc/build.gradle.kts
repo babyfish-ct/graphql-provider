@@ -17,7 +17,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("io.r2dbc:r2dbc-spi:0.9.0.RELEASE")
+    api("io.r2dbc:r2dbc-spi:0.9.0.RELEASE")
 
     testImplementation(kotlin("test"))
     testImplementation("io.r2dbc:r2dbc-h2:0.9.0.M1")

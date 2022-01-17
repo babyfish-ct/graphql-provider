@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.server.cfg
 
-import org.babyfish.graphql.provider.kimmer.Connection
-import org.babyfish.graphql.provider.kimmer.Immutable
+import org.babyfish.kimmer.Connection
+import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.server.meta.EntityPropImpl
 import org.babyfish.graphql.provider.server.meta.RedisDependency
 import kotlin.reflect.KClass

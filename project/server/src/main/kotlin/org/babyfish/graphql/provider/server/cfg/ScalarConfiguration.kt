@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.server.cfg
 
+import org.babyfish.graphql.provider.server.cfg.db.ColumnConfiguration
 import org.babyfish.graphql.provider.server.meta.EntityPropImpl
 
 class ScalarConfiguration<T> internal constructor(
@@ -11,10 +12,3 @@ class ScalarConfiguration<T> internal constructor(
     }
 }
 
-class ColumnConfiguration<T> internal constructor(
-    column: EntityPropImpl.ColumnImpl
-) : AbstractColumnConfiguration<T>(column) {
-    fun nullable(value: Boolean = true) {
-        column.nullable = value
-    }
-}

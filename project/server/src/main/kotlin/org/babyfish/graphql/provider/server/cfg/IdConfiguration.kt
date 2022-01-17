@@ -1,8 +1,9 @@
 package org.babyfish.graphql.provider.server.cfg
 
+import org.babyfish.graphql.provider.server.cfg.db.IdColumnConfiguration
 import org.babyfish.graphql.provider.server.meta.EntityPropImpl
 
-@Configuration
+@GraphQLProviderConfiguration
 class IdConfiguration<T> internal constructor(
     private val entityProp: EntityPropImpl
 ) {
@@ -11,7 +12,3 @@ class IdConfiguration<T> internal constructor(
         IdColumnConfiguration<T>(entityProp.column!!).block()
     }
 }
-
-class IdColumnConfiguration<T> internal constructor(
-    column: EntityPropImpl.ColumnImpl
-) : AbstractColumnConfiguration<T>(column)

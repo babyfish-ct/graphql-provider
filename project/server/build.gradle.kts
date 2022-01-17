@@ -18,9 +18,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.0")
 
     implementation("org.springframework.boot:spring-boot-autoconfigure:2.6.2")
-    implementation("io.r2dbc:r2dbc-spi:0.9.0.RELEASE")
 
-    implementation(project(":graphql-provider-kimmer"))
+    implementation("org.babyfish.kimmer:kimmer:0.0.2")
+    implementation(project(":graphql-provider-r2dbc"))
 
     testImplementation(kotlin("test"))
 }

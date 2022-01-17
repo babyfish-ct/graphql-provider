@@ -1,6 +1,6 @@
 package org.babyfish.graphql.provider.server.meta
 
-import org.babyfish.graphql.provider.kimmer.Immutable
+import org.babyfish.kimmer.Immutable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

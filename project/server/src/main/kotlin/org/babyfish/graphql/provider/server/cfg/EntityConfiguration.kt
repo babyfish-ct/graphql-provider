@@ -1,13 +1,13 @@
 package org.babyfish.graphql.provider.server.cfg
 
-import org.babyfish.graphql.provider.kimmer.Connection
-import org.babyfish.graphql.provider.kimmer.Immutable
+import org.babyfish.kimmer.Connection
+import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.server.meta.EntityTypeImpl
 import org.babyfish.graphql.provider.server.meta.EntityProp
 import org.babyfish.graphql.provider.server.meta.EntityPropImpl
 import kotlin.reflect.KProperty1
 
-@Configuration
+@GraphQLProviderConfiguration
 class EntityConfiguration<E: Any> internal constructor(private val entity: EntityTypeImpl) {
 
     fun db(block: EntityDbConfiguration.() -> Unit) {
@@ -117,7 +117,7 @@ class EntityConfiguration<E: Any> internal constructor(private val entity: Entit
     }
 }
 
-@Configuration
+@GraphQLProviderConfiguration
 class EntityDbConfiguration internal constructor(
     private val database: EntityTypeImpl.DatabaseImpl
 ) {
@@ -126,7 +126,7 @@ class EntityDbConfiguration internal constructor(
     }
 }
 
-@Configuration
+@GraphQLProviderConfiguration
 class EntityGraphQLConfiguration internal constructor(
     private val graphql: EntityTypeImpl.GraphQLImpl
 ) {

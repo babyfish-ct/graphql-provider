@@ -1,11 +1,11 @@
 package org.babyfish.graphql.provider.server
 
-import org.babyfish.graphql.provider.server.cfg.Configuration
+import org.babyfish.graphql.provider.server.cfg.GraphQLProviderConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.annotation.Bean
 
 @ConditionalOnBean(EntityTypeProvider::class)
-@Configuration
+@GraphQLProviderConfiguration
 open class EntityTypeProviderAutoConfiguration {
 
     @Bean

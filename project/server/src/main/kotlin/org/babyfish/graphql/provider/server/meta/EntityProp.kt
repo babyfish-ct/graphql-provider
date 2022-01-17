@@ -1,8 +1,8 @@
 package org.babyfish.graphql.provider.server.meta
 
-import org.babyfish.graphql.provider.kimmer.Connection
-import org.babyfish.graphql.provider.kimmer.Immutable
-import org.babyfish.graphql.provider.kimmer.meta.ImmutableProp
+import org.babyfish.kimmer.Connection
+import org.babyfish.kimmer.Immutable
+import org.babyfish.kimmer.meta.ImmutableProp
 import org.babyfish.graphql.provider.server.EntityTypeProvider
 import kotlin.IllegalArgumentException
 import kotlin.reflect.KClass
