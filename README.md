@@ -7,5 +7,4 @@
 
 ## Table of conents:
 
-1. [kimmer](./doc/kimmer.md)
-2. [configuration](./doc/configuration.md)
+1. [configuration](./doc/configuration.md)
