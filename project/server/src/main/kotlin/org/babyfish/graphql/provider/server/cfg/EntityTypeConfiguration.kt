@@ -1,55 +1,60 @@
 package org.babyfish.graphql.provider.server.cfg
 
+import org.babyfish.graphql.provider.server.cfg.db.EntityTypeDbConfiguration
+import org.babyfish.graphql.provider.server.cfg.graphql.EntityTypeGraphQLConfiguration
 import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable
-import org.babyfish.graphql.provider.server.meta.EntityTypeImpl
+import org.babyfish.graphql.provider.server.meta.impl.EntityTypeImpl
 import org.babyfish.graphql.provider.server.meta.EntityProp
-import org.babyfish.graphql.provider.server.meta.EntityPropImpl
+import org.babyfish.graphql.provider.server.meta.MetadataException
+import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 import kotlin.reflect.KProperty1
 
 @GraphQLProviderConfiguration
-class EntityConfiguration<E: Any> internal constructor(private val entity: EntityTypeImpl) {
+class EntityTypeConfiguration<E: Any> internal constructor(
+    private val entityType: EntityTypeImpl
+) {
 
-    fun db(block: EntityDbConfiguration.() -> Unit) {
-        EntityDbConfiguration(this.entity.database).block()
+    fun db(block: EntityTypeDbConfiguration.() -> Unit) {
+        EntityTypeDbConfiguration(this.entityType.database).block()
     }
 
     fun redis(enabled: Boolean) {
-        this.entity.redis.enabled = enabled
+        this.entityType.redis.enabled = enabled
     }
 
-    fun graphql(block: EntityGraphQLConfiguration.() -> Unit) {
-        EntityGraphQLConfiguration(this.entity.graphql).block()
+    fun graphql(block: EntityTypeGraphQLConfiguration.() -> Unit) {
+        EntityTypeGraphQLConfiguration(this.entityType.graphql).block()
     }
 
     fun <T> id(prop: KProperty1<E, T>, block: (IdConfiguration<T>.() -> Unit)? = null) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entity, EntityProp.Category.ID, prop)
+        val entityProp = EntityPropImpl(entityType, EntityProp.Category.ID, prop)
         block?.let {
             IdConfiguration<T>(entityProp).it()
         }
-        entity.declaredProps[prop.name] = entityProp
+        entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T> scalar(prop: KProperty1<E, T>, block: ScalarConfiguration<T>.() -> Unit) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entity, EntityProp.Category.SCALAR, prop)
+        val entityProp = EntityPropImpl(entityType, EntityProp.Category.SCALAR, prop)
         ScalarConfiguration<T>(entityProp).block()
-        entity.declaredProps[prop.name] = entityProp
+        entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> reference(prop: KProperty1<E, T?>, block: AssociationConfiguration<E, T>.() -> Unit) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entity, EntityProp.Category.REFERENCE, prop)
+        val entityProp = EntityPropImpl(entityType, EntityProp.Category.REFERENCE, prop)
         AssociationConfiguration<E, T>(entityProp).block()
-        entity.declaredProps[prop.name] = entityProp
+        entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> list(prop: KProperty1<E, List<T>>, block: AssociationConfiguration<E, T>.() -> Unit) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entity, EntityProp.Category.LIST, prop)
+        val entityProp = EntityPropImpl(entityType, EntityProp.Category.LIST, prop)
         AssociationConfiguration<E, T>(entityProp).block()
-        entity.declaredProps[prop.name] = entityProp
+        entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> connection(
@@ -57,9 +62,9 @@ class EntityConfiguration<E: Any> internal constructor(private val entity: Entit
         block: AssociationConfiguration<E, T>.() -> Unit
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entity, EntityProp.Category.CONNECTION, prop)
+        val entityProp = EntityPropImpl(entityType, EntityProp.Category.CONNECTION, prop)
         AssociationConfiguration<E, T>(entityProp).block()
-        entity.declaredProps[prop.name] = entityProp
+        entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> mappedReference(
@@ -68,11 +73,11 @@ class EntityConfiguration<E: Any> internal constructor(private val entity: Entit
         block: (MappedAssociationConfiguration<E, T>.() -> Unit)? = null
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entity, EntityProp.Category.REFERENCE, prop, mappedBy)
+        val entityProp = EntityPropImpl(entityType, EntityProp.Category.REFERENCE, prop, mappedBy)
         block?.let {
             MappedAssociationConfiguration<E, T>(entityProp).it()
         }
-        entity.declaredProps[prop.name] = entityProp
+        entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> mappedList(
@@ -81,11 +86,11 @@ class EntityConfiguration<E: Any> internal constructor(private val entity: Entit
         block: (MappedAssociationConfiguration<E, T>.() -> Unit)? = null
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entity, EntityProp.Category.LIST, prop, mappedBy)
+        val entityProp = EntityPropImpl(entityType, EntityProp.Category.LIST, prop, mappedBy)
         block?.let {
             MappedAssociationConfiguration<E, T>(entityProp).it()
         }
-        entity.declaredProps[prop.name] = entityProp
+        entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> mappedConnection(
@@ -94,48 +99,30 @@ class EntityConfiguration<E: Any> internal constructor(private val entity: Entit
         block: (MappedAssociationConfiguration<E, T>.() -> Unit)? = null
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entity, EntityProp.Category.CONNECTION, prop, mappedBy)
+        val entityProp = EntityPropImpl(entityType, EntityProp.Category.CONNECTION, prop, mappedBy)
         block?.let {
             MappedAssociationConfiguration<E, T>(entityProp).it()
         }
-        entity.declaredProps[prop.name] = entityProp
+        entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T> computed(prop: KProperty1<E, T>, block: ComputedConfiguration<E, T>.() -> Unit) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entity, EntityProp.Category.COMPUTED, prop)
+        val entityProp = EntityPropImpl(entityType, EntityProp.Category.COMPUTED, prop)
         block?.let {
             ComputedConfiguration<E, T>(entityProp).it()
         }
-        entity.declaredProps[prop.name] = entityProp
+        entityType.declaredProps[prop.name] = entityProp
     }
 
     private fun validateProp(prop: KProperty1<*, *>) {
-        if (entity.declaredProps.containsKey(prop.name)) {
-            throw IllegalArgumentException("Duplicated configuration for property '${prop.name}'")
+        entityType.declaredProps[prop.name]?.let {
+            if (it.kotlinProp === prop) {
+                throw MetadataException("'$prop' cannot be configured twice")
+            } else {
+                throw MetadataException("Conflict properties: '${prop}' and '$it'")
+            }
         }
     }
 }
 
-@GraphQLProviderConfiguration
-class EntityDbConfiguration internal constructor(
-    private val database: EntityTypeImpl.DatabaseImpl
-) {
-    fun table(tableName: String) {
-        database.userTableName = tableName
-    }
-}
-
-@GraphQLProviderConfiguration
-class EntityGraphQLConfiguration internal constructor(
-    private val graphql: EntityTypeImpl.GraphQLImpl
-) {
-
-    fun defaultBatchSize(value: Int) {
-        graphql.defaultBatchSize = value
-    }
-
-    fun defaultCollectionBatchSize(value: Int) {
-        graphql.defaultCollectionBatchSize = value
-    }
-}

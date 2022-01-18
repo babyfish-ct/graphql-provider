@@ -1,11 +1,11 @@
 package org.babyfish.graphql.provider.server
 
 import org.babyfish.kimmer.Immutable
-import org.babyfish.graphql.provider.server.cfg.EntityConfiguration
-import org.babyfish.graphql.provider.server.meta.EntityTypeImpl
+import org.babyfish.graphql.provider.server.cfg.EntityTypeConfiguration
+import org.babyfish.graphql.provider.server.meta.impl.EntityTypeImpl
 import org.babyfish.graphql.provider.server.meta.EntityType
+import org.babyfish.graphql.provider.server.meta.impl.ResolvingPhase
 import org.springframework.core.GenericTypeResolver
-import java.lang.IllegalStateException
 import kotlin.reflect.KClass
 
 class EntityTypeProvider(
@@ -15,32 +15,37 @@ class EntityTypeProvider(
 
     init {
         val map = mutableMapOf<Class<*>, EntityTypeImpl>()
-        for (assembler in assemblers) {
-            val entityClass = GenericTypeResolver.resolveTypeArgument(
-                assembler::class.java,
+        val assemblerGroups = assemblers.groupBy {
+            GenericTypeResolver.resolveTypeArgument(
+                it::class.java,
                 EntityAssembler::class.java
             ) as Class<out Immutable>
-            if (map.containsKey(entityClass)) {
-                throw IllegalStateException("Duplicated entity assemblers for entity type '${entityClass.name}'")
+        }
+        for (assemblerGroup in assemblerGroups) {
+            val type = assemblerGroup.key
+            val entityImpl = EntityTypeImpl(type.kotlin)
+            for (assembler in assemblerGroup.value) {
+                (assembler as EntityAssembler<Immutable>).apply {
+                    EntityTypeConfiguration<Immutable>(entityImpl).assemble()
+                }
             }
-            val entityImpl = EntityTypeImpl(entityClass.kotlin)
-            (assembler as EntityAssembler<Immutable>).apply {
-                EntityConfiguration<Immutable>(entityImpl).assemble()
-            }
-            map[entityClass] = entityImpl
+            map[type] = entityImpl
         }
         entityTypeMap = map
         for (entityType in map.values) {
-            entityType.resolve(this, EntityTypeImpl.ResolvingPhase.SUPER_TYPE)
+            entityType.resolve(this, ResolvingPhase.SUPER_TYPE)
         }
         for (entityType in map.values) {
-            entityType.resolve(this, EntityTypeImpl.ResolvingPhase.DECLARED_PROPS)
+            entityType.resolve(this, ResolvingPhase.DECLARED_PROPS)
         }
         for (entityType in map.values) {
-            entityType.resolve(this, EntityTypeImpl.ResolvingPhase.PROPS)
+            entityType.resolve(this, ResolvingPhase.PROPS)
         }
         for (entityType in map.values) {
-            entityType.resolve(this, EntityTypeImpl.ResolvingPhase.PROP_DETAIL)
+            entityType.resolve(this, ResolvingPhase.PROP_DETAIL)
+        }
+        for (entityType in map.values) {
+            entityType.resolve(this, ResolvingPhase.ID_PROP)
         }
     }
 

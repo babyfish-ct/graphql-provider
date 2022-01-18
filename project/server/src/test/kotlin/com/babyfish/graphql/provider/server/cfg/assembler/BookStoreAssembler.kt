@@ -4,11 +4,11 @@ import com.babyfish.graphql.provider.server.cfg.Author
 import com.babyfish.graphql.provider.server.cfg.Book
 import com.babyfish.graphql.provider.server.cfg.BookStore
 import org.babyfish.graphql.provider.server.EntityAssembler
-import org.babyfish.graphql.provider.server.cfg.EntityConfiguration
+import org.babyfish.graphql.provider.server.cfg.EntityTypeConfiguration
 
 class BookStoreAssembler: EntityAssembler<BookStore> {
 
-    override fun EntityConfiguration<BookStore>.assemble() {
+    override fun EntityTypeConfiguration<BookStore>.assemble() {
         id(BookStore::id)
         mappedList(BookStore::books, Book::store) {
             redis {
@@ -19,3 +19,8 @@ class BookStoreAssembler: EntityAssembler<BookStore> {
         }
     }
 }
+
+data class Node(
+    val name: String,
+    val childNodes: List<Node>
+)

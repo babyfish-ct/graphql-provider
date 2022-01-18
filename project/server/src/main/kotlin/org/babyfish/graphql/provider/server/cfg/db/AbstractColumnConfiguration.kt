@@ -1,23 +1,23 @@
 package org.babyfish.graphql.provider.server.cfg.db
 
 import org.babyfish.graphql.provider.server.cfg.GraphQLProviderConfiguration
-import org.babyfish.graphql.provider.server.meta.EntityPropImpl
+import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 
 @GraphQLProviderConfiguration
-abstract class AbstractColumnConfiguration<T> internal constructor(internal val column: EntityPropImpl.ColumnImpl) {
-    fun column(columnName: String) {
-        column.userName = columnName
-    }
+abstract class AbstractColumnConfiguration<T> internal constructor(
+    internal val column: EntityPropImpl.ColumnImpl
+) {
+    var columnName: String? by column::userName
 }
 
-fun AbstractColumnConfiguration<out String>.length(length: Int) {
-    column.length = length
-}
+var AbstractColumnConfiguration<String>.length: Int?
+    get() = column.length
+    set(value) { column.length = value }
 
-fun AbstractColumnConfiguration<out Number>.precision(precision: Int) {
-    column.precision = precision
-}
+var AbstractColumnConfiguration<out Number>.precision: Int?
+    get() = column.precision
+    set(value) { column.precision = value }
 
-fun AbstractColumnConfiguration<out Number>.scale(scale: Int) {
-    column.scale = scale
-}
+var AbstractColumnConfiguration<out Number>.scale: Int?
+    get() = column.scale
+    set(value) { column.scale = value }

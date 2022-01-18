@@ -3,8 +3,7 @@ package org.babyfish.graphql.provider.server.cfg
 import org.babyfish.graphql.provider.server.cfg.db.AssociationDbConfiguration
 import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.server.meta.*
-import org.babyfish.graphql.provider.server.meta.EntityPropImpl
-import java.lang.IllegalStateException
+import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 
 @GraphQLProviderConfiguration
 abstract class AbstractAssociationConfiguration<E, T: Immutable> internal constructor(

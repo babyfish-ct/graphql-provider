@@ -2,38 +2,33 @@ package org.babyfish.graphql.provider.server.cfg.db
 
 import org.babyfish.graphql.provider.server.cfg.GraphQLProviderConfiguration
 import org.babyfish.graphql.provider.server.meta.EntityProp
-import org.babyfish.graphql.provider.server.meta.EntityPropImpl
-import org.babyfish.graphql.provider.server.meta.OnDeleteAction
-import java.lang.IllegalStateException
+import org.babyfish.graphql.provider.server.meta.MetadataException
+import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 
 @GraphQLProviderConfiguration
 class AssociationDbConfiguration internal constructor(private val entityProp: EntityPropImpl) {
 
-    fun foreignKey(
-        columnName: String,
-        onDelete: OnDeleteAction = OnDeleteAction.NONE
-    ) {
+    fun foreignKey(block: ForeignKeyConfiguration.() -> Unit) {
         if (entityProp.middleTable !== null) {
-            throw IllegalStateException("Cannot configure foreign key for '${entityProp.kotlinProp.name}' because its middle table has been configured")
+            throw MetadataException("Cannot configure foreign key for '${entityProp}' because its middle table has been configured")
         }
         if (entityProp.category !== EntityProp.Category.REFERENCE) {
-            throw IllegalStateException("Cannot configure foreign key for '${entityProp.kotlinProp.name}' because its category is not ${EntityProp.Category.REFERENCE}")
+            throw MetadataException("Cannot configure foreign key for '${entityProp}' because its category is not reference")
         }
-        val column = entityProp.ColumnImpl()
-        column.userName = columnName
-        column.onDelete = onDelete
-        entityProp.column = column
+        entityProp.column = entityProp.ColumnImpl().also {
+            ForeignKeyConfiguration(it).block()
+        }
     }
 
-    fun middleTable(
-        tableName: String,
-        joinColumn: String,
-        targetJoinColumn: String
-    ) {
+    fun middleTable(block: MiddleTableConfiguration.() -> Unit) {
         if (entityProp.column !== null) {
-            throw IllegalStateException("Cannot configure middle table for '${entityProp.kotlinProp.name}' because its foreign key has been configured")
+            throw MetadataException("Cannot configure middle table for '${entityProp}' because its foreign key has been configured")
         }
-        val middleTable = entityProp.MiddleTableImpl()
-
+        if (!entityProp.isAssociation) {
+            throw MetadataException("Cannot configure foreign key for '${entityProp}' because its category is not association")
+        }
+        val middleTable = entityProp.MiddleTableImpl().also {
+            MiddleTableConfiguration(it).block()
+        }
     }
 }

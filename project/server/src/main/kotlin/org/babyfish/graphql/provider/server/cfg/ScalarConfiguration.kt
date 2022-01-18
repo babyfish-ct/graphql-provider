@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.server.cfg
 
 import org.babyfish.graphql.provider.server.cfg.db.ColumnConfiguration
-import org.babyfish.graphql.provider.server.meta.EntityPropImpl
+import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 
 class ScalarConfiguration<T> internal constructor(
     private val entityProp: EntityPropImpl
