@@ -1,10 +1,10 @@
-package org.babyfish.graphql.provider.server.cfg.db
+package org.babyfish.graphql.provider.server.dsl.db
 
-import org.babyfish.graphql.provider.server.cfg.GraphQLProviderConfiguration
+import org.babyfish.graphql.provider.server.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 
-@GraphQLProviderConfiguration
-class MiddleTableConfiguration internal constructor(
+@GraphQLProviderDSL
+class MiddleTableDSL internal constructor(
     private val middleTable: EntityPropImpl.MiddleTableImpl
 ){
     var tableName: String? by middleTable::userTableName

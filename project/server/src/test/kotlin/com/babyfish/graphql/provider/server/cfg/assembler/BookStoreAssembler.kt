@@ -4,11 +4,11 @@ import com.babyfish.graphql.provider.server.cfg.Author
 import com.babyfish.graphql.provider.server.cfg.Book
 import com.babyfish.graphql.provider.server.cfg.BookStore
 import org.babyfish.graphql.provider.server.EntityAssembler
-import org.babyfish.graphql.provider.server.cfg.EntityTypeConfiguration
+import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
 
 class BookStoreAssembler: EntityAssembler<BookStore> {
 
-    override fun EntityTypeConfiguration<BookStore>.assemble() {
+    override fun EntityTypeDSL<BookStore>.assemble() {
         id(BookStore::id)
         mappedList(BookStore::books, Book::store) {
             redis {

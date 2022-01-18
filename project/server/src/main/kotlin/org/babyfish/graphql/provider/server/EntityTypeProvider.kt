@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.server
 
 import org.babyfish.kimmer.Immutable
-import org.babyfish.graphql.provider.server.cfg.EntityTypeConfiguration
+import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityTypeImpl
 import org.babyfish.graphql.provider.server.meta.EntityType
 import org.babyfish.graphql.provider.server.meta.impl.ResolvingPhase
@@ -26,7 +26,7 @@ class EntityTypeProvider(
             val entityImpl = EntityTypeImpl(type.kotlin)
             for (assembler in assemblerGroup.value) {
                 (assembler as EntityAssembler<Immutable>).apply {
-                    EntityTypeConfiguration<Immutable>(entityImpl).assemble()
+                    EntityTypeDSL<Immutable>(entityImpl).assemble()
                 }
             }
             map[type] = entityImpl

@@ -1,10 +1,10 @@
-package org.babyfish.graphql.provider.server.cfg.graphql
+package org.babyfish.graphql.provider.server.dsl.graphql
 
-import org.babyfish.graphql.provider.server.cfg.GraphQLProviderConfiguration
+import org.babyfish.graphql.provider.server.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityTypeImpl
 
-@GraphQLProviderConfiguration
-class EntityTypeGraphQLConfiguration internal constructor(
+@GraphQLProviderDSL
+class EntityTypeGraphQLDSL internal constructor(
     private val graphql: EntityTypeImpl.GraphQLImpl
 ) {
     var defaultBatchSize: Int? by graphql::defaultBatchSize

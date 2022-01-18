@@ -2,20 +2,21 @@ package org.babyfish.graphql.provider.server.meta
 
 import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KProperty1
+import kotlin.time.Duration
 
 interface EntityProp {
 
     val declaringType: EntityType
 
-    val category: Category
+    val category: EntityPropCategory
 
     val isAssociation: Boolean
         get() = immutableProp.isAssociation
 
     val isMapped: Boolean
-        get() = category == Category.MAPPED_REFERENCE ||
-            category == Category.MAPPED_LIST ||
-            category == Category.MAPPED_CONNECTION
+        get() = category == EntityPropCategory.MAPPED_REFERENCE ||
+            category == EntityPropCategory.MAPPED_LIST ||
+            category == EntityPropCategory.MAPPED_CONNECTION
 
     val immutableProp: ImmutableProp
 
@@ -33,19 +34,7 @@ interface EntityProp {
 
     val middleTable: MiddleTable?
 
-    val redisDependencies: Collection<RedisDependency>?
-
-    enum class Category {
-        ID,
-        SCALAR,
-        REFERENCE,
-        LIST,
-        CONNECTION,
-        MAPPED_REFERENCE,
-        MAPPED_LIST,
-        MAPPED_CONNECTION,
-        COMPUTED
-    }
+    val redis: Redis
 
     interface Column {
         val name: String
@@ -60,6 +49,18 @@ interface EntityProp {
         val tableName: String
         val joinColumnName: String
         val targetJoinColumnName: String
+    }
+
+    interface Redis {
+        val enabled: Boolean
+        val timeout: Duration?
+        val nullTimeout: Duration?
+        val dependencies: Collection<RedisDependency>
+    }
+
+    interface RedisDependency {
+        val prop: EntityProp
+        val dependencies: Collection<RedisDependency>
     }
 }
 

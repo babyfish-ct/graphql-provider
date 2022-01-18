@@ -1,14 +1,10 @@
 package org.babyfish.graphql.provider.server.meta.impl
 
 import org.babyfish.graphql.provider.server.EntityTypeProvider
-import org.babyfish.graphql.provider.server.meta.EntityProp
-import org.babyfish.graphql.provider.server.meta.EntityType
-import org.babyfish.graphql.provider.server.meta.MetadataException
-import org.babyfish.graphql.provider.server.meta.databaseIdentifier
+import org.babyfish.graphql.provider.server.meta.*
 import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableType
-import java.lang.IllegalStateException
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
@@ -78,7 +74,7 @@ internal class EntityTypeImpl(
                 }
                 declaredProps[immutableProp.name] = EntityPropImpl(
                     this,
-                    EntityProp.Category.SCALAR,
+                    EntityPropCategory.SCALAR,
                     immutableProp.kotlinProp
                 )
             }
@@ -99,7 +95,7 @@ internal class EntityTypeImpl(
                     for (superProp in superType.props.values) {
                         val prop = map[superProp.name]
                         if (prop !== null) {
-                            if (superProp.category !== EntityProp.Category.ID) {
+                            if (superProp.category !== EntityPropCategory.ID) {
                                 throw MetadataException(
                                     "Duplicate properties: '$superProp' and '$prop'"
                                 )
@@ -122,7 +118,7 @@ internal class EntityTypeImpl(
 
     private fun resolveIdProp(): EntityProp {
         if (_idProp === null) {
-            val props = declaredProps.values.filter { it.category == EntityProp.Category.ID }
+            val props = declaredProps.values.filter { it.category == EntityPropCategory.ID }
             if (superTypes.isNotEmpty()) {
                 if (props.isNotEmpty()) {
                     throw MetadataException(

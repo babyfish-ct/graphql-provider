@@ -1,9 +1,10 @@
-package org.babyfish.graphql.provider.server.cfg
+package org.babyfish.graphql.provider.server.dsl
 
 import io.r2dbc.spi.Statement
+import org.babyfish.graphql.provider.server.dsl.redis.AbstractRedisDependencyDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 
-class ComputedConfiguration<E, T> internal constructor(
+class ComputedDSL<E, T> internal constructor(
     private val entityProp: EntityPropImpl
 ) {
 
@@ -11,7 +12,7 @@ class ComputedConfiguration<E, T> internal constructor(
 
     fun batchImplementation(block: suspend BatchImplementationContext<E>.() -> List<Pair<Any, T>>) {}
 
-    fun redis(block: RedisConfiguration<E>.() -> Unit) {
+    fun redis(block: AbstractRedisDependencyDSL<E>.() -> Unit) {
 
     }
 }

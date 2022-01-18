@@ -1,11 +1,11 @@
-package org.babyfish.graphql.provider.server.cfg.db
+package org.babyfish.graphql.provider.server.dsl.db
 
-import org.babyfish.graphql.provider.server.cfg.GraphQLProviderConfiguration
+import org.babyfish.graphql.provider.server.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.server.meta.OnDeleteAction
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 
-@GraphQLProviderConfiguration
-class ForeignKeyConfiguration internal constructor(
+@GraphQLProviderDSL
+class ForeignKeyDSL internal constructor(
     private val column: EntityPropImpl.ColumnImpl
 ) {
     var columnName: String? by column::userName

@@ -7,10 +7,11 @@ import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
+import kotlin.time.Duration
 
 internal class EntityPropImpl(
     override val declaringType: EntityType,
-    override val category: EntityProp.Category,
+    override val category: EntityPropCategory,
     kotlinProp: KProperty1<*, *>,
     mappedBy: KProperty1<*, *>? = null
 ): EntityProp {
@@ -29,10 +30,7 @@ internal class EntityPropImpl(
 
     override var middleTable: EntityProp.MiddleTable? = null
 
-    var redisDependencyMap: MutableMap<String, RedisDependencyImpl>? = null
-
-    override val redisDependencies: Collection<RedisDependency>?
-        get() = (redisDependencyMap as Map<String, RedisDependency>?)?.values
+    override var redis = RedisImpl()
 
     fun resolve(provider: EntityTypeProvider) {
         val tgtKtType = immutableProp.targetType?.kotlinType
@@ -49,7 +47,7 @@ internal class EntityPropImpl(
     }
 
     init {
-        if (category == EntityProp.Category.ID || category == EntityProp.Category.SCALAR) {
+        if (category == EntityPropCategory.ID || category == EntityPropCategory.SCALAR) {
             column = ColumnImpl()
         }
         val classifier = kotlinProp.returnType.classifier as? KClass<*>
@@ -58,15 +56,15 @@ internal class EntityPropImpl(
             throw IllegalArgumentException("The property '${kotlinProp}' returns '${classifier.qualifiedName}' but its category is ${category}, this is not allowed")
         }
         when (category) {
-            EntityProp.Category.REFERENCE, EntityProp.Category.MAPPED_REFERENCE ->
+            EntityPropCategory.REFERENCE, EntityPropCategory.MAPPED_REFERENCE ->
                 if (!immutableProp.isReference) {
                     throw IllegalArgumentException("The property '${kotlinProp}' must returns another ${Immutable::class.qualifiedName} when category is $category")
                 }
-            EntityProp.Category.LIST, EntityProp.Category.MAPPED_LIST ->
+            EntityPropCategory.LIST, EntityPropCategory.MAPPED_LIST ->
                 if (!immutableProp.isList) {
                     throw IllegalArgumentException("The property '${kotlinProp}' must returns another ${List::class.qualifiedName} when category is $category")
                 }
-            EntityProp.Category.CONNECTION, EntityProp.Category.MAPPED_CONNECTION ->
+            EntityPropCategory.CONNECTION, EntityPropCategory.MAPPED_CONNECTION ->
                 if (!immutableProp.isConnection) {
                     throw IllegalArgumentException("The property '${kotlinProp}' must returns another ${Connection::class.qualifiedName} when category is $category")
                 }
@@ -133,18 +131,28 @@ internal class EntityPropImpl(
             databaseIdentifier(tgt.kotlinType.simpleName!!) + "_ID"
         }
     }
-
-    class RedisDependencyImpl internal constructor(
-        override val category: RedisDependency.Category,
-        private val kotlinProp: KProperty1<*, *>
-    ): RedisDependency {
-
-        override val dependencies: Collection<RedisDependency>
-            get() = dependencyMap.values
-
-        override val prop: EntityProp
-            get() = TODO("Not yet implemented")
+    
+    internal class RedisImpl: EntityProp.Redis {
 
         var dependencyMap = mutableMapOf<String, RedisDependencyImpl>()
+        
+        override var enabled: Boolean = true
+        override var timeout: Duration? = null
+        override var nullTimeout: Duration? = null
+        override val dependencies: Collection<EntityProp.RedisDependency>
+            get() = dependencyMap.values
+    }
+
+    internal open class RedisDependencyImpl internal constructor(
+        private val kotlinProp: KProperty1<*, *>
+    ): EntityProp.RedisDependency {
+
+        var dependencyMap = mutableMapOf<String, RedisDependencyImpl>()
+
+        override val prop: EntityProp
+            get() = TODO()
+
+        override val dependencies: Collection<EntityProp.RedisDependency>
+            get() = dependencyMap.values
     }
 }
