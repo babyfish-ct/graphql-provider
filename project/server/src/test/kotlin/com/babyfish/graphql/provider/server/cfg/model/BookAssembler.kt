@@ -27,14 +27,6 @@ class BookAssembler: EntityAssembler<Book> {
         }
 
         list(Book::authors) {
-
-            optionalArgument("name", String::class) {
-                where(table[Author::name] ilike it)
-                redis {
-                    dependsOn(Author::name)
-                }
-            }
-
             db {
                 middleTable {
                     tableName = "BOOK_AUTHOR_MAPPING"

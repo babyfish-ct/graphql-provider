@@ -18,11 +18,11 @@ class BookStoreAssembler(
 
         mappedList(BookStore::books, Book::store) {
 
-            argument(
-                "name",
-                String::class
-            ) {
+            optionalArgument("name", String::class) {
                 where(table[Book::name] ilike it)
+            }
+            filter {
+                orderBy(Book::name)
                 redis {
                     dependsOn(Book::name)
                 }

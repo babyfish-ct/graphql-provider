@@ -1,15 +1,7 @@
 package com.babyfish.graphql.provider.server.cfg
 
-import org.babyfish.graphql.provider.server.AbstractQuery
-import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable
 import java.math.BigDecimal
-
-interface Query: AbstractQuery {
-    val findBookStores: Connection<BookStore>
-    val findBooks: Connection<Book>
-    val findAuthors: Connection<Author>
-}
 
 interface Node: Immutable {
     val id: String
