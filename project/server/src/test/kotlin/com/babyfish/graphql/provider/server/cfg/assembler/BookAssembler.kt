@@ -2,7 +2,6 @@ package com.babyfish.graphql.provider.server.cfg.assembler
 
 import com.babyfish.graphql.provider.server.cfg.Author
 import com.babyfish.graphql.provider.server.cfg.Book
-import com.babyfish.graphql.provider.server.cfg.BookStore
 import org.babyfish.graphql.provider.server.EntityAssembler
 import org.babyfish.graphql.provider.server.dsl.ArgumentType
 import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
@@ -10,7 +9,9 @@ import org.babyfish.graphql.provider.server.dsl.db.precision
 import org.babyfish.graphql.provider.server.dsl.db.scale
 import org.babyfish.graphql.provider.server.meta.OnDeleteAction
 import org.babyfish.graphql.provider.server.runtime.ilike
+import org.springframework.stereotype.Component
 
+@Component
 class BookAssembler: EntityAssembler<Book> {
 
     override fun EntityTypeDSL<Book>.assemble() {
@@ -27,12 +28,18 @@ class BookAssembler: EntityAssembler<Book> {
         }
 
         list(Book::authors) {
+
             argument(
                 "name",
                 ArgumentType.of(String::class).asNullable()
             ) {
                 where(table[Author::name] ilike it)
             }
+
+            filter {
+                orderBy(table[Author::name])
+            }
+
             db {
                 middleTable {
                     tableName = "BOOK_AUTHOR_MAPPING"
@@ -40,6 +47,7 @@ class BookAssembler: EntityAssembler<Book> {
                     targetJoinColumnName = "AUTHOR_ID"
                 }
             }
+
             redis {
                 dependsOn(Author::name)
             }

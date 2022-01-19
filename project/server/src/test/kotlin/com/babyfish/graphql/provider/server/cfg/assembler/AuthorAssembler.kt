@@ -6,7 +6,9 @@ import org.babyfish.graphql.provider.server.EntityAssembler
 import org.babyfish.graphql.provider.server.dsl.ArgumentType
 import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
 import org.babyfish.graphql.provider.server.runtime.ilike
+import org.springframework.stereotype.Component
 
+@Component
 class AuthorAssembler: EntityAssembler<Author> {
 
     override fun EntityTypeDSL<Author>.assemble() {
@@ -20,6 +22,10 @@ class AuthorAssembler: EntityAssembler<Author> {
                 ArgumentType.of(String::class).asNullable()
             ) {
                 where(table[Book::name] ilike  it)
+            }
+
+            filter {
+                orderBy(table[Book::name])
             }
 
             redis {
