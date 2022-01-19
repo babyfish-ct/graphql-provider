@@ -1,5 +1,8 @@
 package org.babyfish.graphql.provider.server.dsl
 
+import org.babyfish.graphql.provider.server.dsl.association.CollectionDSL
+import org.babyfish.graphql.provider.server.dsl.association.MappedCollectionDSL
+import org.babyfish.graphql.provider.server.dsl.association.ReferenceDSL
 import org.babyfish.graphql.provider.server.dsl.db.EntityTypeDatabaseDSL
 import org.babyfish.graphql.provider.server.dsl.graphql.EntityTypeGraphQLDSL
 import org.babyfish.kimmer.Connection
@@ -51,56 +54,52 @@ class EntityTypeDSL<E: Immutable> internal constructor(
 
     fun <T: Immutable> reference(
         prop: KProperty1<E, T?>,
-        block: AssociationDSL<E, T>.() -> Unit
+        block: ReferenceDSL.() -> Unit
     ) {
         validateProp(prop)
         val entityProp = EntityPropImpl(entityType, EntityPropCategory.REFERENCE, prop)
-        AssociationDSL<E, T>(entityProp).block()
+        ReferenceDSL(entityProp).block()
         entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> list(
         prop: KProperty1<E, List<T>>,
-        block: AssociationDSL<E, T>.() -> Unit
+        block: CollectionDSL<T>.() -> Unit
     ) {
         validateProp(prop)
         val entityProp = EntityPropImpl(entityType, EntityPropCategory.LIST, prop)
-        AssociationDSL<E, T>(entityProp).block()
+        CollectionDSL<T>(entityProp).block()
         entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> connection(
         prop: KProperty1<E, out Connection<T>>,
-        block: AssociationDSL<E, T>.() -> Unit
+        block: CollectionDSL<T>.() -> Unit
     ) {
         validateProp(prop)
         val entityProp = EntityPropImpl(entityType, EntityPropCategory.CONNECTION, prop)
-        AssociationDSL<E, T>(entityProp).block()
+        CollectionDSL<T>(entityProp).block()
         entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> mappedReference(
         prop: KProperty1<E, T>,
-        mappedBy: KProperty1<T, *>,
-        block: (MappedAssociationDSL<E, T>.() -> Unit)? = null
+        mappedBy: KProperty1<T, *>
     ) {
         validateProp(prop)
         val entityProp = EntityPropImpl(entityType, EntityPropCategory.REFERENCE, prop, mappedBy)
-        block?.let {
-            MappedAssociationDSL<E, T>(entityProp).it()
-        }
         entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> mappedList(
         prop: KProperty1<E, List<T>>,
         mappedBy: KProperty1<T, *>,
-        block: (MappedAssociationDSL<E, T>.() -> Unit)? = null
+        block: (MappedCollectionDSL<T>.() -> Unit)? = null
     ) {
         validateProp(prop)
         val entityProp = EntityPropImpl(entityType, EntityPropCategory.LIST, prop, mappedBy)
         block?.let {
-            MappedAssociationDSL<E, T>(entityProp).it()
+            MappedCollectionDSL<T>(entityProp).it()
         }
         entityType.declaredProps[prop.name] = entityProp
     }
@@ -108,12 +107,12 @@ class EntityTypeDSL<E: Immutable> internal constructor(
     fun <T: Immutable> mappedConnection(
         prop: KProperty1<E, out Connection<T>>,
         mappedBy: KProperty1<T, *>,
-        block: (MappedAssociationDSL<E, T>.() -> Unit)? = null
+        block: (MappedCollectionDSL<T>.() -> Unit)? = null
     ) {
         validateProp(prop)
         val entityProp = EntityPropImpl(entityType, EntityPropCategory.CONNECTION, prop, mappedBy)
         block?.let {
-            MappedAssociationDSL<E, T>(entityProp).it()
+            MappedCollectionDSL<T>(entityProp).it()
         }
         entityType.declaredProps[prop.name] = entityProp
     }

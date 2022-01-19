@@ -10,7 +10,7 @@ class ComputedDSL<E, T> internal constructor(
 
     fun implementation(block: suspend ImplementationContext<E>.() -> T) {}
 
-    fun batchImplementation(block: suspend BatchImplementationContext<E>.() -> List<Pair<Any, T>>) {}
+    fun batchImplementation(block: suspend BatchImplementationContext<E>.() -> Map<out Any, T>) {}
 
     fun redis(block: AbstractRedisDependencyDSL<E>.() -> Unit) {
 
