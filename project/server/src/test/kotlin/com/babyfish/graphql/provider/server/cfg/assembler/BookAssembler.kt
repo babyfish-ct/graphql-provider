@@ -27,19 +27,17 @@ class BookAssembler: EntityAssembler<Book> {
         }
 
         list(Book::authors) {
+            argument(
+                "name",
+                ArgumentType.of(String::class).asNullable()
+            ) {
+                where(table[Author::name] ilike it)
+            }
             db {
                 middleTable {
                     tableName = "BOOK_AUTHOR_MAPPING"
                     joinColumnName = "BOOK_ID"
                     targetJoinColumnName = "AUTHOR_ID"
-                }
-            }
-            filter {
-                argument(
-                    "name",
-                    ArgumentType.of(String::class).asNullable()
-                ) {
-                    where(table[Author::name] ilike it)
                 }
             }
             redis {

@@ -3,10 +3,11 @@ package org.babyfish.graphql.provider.server.dsl
 import io.r2dbc.spi.Statement
 import org.babyfish.graphql.provider.server.dsl.redis.AbstractRedisDependencyDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
+import org.babyfish.kimmer.Immutable
 
-class ComputedDSL<E, T> internal constructor(
-    private val entityProp: EntityPropImpl
-) {
+class ComputedDSL<E: Immutable, T> internal constructor(
+    entityProp: EntityPropImpl
+): ArgumentsDSL<E>(entityProp) {
 
     fun implementation(block: suspend ImplementationContext<E>.() -> T) {}
 

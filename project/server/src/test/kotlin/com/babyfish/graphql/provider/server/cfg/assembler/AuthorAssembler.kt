@@ -15,13 +15,11 @@ class AuthorAssembler: EntityAssembler<Author> {
 
         mappedList(Author::books, Book::authors) {
 
-            filter {
-                argument(
-                    "name",
-                    ArgumentType.of(String::class).asNullable()
-                ) {
-                    where(table[Book::name] ilike  it)
-                }
+            argument(
+                "name",
+                ArgumentType.of(String::class).asNullable()
+            ) {
+                where(table[Book::name] ilike  it)
             }
 
             redis {
