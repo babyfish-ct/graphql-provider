@@ -2,9 +2,11 @@ package org.babyfish.graphql.provider.server.dsl
 
 import io.r2dbc.spi.Statement
 import org.babyfish.graphql.provider.server.dsl.redis.AbstractRedisDependencyDSL
+import org.babyfish.graphql.provider.server.dsl.redis.EntityPropRedisDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 import org.babyfish.kimmer.Immutable
 
+@GraphQLProviderDSL
 class ComputedDSL<E: Immutable, T> internal constructor(
     entityProp: EntityPropImpl
 ): ArgumentsDSL<E>(entityProp) {
@@ -13,7 +15,7 @@ class ComputedDSL<E: Immutable, T> internal constructor(
 
     fun batchImplementation(block: suspend BatchImplementationContext<E>.() -> Map<out Any, T>) {}
 
-    fun redis(block: AbstractRedisDependencyDSL<E>.() -> Unit) {
+    fun redis(block: EntityPropRedisDSL<E>.() -> Unit) {
 
     }
 }

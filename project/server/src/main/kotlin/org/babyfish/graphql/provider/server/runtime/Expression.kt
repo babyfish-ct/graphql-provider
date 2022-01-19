@@ -1,6 +1,5 @@
 package org.babyfish.graphql.provider.server.runtime
 
-import org.babyfish.graphql.provider.server.dsl.ArgumentType
 import kotlin.reflect.KClass
 
 interface Expression<T>
@@ -136,6 +135,5 @@ internal class ValueExpression<T>(
 ): Expression<T>
 
 internal class ArgumentExpression<T>(
-    val name: String,
-    val type: ArgumentType<T>
+    val name: String
 ): Expression<T>

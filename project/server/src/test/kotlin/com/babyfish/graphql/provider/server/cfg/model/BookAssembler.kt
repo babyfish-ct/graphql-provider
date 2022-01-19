@@ -1,9 +1,8 @@
-package com.babyfish.graphql.provider.server.cfg.assembler
+package com.babyfish.graphql.provider.server.cfg.model
 
 import com.babyfish.graphql.provider.server.cfg.Author
 import com.babyfish.graphql.provider.server.cfg.Book
 import org.babyfish.graphql.provider.server.EntityAssembler
-import org.babyfish.graphql.provider.server.dsl.ArgumentType
 import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
 import org.babyfish.graphql.provider.server.dsl.db.precision
 import org.babyfish.graphql.provider.server.dsl.db.scale
@@ -29,15 +28,11 @@ class BookAssembler: EntityAssembler<Book> {
 
         list(Book::authors) {
 
-            argument(
-                "name",
-                ArgumentType.of(String::class).asNullable()
-            ) {
+            optionalArgument("name", String::class) {
                 where(table[Author::name] ilike it)
-            }
-
-            filter {
-                orderBy(table[Author::name])
+                redis {
+                    dependsOn(Author::name)
+                }
             }
 
             db {
@@ -46,10 +41,6 @@ class BookAssembler: EntityAssembler<Book> {
                     joinColumnName = "BOOK_ID"
                     targetJoinColumnName = "AUTHOR_ID"
                 }
-            }
-
-            redis {
-                dependsOn(Author::name)
             }
         }
 

@@ -1,6 +1,5 @@
-package org.babyfish.graphql.provider.server.dsl.association
+package org.babyfish.graphql.provider.server.dsl
 
-import org.babyfish.graphql.provider.server.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.server.dsl.db.ReferenceDatabaseDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 

@@ -1,8 +1,10 @@
 package org.babyfish.graphql.provider.server.dsl.db
 
+import org.babyfish.graphql.provider.server.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.server.meta.MetadataException
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 
+@GraphQLProviderDSL
 open class AssociationDatabaseDSL internal constructor(
     internal val entityProp: EntityPropImpl
 ) {

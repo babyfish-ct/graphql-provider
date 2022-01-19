@@ -1,14 +1,12 @@
 package com.babyfish.graphql.provider.server.cfg
 
-import com.babyfish.graphql.provider.server.cfg.assembler.AuthorAssembler
-import com.babyfish.graphql.provider.server.cfg.assembler.BookAssembler
-import com.babyfish.graphql.provider.server.cfg.assembler.BookRepository
-import com.babyfish.graphql.provider.server.cfg.assembler.BookStoreAssembler
-import org.babyfish.graphql.provider.server.EntityTypeProvider
-import org.babyfish.graphql.provider.server.meta.EntityType
+import com.babyfish.graphql.provider.server.cfg.model.AuthorAssembler
+import com.babyfish.graphql.provider.server.cfg.model.BookAssembler
+import com.babyfish.graphql.provider.server.cfg.model.BookRepository
+import com.babyfish.graphql.provider.server.cfg.model.BookStoreAssembler
+import org.babyfish.graphql.provider.server.runtime.EntityTypeProvider
 
 import kotlin.test.Test
-import kotlin.test.expect
 
 class EntityTypeProviderTest {
 

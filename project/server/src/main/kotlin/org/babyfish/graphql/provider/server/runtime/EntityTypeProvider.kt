@@ -1,5 +1,6 @@
-package org.babyfish.graphql.provider.server
+package org.babyfish.graphql.provider.server.runtime
 
+import org.babyfish.graphql.provider.server.EntityAssembler
 import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityTypeImpl

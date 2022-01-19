@@ -1,4 +1,4 @@
-package com.babyfish.graphql.provider.server.cfg.assembler
+package com.babyfish.graphql.provider.server.cfg.model
 
 import java.math.BigDecimal
 

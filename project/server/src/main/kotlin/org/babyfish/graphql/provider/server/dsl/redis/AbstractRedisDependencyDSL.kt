@@ -1,15 +1,17 @@
 package org.babyfish.graphql.provider.server.dsl.redis
 
+import org.babyfish.graphql.provider.server.dsl.EvalDSL
 import org.babyfish.graphql.provider.server.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.server.meta.MetadataException
 import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable
-import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
+import org.babyfish.graphql.provider.server.meta.impl.EntityPropRedisDependencyImpl
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 @GraphQLProviderDSL
-abstract class AbstractRedisDependencyDSL<E> internal constructor() {
+abstract class AbstractRedisDependencyDSL<E> internal constructor(
+): EvalDSL() {
 
     fun dependsOn(prop: KProperty1<E, *>) {
         dependsOn(Kind.SCALAR, prop)
@@ -48,12 +50,12 @@ abstract class AbstractRedisDependencyDSL<E> internal constructor() {
         }
     }
 
-    internal abstract val dependencyMap: MutableMap<String, EntityPropImpl.RedisDependencyImpl>
+    internal abstract val dependencyMap: MutableMap<String, EntityPropRedisDependencyImpl>
 
     private fun dependsOn(
         kind: Kind,
         prop: KProperty1<*, *>
-    ): EntityPropImpl.RedisDependencyImpl {
+    ): EntityPropRedisDependencyImpl {
         if (this.dependencyMap.containsKey(prop.name)) {
             throw MetadataException("Cannot depends on '${prop.name}' twice")
         }
@@ -77,7 +79,7 @@ abstract class AbstractRedisDependencyDSL<E> internal constructor() {
                 throw IllegalArgumentException("Cannot add '$prop' as scalar dependency because it's not connection dependency")
             }
         }
-        val dependency = EntityPropImpl.RedisDependencyImpl(prop)
+        val dependency = EntityPropRedisDependencyImpl()
         this.dependencyMap[prop.name] = dependency
         return dependency
     }

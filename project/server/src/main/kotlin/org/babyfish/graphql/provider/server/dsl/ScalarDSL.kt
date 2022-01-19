@@ -3,6 +3,7 @@ package org.babyfish.graphql.provider.server.dsl
 import org.babyfish.graphql.provider.server.dsl.db.ColumnDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 
+@GraphQLProviderDSL
 class ScalarDSL<T> internal constructor(
     private val entityProp: EntityPropImpl
 ) {

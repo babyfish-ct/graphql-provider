@@ -1,8 +1,5 @@
 package org.babyfish.graphql.provider.server.dsl
 
-import org.babyfish.graphql.provider.server.dsl.association.CollectionDSL
-import org.babyfish.graphql.provider.server.dsl.association.MappedCollectionDSL
-import org.babyfish.graphql.provider.server.dsl.association.ReferenceDSL
 import org.babyfish.graphql.provider.server.dsl.db.EntityTypeDatabaseDSL
 import org.babyfish.graphql.provider.server.dsl.graphql.EntityTypeGraphQLDSL
 import org.babyfish.kimmer.Connection
@@ -94,12 +91,12 @@ class EntityTypeDSL<E: Immutable> internal constructor(
     fun <T: Immutable> mappedList(
         prop: KProperty1<E, List<T>>,
         mappedBy: KProperty1<T, *>,
-        block: (MappedCollectionDSL<T>.() -> Unit)? = null
+        block: (PhantomCollectionDSL<T>.() -> Unit)? = null
     ) {
         validateProp(prop)
         val entityProp = EntityPropImpl(entityType, EntityPropCategory.LIST, prop, mappedBy)
         block?.let {
-            MappedCollectionDSL<T>(entityProp).it()
+            PhantomCollectionDSL<T>(entityProp).it()
         }
         entityType.declaredProps[prop.name] = entityProp
     }
@@ -107,12 +104,12 @@ class EntityTypeDSL<E: Immutable> internal constructor(
     fun <T: Immutable> mappedConnection(
         prop: KProperty1<E, out Connection<T>>,
         mappedBy: KProperty1<T, *>,
-        block: (MappedCollectionDSL<T>.() -> Unit)? = null
+        block: (PhantomCollectionDSL<T>.() -> Unit)? = null
     ) {
         validateProp(prop)
         val entityProp = EntityPropImpl(entityType, EntityPropCategory.CONNECTION, prop, mappedBy)
         block?.let {
-            MappedCollectionDSL<T>(entityProp).it()
+            PhantomCollectionDSL<T>(entityProp).it()
         }
         entityType.declaredProps[prop.name] = entityProp
     }

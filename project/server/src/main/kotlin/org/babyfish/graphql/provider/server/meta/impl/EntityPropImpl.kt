@@ -1,13 +1,12 @@
 package org.babyfish.graphql.provider.server.meta.impl
 
-import org.babyfish.graphql.provider.server.EntityTypeProvider
+import org.babyfish.graphql.provider.server.runtime.EntityTypeProvider
 import org.babyfish.graphql.provider.server.meta.*
 import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
-import kotlin.time.Duration
 
 internal class EntityPropImpl(
     override val declaringType: EntityType,
@@ -30,7 +29,7 @@ internal class EntityPropImpl(
 
     override var middleTable: EntityProp.MiddleTable? = null
 
-    override var redis = RedisImpl()
+    override var redis = EntityPropRedisImpl()
 
     fun resolve(provider: EntityTypeProvider) {
         val tgtKtType = immutableProp.targetType?.kotlinType
@@ -130,29 +129,5 @@ internal class EntityPropImpl(
             val tgt = targetType ?: error("Cannot get the default table name because target is not resolved")
             databaseIdentifier(tgt.kotlinType.simpleName!!) + "_ID"
         }
-    }
-    
-    internal class RedisImpl: EntityProp.Redis {
-
-        var dependencyMap = mutableMapOf<String, RedisDependencyImpl>()
-        
-        override var enabled: Boolean = true
-        override var timeout: Duration? = null
-        override var nullTimeout: Duration? = null
-        override val dependencies: Collection<EntityProp.RedisDependency>
-            get() = dependencyMap.values
-    }
-
-    internal open class RedisDependencyImpl internal constructor(
-        private val kotlinProp: KProperty1<*, *>
-    ): EntityProp.RedisDependency {
-
-        var dependencyMap = mutableMapOf<String, RedisDependencyImpl>()
-
-        override val prop: EntityProp
-            get() = TODO()
-
-        override val dependencies: Collection<EntityProp.RedisDependency>
-            get() = dependencyMap.values
     }
 }

@@ -1,9 +1,8 @@
-package com.babyfish.graphql.provider.server.cfg.assembler
+package com.babyfish.graphql.provider.server.cfg.model
 
 import com.babyfish.graphql.provider.server.cfg.Book
 import com.babyfish.graphql.provider.server.cfg.BookStore
 import org.babyfish.graphql.provider.server.EntityAssembler
-import org.babyfish.graphql.provider.server.dsl.ArgumentType
 import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
 import org.babyfish.graphql.provider.server.runtime.ilike
 import org.springframework.stereotype.Component
@@ -21,17 +20,12 @@ class BookStoreAssembler(
 
             argument(
                 "name",
-                ArgumentType.of(String::class).asNullable()
+                String::class
             ) {
                 where(table[Book::name] ilike it)
-            }
-
-            filter {
-                orderBy(table[Book::name])
-            }
-
-            redis {
-                dependsOn(Book::name)
+                redis {
+                    dependsOn(Book::name)
+                }
             }
         }
 
