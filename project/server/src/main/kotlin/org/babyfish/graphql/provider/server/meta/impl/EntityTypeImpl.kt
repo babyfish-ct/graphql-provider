@@ -14,9 +14,14 @@ internal class EntityTypeImpl(
 
     private val _superTypes = mutableListOf<EntityTypeImpl>()
 
+    private val _derivedTypes = mutableListOf<EntityTypeImpl>()
+
     private var _props: Map<String, EntityProp>? = null
 
     private var _idProp: EntityProp? = null
+
+    override val name: String
+        get() = immutableType.simpleName
 
     override val immutableType: ImmutableType =
         if (Connection::class.java.isAssignableFrom(kotlinType.java)) {
@@ -35,6 +40,9 @@ internal class EntityTypeImpl(
 
     override val superTypes: List<EntityType>
         get() = _superTypes
+
+    override val derivedTypes: List<EntityType>
+        get() = _derivedTypes
 
     override val idProp: EntityProp
         get() = _idProp ?: error("Id property has not been resolved")
@@ -59,6 +67,7 @@ internal class EntityTypeImpl(
             val superType = provider.tryGet(superImmutableType.kotlinType) as EntityTypeImpl?
             if (superType !== null) {
                 _superTypes += superType
+                superType._derivedTypes += this
             }
         }
     }

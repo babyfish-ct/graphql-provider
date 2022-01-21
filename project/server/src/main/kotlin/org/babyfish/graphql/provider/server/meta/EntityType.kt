@@ -6,12 +6,16 @@ import kotlin.time.Duration
 
 interface EntityType {
 
+    val name: String
+
     val immutableType: ImmutableType
 
     val kotlinType: KClass<*>
         get() = immutableType.kotlinType
 
     val superTypes: List<EntityType>
+
+    val derivedTypes: List<EntityType>
 
     val database: Database
 

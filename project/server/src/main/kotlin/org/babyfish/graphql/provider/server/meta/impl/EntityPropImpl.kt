@@ -7,6 +7,7 @@ import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
+import kotlin.time.Duration
 
 internal class EntityPropImpl(
     override val declaringType: EntityType,
@@ -29,7 +30,7 @@ internal class EntityPropImpl(
 
     override var middleTable: EntityProp.MiddleTable? = null
 
-    override var redis = EntityPropRedisImpl()
+    override var redis = RedisImpl()
 
     fun resolve(provider: EntityTypeProvider) {
         val tgtKtType = immutableProp.targetType?.kotlinType
@@ -129,5 +130,11 @@ internal class EntityPropImpl(
             val tgt = targetType ?: error("Cannot get the default table name because target is not resolved")
             databaseIdentifier(tgt.kotlinType.simpleName!!) + "_ID"
         }
+    }
+
+    class RedisImpl: EntityProp.Redis {
+        override var enabled: Boolean = false
+        override var timeout: Duration? = null
+        override var nullTimeout: Duration? = null
     }
 }

@@ -5,12 +5,13 @@ import org.babyfish.graphql.provider.server.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.server.meta.MetadataException
 import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable
-import org.babyfish.graphql.provider.server.meta.impl.EntityPropRedisDependencyImpl
+import org.babyfish.graphql.provider.server.meta.impl.FilterRedisDependencyImpl
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 @GraphQLProviderDSL
-abstract class AbstractRedisDependencyDSL<E> internal constructor(
+class FilterRedisDSL<E> internal constructor(
+    private val dependencyMap: MutableMap<String, FilterRedisDependencyImpl>
 ): EvalDSL() {
 
     fun dependsOn(prop: KProperty1<E, *>) {
@@ -19,10 +20,10 @@ abstract class AbstractRedisDependencyDSL<E> internal constructor(
 
     fun <T: Immutable> dependsOnReference(
         prop: KProperty1<E, T?>,
-        block: (AbstractRedisDependencyDSL<T>.() -> Unit) ?= null
+        block: (FilterRedisDSL<T>.() -> Unit) ?= null
     ) {
         dependsOn(Kind.REFERENCE, prop).let {
-            RedisDependencyDSL<T>(it).apply {
+            FilterRedisDSL<T>(it.dependencyMap).apply {
                 block?.invoke(this)
             }
         }
@@ -30,10 +31,10 @@ abstract class AbstractRedisDependencyDSL<E> internal constructor(
 
     fun <T: Immutable> dependsOnList(
         prop: KProperty1<E, List<T>>,
-        block: (AbstractRedisDependencyDSL<T>.() -> Unit)? = null
+        block: (FilterRedisDSL<T>.() -> Unit)? = null
     ) {
         dependsOn(Kind.LIST, prop).let {
-            RedisDependencyDSL<T>(it).apply {
+            FilterRedisDSL<T>(it.dependencyMap).apply {
                 block?.invoke(this)
             }
         }
@@ -41,21 +42,19 @@ abstract class AbstractRedisDependencyDSL<E> internal constructor(
 
     fun <T: Immutable> dependsOnConnection(
         prop: KProperty1<E, out Connection<T>>,
-        block: (AbstractRedisDependencyDSL<T>.() -> Unit) ?= null
+        block: (FilterRedisDSL<T>.() -> Unit) ?= null
     ) {
         dependsOn(Kind.CONNECTION, prop).let {
-            RedisDependencyDSL<T>(it).apply {
+            FilterRedisDSL<T>(it.dependencyMap).apply {
                 block?.invoke(this)
             }
         }
     }
 
-    internal abstract val dependencyMap: MutableMap<String, EntityPropRedisDependencyImpl>
-
     private fun dependsOn(
         kind: Kind,
         prop: KProperty1<*, *>
-    ): EntityPropRedisDependencyImpl {
+    ): FilterRedisDependencyImpl {
         if (this.dependencyMap.containsKey(prop.name)) {
             throw MetadataException("Cannot depends on '${prop.name}' twice")
         }
@@ -79,7 +78,7 @@ abstract class AbstractRedisDependencyDSL<E> internal constructor(
                 throw IllegalArgumentException("Cannot add '$prop' as scalar dependency because it's not connection dependency")
             }
         }
-        val dependency = EntityPropRedisDependencyImpl()
+        val dependency = FilterRedisDependencyImpl()
         this.dependencyMap[prop.name] = dependency
         return dependency
     }

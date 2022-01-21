@@ -1,6 +1,8 @@
 package org.babyfish.graphql.provider.server.runtime
 
+import graphql.schema.GraphQLSchema
 import org.babyfish.graphql.provider.server.EntityAssembler
+import org.babyfish.graphql.provider.server.QueryService
 import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityTypeImpl
@@ -10,9 +12,12 @@ import org.springframework.core.GenericTypeResolver
 import kotlin.reflect.KClass
 
 class EntityTypeProvider(
+    queryServices: List<QueryService>,
     assemblers: List<EntityAssembler<*>>
 ) {
     private val entityTypeMap: Map<Class<*>, EntityType>
+
+    val schema: GraphQLSchema
 
     init {
         val map = mutableMapOf<Class<*>, EntityTypeImpl>()
@@ -48,6 +53,7 @@ class EntityTypeProvider(
         for (entityType in map.values) {
             entityType.resolve(this, ResolvingPhase.ID_PROP)
         }
+        schema = SchemaGenerator(queryServices, entityTypeMap.values).generate()
     }
 
     operator fun get(type: KClass<out Immutable>): EntityType =

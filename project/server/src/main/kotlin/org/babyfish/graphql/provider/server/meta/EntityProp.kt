@@ -2,6 +2,7 @@ package org.babyfish.graphql.provider.server.meta
 
 import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KProperty1
+import kotlin.time.Duration
 
 interface EntityProp {
 
@@ -33,7 +34,7 @@ interface EntityProp {
 
     val middleTable: MiddleTable?
 
-    val redis: EntityPropRedis
+    val redis: Redis
 
     interface Column {
         val name: String
@@ -48,6 +49,12 @@ interface EntityProp {
         val tableName: String
         val joinColumnName: String
         val targetJoinColumnName: String
+    }
+
+    interface Redis {
+        val enabled: Boolean
+        val timeout: Duration?
+        val nullTimeout: Duration?
     }
 }
 
