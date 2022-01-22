@@ -1,6 +1,6 @@
 package org.babyfish.graphql.provider.server.meta.impl
 
-import org.babyfish.graphql.provider.server.runtime.EntityTypeProvider
+import org.babyfish.graphql.provider.server.runtime.EntityTypeResolver
 import org.babyfish.graphql.provider.server.meta.*
 import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable
@@ -32,11 +32,10 @@ internal class EntityPropImpl(
 
     override var redis = RedisImpl()
 
-    fun resolve(provider: EntityTypeProvider) {
+    fun resolve(provider: EntityTypeResolver) {
         val tgtKtType = immutableProp.targetType?.kotlinType
         if (tgtKtType !== null) {
-            val tgtType = provider.tryGet(tgtKtType)
-                ?: error("Failed to resolve $kotlinProp")
+            val tgtType = provider[tgtKtType]
             targetType = tgtType
             if (mappedBy !== null) {
                 val opposite = tgtType.props[mappedBy] as EntityPropImpl? ?: error("Internal bug")

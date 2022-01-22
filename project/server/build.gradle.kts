@@ -19,7 +19,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-autoconfigure:2.6.2")
 
-    implementation("org.babyfish.kimmer:kimmer:0.0.2")
+    implementation("org.babyfish.kimmer:kimmer:0.0.3")
     implementation(project(":graphql-provider-r2dbc"))
     implementation("com.graphql-java:graphql-java:17.3")
 

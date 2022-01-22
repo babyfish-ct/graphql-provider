@@ -6,13 +6,13 @@ import org.babyfish.graphql.provider.server.dsl.GraphQLProviderDSL
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.annotation.Bean
 
-@ConditionalOnBean(EntityTypeProvider::class)
+@ConditionalOnBean(EntityTypeResolver::class)
 @GraphQLProviderDSL
 open class EntityTypeProviderAutoConfiguration {
 
     @Bean
-    open fun entityMetadataProvider(
+    internal open fun entityMetadataResolver(
         queryServices: List<QueryService>,
         assemblers: List<EntityAssembler<*>>
-    ) = EntityTypeProvider(queryServices, assemblers)
+    ) = EntityTypeResolver(queryServices, assemblers)
 }

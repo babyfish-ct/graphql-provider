@@ -8,14 +8,14 @@ import com.babyfish.graphql.provider.server.cfg.query.AuthorQueryService
 import com.babyfish.graphql.provider.server.cfg.query.BookQueryService
 import com.babyfish.graphql.provider.server.cfg.query.BookStoreQueryService
 import graphql.schema.idl.SchemaPrinter
-import org.babyfish.graphql.provider.server.runtime.EntityTypeProvider
+import org.babyfish.graphql.provider.server.runtime.EntityTypeResolver
 
 import kotlin.test.Test
 
-class EntityTypeProviderTest {
+class EntityTypeResolverTest {
 
     private val entityTypeProvider =
-        EntityTypeProvider(
+        EntityTypeResolver(
             listOf(
                 BookStoreQueryService(),
                 BookQueryService(),
