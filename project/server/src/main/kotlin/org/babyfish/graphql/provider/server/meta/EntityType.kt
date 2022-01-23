@@ -25,6 +25,8 @@ interface EntityType {
 
     val idProp: EntityProp
 
+    val isAssembled: Boolean
+
     val declaredProps: Map<String, EntityProp>
 
     val props: Map<String, EntityProp>

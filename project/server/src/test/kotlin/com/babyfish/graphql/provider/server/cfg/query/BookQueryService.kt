@@ -18,34 +18,42 @@ class BookQueryService: QueryService() {
         maxPrice: BigDecimal?,
         sortedField: BookSortedField = BookSortedField.NAME,
         descending: Boolean = false
-    ): Connection<Book> = buildConnection {
+    ): Connection<Book> = queryConnection {
 
         name?.let {
-            where(table[Book::name] ilike  it)
+            db {
+                where(table[Book::name] ilike it)
+            }
             redis {
                 dependsOn(Book::name)
             }
         }
 
         minPrice?.let {
-            where(table[Book::price] ge it)
+            db {
+                where(table[Book::price] ge it)
+            }
             redis {
                 dependsOn(Book::price)
             }
         }
 
         maxPrice?.let {
-            where(table[Book::price] le it)
+            db {
+                where(table[Book::price] le it)
+            }
             redis {
                 dependsOn(Book::price)
             }
         }
-        
+
         val prop: KProperty1<Book, *> = when (sortedField) {
             BookSortedField.NAME -> Book::name
             BookSortedField.PRICE -> Book::price
         }
-        orderBy(prop, descending)
+        db {
+            orderBy(prop, descending)
+        }
         redis {
             dependsOn(prop)
         }

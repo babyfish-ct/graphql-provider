@@ -9,11 +9,13 @@ class AuthorQueryService: QueryService() {
 
     suspend fun findAuthors(
         name: String?
-    ): Connection<Author> = buildConnection {
-        name?.let {
-            where(table[Author::name] ilike it)
+    ): Connection<Author> = queryConnection {
+        db {
+            name?.let {
+                where(table[Author::name] ilike it)
+            }
+            orderBy(Author::name)
         }
-        orderBy(Author::name)
         redis {
             dependsOn(Author::name)
         }

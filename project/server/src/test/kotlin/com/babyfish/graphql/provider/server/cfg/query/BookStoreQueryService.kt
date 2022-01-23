@@ -11,11 +11,15 @@ class BookStoreQueryService : QueryService() {
 
     suspend fun findBookStores(
         name: String?
-    ): Connection<BookStore> = buildConnection {
-        name?.let {
-            where(table[BookStore::name] ilike it)
+    ): Connection<BookStore> = queryConnection {
+
+        db {
+            name?.let {
+                where(table[BookStore::name] ilike it)
+            }
+            orderBy(BookStore::name)
         }
-        orderBy(BookStore::name)
+
         redis {
             dependsOn(BookStore::name)
         }

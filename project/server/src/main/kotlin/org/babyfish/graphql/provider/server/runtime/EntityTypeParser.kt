@@ -1,7 +1,6 @@
 package org.babyfish.graphql.provider.server.runtime
 
-import graphql.schema.GraphQLSchema
-import org.babyfish.graphql.provider.server.EntityAssembler
+import org.babyfish.graphql.provider.server.EntityMapper
 import org.babyfish.graphql.provider.server.QueryService
 import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
@@ -12,22 +11,22 @@ import org.babyfish.kimmer.meta.ImmutableType
 import org.springframework.core.GenericTypeResolver
 import kotlin.reflect.KClass
 
-internal class EntityTypeResolver(
+internal class EntityTypeParser(
     queryServices: List<QueryService>,
-    assemblers: List<EntityAssembler<*>>
+    assemblers: List<EntityMapper<*>>
 ) {
     private val entityTypeMap = mutableMapOf<Class<*>, EntityTypeImpl>()
-
-    val schema: GraphQLSchema
 
     init {
         for (assembler in assemblers) {
             val type = GenericTypeResolver.resolveTypeArgument(
                 assembler::class.java,
-                EntityAssembler::class.java
+                EntityMapper::class.java
             ) as Class<out Immutable>
-            (assembler as EntityAssembler<Immutable>).apply {
-                EntityTypeDSL<Immutable>(get(type.kotlin)).assemble()
+            (assembler as EntityMapper<Immutable>).apply {
+                val entityType = get(type.kotlin)
+                entityType.isAssembled = true
+                EntityTypeDSL<Immutable>(entityType).map()
             }
         }
         for (entityType in entityTypeMap.values) {
@@ -45,7 +44,6 @@ internal class EntityTypeResolver(
         for (entityType in entityTypeMap.values) {
             entityType.resolve(this, ResolvingPhase.ID_PROP)
         }
-        schema = ExecutableSchemaGenerator(queryServices, entityTypeMap.values).generate()
     }
 
     operator fun get(type: KClass<out Immutable>): EntityTypeImpl =

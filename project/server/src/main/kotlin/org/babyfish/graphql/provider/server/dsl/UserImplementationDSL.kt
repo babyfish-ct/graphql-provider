@@ -6,13 +6,13 @@ import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 import org.babyfish.kimmer.Immutable
 
 @GraphQLProviderDSL
-class ComputedDSL<E: Immutable, T> internal constructor(
+class UserImplementationDSL<E: Immutable, T> internal constructor(
     entityProp: EntityPropImpl
 ): ArgumentsDSL<E>(entityProp) {
 
-    fun implementation(block: suspend ImplementationContext<E>.() -> T) {}
+    fun single(block: suspend ImplementationContext<E>.() -> T) {}
 
-    fun batchImplementation(block: suspend BatchImplementationContext<E>.() -> Map<out Any, T>) {}
+    fun batch(block: suspend BatchImplementationContext<E>.() -> Map<out Any, T>) {}
 
     fun redis(block: FilterRedisDSL<E>.() -> Unit) {
 

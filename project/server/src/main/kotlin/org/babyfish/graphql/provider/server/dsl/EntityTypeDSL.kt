@@ -114,13 +114,8 @@ class EntityTypeDSL<E: Immutable> internal constructor(
         entityType.declaredProps[prop.name] = entityProp
     }
 
-    fun <T> computed(prop: KProperty1<E, T>, block: ComputedDSL<E, T>.() -> Unit) {
-        validateProp(prop)
-        val entityProp = EntityPropImpl(entityType, EntityPropCategory.COMPUTED, prop)
-        block?.let {
-            ComputedDSL<E, T>(entityProp).it()
-        }
-        entityType.declaredProps[prop.name] = entityProp
+    fun <T> computed(prop: KProperty1<E, T>) {
+
     }
 
     private fun validateProp(prop: KProperty1<*, *>) {

@@ -1,11 +1,8 @@
 package org.babyfish.graphql.provider.server.meta.impl
 
-import org.babyfish.graphql.provider.server.runtime.EntityTypeResolver
+import org.babyfish.graphql.provider.server.runtime.EntityTypeParser
 import org.babyfish.graphql.provider.server.meta.*
-import org.babyfish.kimmer.Connection
-import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableType
-import kotlin.reflect.KClass
 import kotlin.time.Duration
 
 internal class EntityTypeImpl(
@@ -24,6 +21,8 @@ internal class EntityTypeImpl(
 
     override val name: String
         get() = immutableType.simpleName
+
+    override var isAssembled: Boolean = false
 
     override val database = DatabaseImpl()
 
@@ -45,7 +44,7 @@ internal class EntityTypeImpl(
     override val props: Map<String, EntityProp>
         get() = _props ?: error("Properties have not been resolved")
 
-    fun resolve(provider: EntityTypeResolver, phase: ResolvingPhase) {
+    fun resolve(provider: EntityTypeParser, phase: ResolvingPhase) {
         when (phase) {
             ResolvingPhase.SUPER_TYPE -> if (_expectedPhase == ResolvingPhase.SUPER_TYPE.ordinal) {
                 resolveSuperTypes(provider)
@@ -70,7 +69,7 @@ internal class EntityTypeImpl(
         }
     }
 
-    private fun resolveSuperTypes(provider: EntityTypeResolver) {
+    private fun resolveSuperTypes(provider: EntityTypeParser) {
         for (superImmutableType in immutableType.superTypes) {
             val superType = provider[superImmutableType.kotlinType]
             _superTypes += superType
@@ -78,7 +77,7 @@ internal class EntityTypeImpl(
         }
     }
 
-    private fun resolveDeclaredProps(provider: EntityTypeResolver) {
+    private fun resolveDeclaredProps(provider: EntityTypeParser) {
         for (immutableProp in immutableType.declaredProps.values) {
             if (!declaredProps.containsKey(immutableProp.name)) {
                 if (immutableProp.isAssociation) {
@@ -96,7 +95,7 @@ internal class EntityTypeImpl(
         }
     }
 
-    private fun resolveProps(provider: EntityTypeResolver) {
+    private fun resolveProps(provider: EntityTypeParser) {
         for (superType in _superTypes) {
             superType.resolve(provider, ResolvingPhase.PROPS)
         }
@@ -123,7 +122,7 @@ internal class EntityTypeImpl(
         }
     }
 
-    private fun resolvePropDetail(provider: EntityTypeResolver) {
+    private fun resolvePropDetail(provider: EntityTypeParser) {
         for (declaredProp in declaredProps.values) {
             declaredProp.resolve(provider)
         }

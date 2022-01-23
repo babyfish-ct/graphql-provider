@@ -6,9 +6,19 @@ import org.babyfish.kimmer.Immutable
 
 class FilterDSL<E: Immutable> internal constructor(
     private val databaseQuery: DatabaseQuery<E>
-): DatabaseQuery<E> by databaseQuery {
+) {
+    fun db(block: DatabaseQuery<E>.() -> Unit) {
+
+    }
 
     fun redis(block: FilterRedisDSL<E>.() -> Unit) {
 
     }
+
+    fun <T> String.whenNotBlank(block: (String) -> T): T? =
+        if (this != "") {
+            block(this)
+        } else {
+            null
+        }
 }

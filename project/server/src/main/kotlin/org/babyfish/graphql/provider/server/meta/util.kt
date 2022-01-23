@@ -7,7 +7,7 @@ fun databaseIdentifier(name: String): String {
         val result = if (!prevUpper && upper) {
             "_$it"
         } else {
-            it.toString()
+            it.uppercase()
         }
         prevUpper = upper
         result

@@ -1,44 +1,25 @@
 package org.babyfish.graphql.provider.server.runtime
 
 import graphql.language.*
-import graphql.schema.*
-import graphql.schema.idl.RuntimeWiring
-import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.TypeDefinitionRegistry
 import org.babyfish.graphql.provider.server.QueryService
 import org.babyfish.graphql.provider.server.meta.EntityProp
 import org.babyfish.graphql.provider.server.meta.EntityType
-import org.babyfish.kimmer.Immutable
 import java.math.BigDecimal
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredFunctions
 
-internal class ExecutableSchemaGenerator(
+internal class TypeDefinitionRegistryGenerator(
     private val queryServices: Collection<QueryService>,
     private val entityTypes: Collection<EntityType>
 ) {
-    fun generate(): GraphQLSchema {
-        val typeDefinitionRegistry = TypeDefinitionRegistry().apply {
+    fun generate(): TypeDefinitionRegistry =
+        TypeDefinitionRegistry().apply {
             add(generateQueryType())
             addAll(entityTypes.map { generateEntityType(it) })
         }
-        val runtimeWring = RuntimeWiring.newRuntimeWiring().apply {
-            for (entityType in entityTypes) {
-                if (entityType.derivedTypes.isNotEmpty()) {
-                    type(entityType.name) { builder ->
-                        builder.typeResolver { env ->
-                            val obj = env.getObject<Immutable>()
-                            val type = entityType.derivedTypes.first { it.kotlinType.java.isInstance(obj) }
-                            env.schema.getObjectType(type.name)
-                        }
-                    }
-                }
-            }
-        }.build()
-        return SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWring)
-    }
 
     private fun generateQueryType(): ObjectTypeDefinition =
         ObjectTypeDefinition.newObjectTypeDefinition().apply {

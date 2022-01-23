@@ -2,42 +2,44 @@ package com.babyfish.graphql.provider.server.cfg.model
 
 import com.babyfish.graphql.provider.server.cfg.Book
 import com.babyfish.graphql.provider.server.cfg.BookStore
-import org.babyfish.graphql.provider.server.EntityAssembler
+import org.babyfish.graphql.provider.server.EntityMapper
 import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
 import org.babyfish.graphql.provider.server.runtime.ilike
 import org.springframework.stereotype.Component
 
 @Component
-class BookStoreAssembler(
+class BookStoreMapper(
     private val bookRepository: BookRepository
-): EntityAssembler<BookStore> {
+): EntityMapper<BookStore>() {
 
-    override fun EntityTypeDSL<BookStore>.assemble() {
+    override fun EntityTypeDSL<BookStore>.map() {
 
         id(BookStore::id)
 
-        mappedList(BookStore::books, Book::store) {
+        mappedList(BookStore::books, Book::store)
+    }
 
-            optionalArgument("name", String::class) {
-                where(table[Book::name] ilike it)
-            }
-            filter {
-                orderBy(Book::name)
+    fun books(name: String?) {
+        filterList(BookStore::books) {
+            name?.whenNotBlank {
+                db {
+                    where(table[Book::name] ilike it)
+                }
                 redis {
                     dependsOn(Book::name)
                 }
             }
         }
+    }
 
-        computed(BookStore::avgPrice) {
-
-            batchImplementation {
+    fun avgPrice() {
+        userImplementation(BookStore::avgPrice) {
+            batch {
                 bookRepository.findAvgPrices(rows.map { it.id })
             }
-
             redis {
                 dependsOnList(BookStore::books) {
-                    dependsOn(Book::price)
+                    dependsOn(Book::name)
                 }
             }
         }
