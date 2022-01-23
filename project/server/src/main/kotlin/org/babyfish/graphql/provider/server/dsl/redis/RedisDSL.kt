@@ -5,7 +5,7 @@ import org.babyfish.graphql.provider.server.meta.impl.EntityTypeImpl
 import kotlin.time.Duration
 
 @GraphQLProviderDSL
-class EntityTypeRedisDSL internal constructor(
+class RedisDSL internal constructor(
     private val redis: EntityTypeImpl.RedisImpl
 ) {
     var enabled: Boolean by redis::enabled

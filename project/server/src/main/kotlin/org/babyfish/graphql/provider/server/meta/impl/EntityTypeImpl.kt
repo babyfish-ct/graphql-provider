@@ -1,6 +1,7 @@
 package org.babyfish.graphql.provider.server.meta.impl
 
-import org.babyfish.graphql.provider.server.runtime.EntityTypeParser
+import org.babyfish.graphql.provider.server.ModelException
+import org.babyfish.graphql.provider.server.runtime.EntityTypeGenerator
 import org.babyfish.graphql.provider.server.meta.*
 import org.babyfish.kimmer.meta.ImmutableType
 import kotlin.time.Duration
@@ -44,60 +45,54 @@ internal class EntityTypeImpl(
     override val props: Map<String, EntityProp>
         get() = _props ?: error("Properties have not been resolved")
 
-    fun resolve(provider: EntityTypeParser, phase: ResolvingPhase) {
-        when (phase) {
-            ResolvingPhase.SUPER_TYPE -> if (_expectedPhase == ResolvingPhase.SUPER_TYPE.ordinal) {
-                resolveSuperTypes(provider)
-                _expectedPhase++
-            }
-            ResolvingPhase.DECLARED_PROPS -> if (_expectedPhase == ResolvingPhase.DECLARED_PROPS.ordinal) {
-                resolveDeclaredProps(provider)
-                _expectedPhase++
-            }
-            ResolvingPhase.PROPS -> if (_expectedPhase == ResolvingPhase.PROPS.ordinal) {
-                resolveProps(provider)
-                _expectedPhase++
-            }
-            ResolvingPhase.PROP_DETAIL -> if (_expectedPhase == ResolvingPhase.PROP_DETAIL.ordinal) {
-                resolvePropDetail(provider)
-                _expectedPhase++
-            }
-            ResolvingPhase.ID_PROP -> if (_expectedPhase == ResolvingPhase.ID_PROP.ordinal) {
-                resolveIdProp()
-                _expectedPhase++
+    fun resolve(generator: EntityTypeGenerator, phase: ResolvingPhase) {
+        if (shouldResolve(phase)) {
+            when (phase) {
+                ResolvingPhase.SUPER_TYPE -> resolveSuperTypes(generator)
+                ResolvingPhase.DECLARED_PROPS -> resolveDeclaredProps(generator)
+                ResolvingPhase.PROPS -> resolveProps(generator)
+                ResolvingPhase.PROP_DETAIL -> resolvePropDetail(generator)
+                ResolvingPhase.ID_PROP -> resolveIdProp()
             }
         }
     }
 
-    private fun resolveSuperTypes(provider: EntityTypeParser) {
+    private fun shouldResolve(phase: ResolvingPhase): Boolean =
+        if (_expectedPhase == phase.ordinal) {
+            _expectedPhase++
+            true
+        } else {
+            false
+        }
+
+    private fun resolveSuperTypes(generator: EntityTypeGenerator) {
         for (superImmutableType in immutableType.superTypes) {
-            val superType = provider[superImmutableType.kotlinType]
+            val superType = generator[superImmutableType]
             _superTypes += superType
             superType._derivedTypes += this
         }
     }
 
-    private fun resolveDeclaredProps(provider: EntityTypeParser) {
+    private fun resolveDeclaredProps(generator: EntityTypeGenerator) {
         for (immutableProp in immutableType.declaredProps.values) {
             if (!declaredProps.containsKey(immutableProp.name)) {
                 if (immutableProp.isAssociation) {
-                    throw MetadataException(
+                    throw ModelException(
                         "The property '${immutableProp}' is association " +
                             "but it is not configured by any EntityAssembler"
                     )
                 }
                 declaredProps[immutableProp.name] = EntityPropImpl(
                     this,
-                    EntityPropCategory.SCALAR,
                     immutableProp.kotlinProp
                 )
             }
         }
     }
 
-    private fun resolveProps(provider: EntityTypeParser) {
+    private fun resolveProps(generator: EntityTypeGenerator) {
         for (superType in _superTypes) {
-            superType.resolve(provider, ResolvingPhase.PROPS)
+            superType.resolve(generator, ResolvingPhase.PROPS)
         }
         if (_superTypes.isEmpty()) {
             _props = declaredProps
@@ -105,16 +100,18 @@ internal class EntityTypeImpl(
             val map = mutableMapOf<String, EntityProp>()
             map += declaredProps
             for (superType in _superTypes) {
-                for (superProp in superType.props.values) {
-                    val prop = map[superProp.name]
-                    if (prop !== null) {
-//                        if (superProp.category !== EntityPropCategory.ID) {
-//                            throw MetadataException(
-//                                "Duplicate properties: '$superProp' and '$prop'"
-//                            )
-//                        }
-                    } else {
-                        map[superProp.name] = superProp
+                if (generator[superType.immutableType].isAssembled) {
+                    for (superProp in superType.props.values) {
+                        val prop = map[superProp.name]
+                        if (prop !== null) {
+                            if (!superProp.isId) {
+                                throw ModelException(
+                                    "Duplicate properties: '$superProp' and '$prop'"
+                                )
+                            }
+                        } else {
+                            map[superProp.name] = superProp
+                        }
                     }
                 }
             }
@@ -122,26 +119,20 @@ internal class EntityTypeImpl(
         }
     }
 
-    private fun resolvePropDetail(provider: EntityTypeParser) {
+    private fun resolvePropDetail(generator: EntityTypeGenerator) {
         for (declaredProp in declaredProps.values) {
-            declaredProp.resolve(provider)
+            declaredProp.resolve(generator)
         }
     }
 
     private fun resolveIdProp(): EntityProp? {
-        val props = declaredProps.values.filter { it.category == EntityPropCategory.ID }
+        val props = declaredProps.values.filter { it.isId }
         if (superTypes.isNotEmpty()) {
-//            if (props.isNotEmpty()) {
-//                throw MetadataException(
-//                    "'${this}' inherits other entity types so that " +
-//                        "it cannot have its own id property"
-//                )
-//            }
             var superIdProp: EntityProp? = null
             for (superType in _superTypes) {
                 var prop = superType.resolveIdProp()
                 if (superIdProp !== null) {
-                    throw MetadataException(
+                    throw ModelException(
                         "'${this}' inherits two id properties:" +
                             "'$superIdProp' and '$prop'"
                     )
@@ -151,7 +142,7 @@ internal class EntityTypeImpl(
             _idProp = superIdProp
         } else {
             if (props.size > 1) {
-                throw MetadataException(
+                throw ModelException(
                     "More than one 1 id properties is specified for type '${immutableType}'"
                 )
             }

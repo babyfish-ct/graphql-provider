@@ -1,6 +1,8 @@
 package org.babyfish.graphql.provider.server.runtime
 
+import graphql.TypeResolutionEnvironment
 import graphql.schema.idl.RuntimeWiring
+import graphql.schema.idl.TypeRuntimeWiring
 import org.babyfish.graphql.provider.server.QueryService
 import org.babyfish.graphql.provider.server.meta.EntityType
 import org.babyfish.kimmer.Immutable
@@ -13,16 +15,24 @@ class RuntimeWiringGenerator(
     fun generate(): RuntimeWiring {
         return RuntimeWiring.newRuntimeWiring().apply {
             for (entityType in entityTypes) {
-                if (entityType.derivedTypes.isNotEmpty()) {
-                    type(entityType.name) { builder ->
-                        builder.typeResolver { env ->
-                            val obj = env.getObject<Immutable>()
-                            val type = entityType.derivedTypes.first { it.kotlinType.java.isInstance(obj) }
-                            env.schema.getObjectType(type.name)
-                        }
+                type(entityType.name) { builder ->
+                    builder.apply {
+                        generateTypeResolver(entityType)
                     }
                 }
             }
         }.build()
+    }
+
+    private fun TypeRuntimeWiring.Builder.generateTypeResolver(
+        entityType: EntityType
+    ) {
+        if (entityType.derivedTypes.isNotEmpty()) {
+            typeResolver { env ->
+                val obj = env.getObject<Immutable>()
+                val type = entityType.derivedTypes.first { it.kotlinType.java.isInstance(obj) }
+                env.schema.getObjectType(type.name)
+            }
+        }
     }
 }

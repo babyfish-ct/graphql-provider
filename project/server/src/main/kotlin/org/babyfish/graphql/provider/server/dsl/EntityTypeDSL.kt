@@ -5,8 +5,7 @@ import org.babyfish.graphql.provider.server.dsl.graphql.EntityTypeGraphQLDSL
 import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.server.meta.impl.EntityTypeImpl
-import org.babyfish.graphql.provider.server.meta.EntityPropCategory
-import org.babyfish.graphql.provider.server.meta.MetadataException
+import org.babyfish.graphql.provider.server.ModelException
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 import kotlin.reflect.KProperty1
 
@@ -32,7 +31,7 @@ class EntityTypeDSL<E: Immutable> internal constructor(
         block: (IdDSL<T>.() -> Unit)? = null
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entityType, EntityPropCategory.ID, prop)
+        val entityProp = EntityPropImpl(entityType, prop, true)
         block?.let {
             IdDSL<T>(entityProp).it()
         }
@@ -44,7 +43,7 @@ class EntityTypeDSL<E: Immutable> internal constructor(
         block: ScalarDSL<T>.() -> Unit
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entityType, EntityPropCategory.SCALAR, prop)
+        val entityProp = EntityPropImpl(entityType, prop)
         ScalarDSL<T>(entityProp).block()
         entityType.declaredProps[prop.name] = entityProp
     }
@@ -54,7 +53,7 @@ class EntityTypeDSL<E: Immutable> internal constructor(
         block: ReferenceDSL.() -> Unit
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entityType, EntityPropCategory.REFERENCE, prop)
+        val entityProp = EntityPropImpl(entityType, prop)
         ReferenceDSL(entityProp).block()
         entityType.declaredProps[prop.name] = entityProp
     }
@@ -64,7 +63,7 @@ class EntityTypeDSL<E: Immutable> internal constructor(
         block: CollectionDSL<T>.() -> Unit
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entityType, EntityPropCategory.LIST, prop)
+        val entityProp = EntityPropImpl(entityType, prop)
         CollectionDSL<T>(entityProp).block()
         entityType.declaredProps[prop.name] = entityProp
     }
@@ -74,7 +73,7 @@ class EntityTypeDSL<E: Immutable> internal constructor(
         block: CollectionDSL<T>.() -> Unit
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entityType, EntityPropCategory.CONNECTION, prop)
+        val entityProp = EntityPropImpl(entityType, prop)
         CollectionDSL<T>(entityProp).block()
         entityType.declaredProps[prop.name] = entityProp
     }
@@ -84,19 +83,19 @@ class EntityTypeDSL<E: Immutable> internal constructor(
         mappedBy: KProperty1<T, *>
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entityType, EntityPropCategory.REFERENCE, prop, mappedBy)
+        val entityProp = EntityPropImpl(entityType, prop)
         entityType.declaredProps[prop.name] = entityProp
     }
 
     fun <T: Immutable> mappedList(
         prop: KProperty1<E, List<T>>,
         mappedBy: KProperty1<T, *>,
-        block: (PhantomCollectionDSL<T>.() -> Unit)? = null
+        block: (MappedCollectionDSL<T>.() -> Unit)? = null
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entityType, EntityPropCategory.LIST, prop, mappedBy)
+        val entityProp = EntityPropImpl(entityType, prop, mappedBy = mappedBy)
         block?.let {
-            PhantomCollectionDSL<T>(entityProp).it()
+            MappedCollectionDSL<T>(entityProp).it()
         }
         entityType.declaredProps[prop.name] = entityProp
     }
@@ -104,26 +103,26 @@ class EntityTypeDSL<E: Immutable> internal constructor(
     fun <T: Immutable> mappedConnection(
         prop: KProperty1<E, out Connection<T>>,
         mappedBy: KProperty1<T, *>,
-        block: (PhantomCollectionDSL<T>.() -> Unit)? = null
+        block: (MappedCollectionDSL<T>.() -> Unit)? = null
     ) {
         validateProp(prop)
-        val entityProp = EntityPropImpl(entityType, EntityPropCategory.CONNECTION, prop, mappedBy)
+        val entityProp = EntityPropImpl(entityType, prop, mappedBy = mappedBy)
         block?.let {
-            PhantomCollectionDSL<T>(entityProp).it()
+            MappedCollectionDSL<T>(entityProp).it()
         }
         entityType.declaredProps[prop.name] = entityProp
     }
 
-    fun <T> computed(prop: KProperty1<E, T>) {
+    fun <T> userImplementation(prop: KProperty1<E, T>) {
 
     }
 
     private fun validateProp(prop: KProperty1<*, *>) {
         entityType.declaredProps[prop.name]?.let {
             if (it.kotlinProp === prop) {
-                throw MetadataException("'$prop' cannot be configured twice")
+                throw ModelException("'$prop' cannot be configured twice")
             } else {
-                throw MetadataException("Conflict properties: '${prop}' and '$it'")
+                throw ModelException("Conflict properties: '${prop}' and '$it'")
             }
         }
     }

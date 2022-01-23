@@ -2,13 +2,14 @@ package org.babyfish.graphql.provider.server.dsl
 
 import io.r2dbc.spi.Statement
 import org.babyfish.graphql.provider.server.dsl.redis.FilterRedisDSL
+import org.babyfish.graphql.provider.server.dsl.redis.RedisDSL
 import org.babyfish.graphql.provider.server.meta.impl.EntityPropImpl
 import org.babyfish.kimmer.Immutable
 
 @GraphQLProviderDSL
 class UserImplementationDSL<E: Immutable, T> internal constructor(
     entityProp: EntityPropImpl
-): ArgumentsDSL<E>(entityProp) {
+) {
 
     fun single(block: suspend ImplementationContext<E>.() -> T) {}
 

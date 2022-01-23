@@ -7,15 +7,14 @@ import com.babyfish.graphql.provider.server.cfg.model.BookStoreMapper
 import com.babyfish.graphql.provider.server.cfg.query.AuthorQueryService
 import com.babyfish.graphql.provider.server.cfg.query.BookQueryService
 import com.babyfish.graphql.provider.server.cfg.query.BookStoreQueryService
-import graphql.schema.idl.SchemaPrinter
-import org.babyfish.graphql.provider.server.runtime.EntityTypeParser
+import org.babyfish.graphql.provider.server.runtime.EntityTypeGenerator
 
 import kotlin.test.Test
 
-class EntityTypeParserTest {
+class EntityTypeGeneratorTest {
 
-    private val entityTypeProvider =
-        EntityTypeParser(
+    private val entityTypeGenerator =
+        EntityTypeGenerator(
             listOf(
                 BookStoreQueryService(),
                 BookQueryService(),
@@ -30,8 +29,7 @@ class EntityTypeParserTest {
 
     @Test
     fun testBookType() {
-        println(entityTypeProvider[BookStore::class].database.tableName)
-        //println(SchemaPrinter().print(entityTypeProvider.schema))
+
     }
 }
 

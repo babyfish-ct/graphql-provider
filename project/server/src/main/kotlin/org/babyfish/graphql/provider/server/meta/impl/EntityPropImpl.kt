@@ -1,9 +1,7 @@
 package org.babyfish.graphql.provider.server.meta.impl
 
-import org.babyfish.graphql.provider.server.runtime.EntityTypeParser
+import org.babyfish.graphql.provider.server.runtime.EntityTypeGenerator
 import org.babyfish.graphql.provider.server.meta.*
-import org.babyfish.kimmer.Connection
-import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -11,8 +9,8 @@ import kotlin.time.Duration
 
 internal class EntityPropImpl(
     override val declaringType: EntityType,
-    override val category: EntityPropCategory,
     kotlinProp: KProperty1<*, *>,
+    override val isId: Boolean = false,
     mappedBy: KProperty1<*, *>? = null
 ): EntityProp {
 
@@ -31,46 +29,33 @@ internal class EntityPropImpl(
     override var middleTable: EntityProp.MiddleTable? = null
 
     override var redis = RedisImpl()
+    override val returnType: KClass<*>
+        get() = immutableProp.returnType
 
-    fun resolve(provider: EntityTypeParser) {
-        val tgtKtType = immutableProp.targetType?.kotlinType
-        if (tgtKtType !== null) {
-            val tgtType = provider[tgtKtType]
+    override val isReference: Boolean
+        get() = immutableProp.isReference
+
+    override val isList: Boolean
+        get() = immutableProp.isList
+
+    override val isConnection: Boolean
+        get() = immutableProp.isConnection
+
+    override val isNullable: Boolean
+        get() = immutableProp.isNullable
+
+    override val isTargetNullable: Boolean
+        get() = immutableProp.isTargetNullable
+
+    fun resolve(generator: EntityTypeGenerator) {
+        immutableProp.targetType?.let {
+            val tgtType = generator[it]
             targetType = tgtType
             if (mappedBy !== null) {
                 val opposite = tgtType.props[mappedBy] as EntityPropImpl? ?: error("Internal bug")
                 oppositeProp = opposite
                 opposite.oppositeProp = this
             }
-        }
-    }
-
-    init {
-        if (category == EntityPropCategory.ID || category == EntityPropCategory.SCALAR) {
-            column = ColumnImpl()
-        }
-        val classifier = kotlinProp.returnType.classifier as? KClass<*>
-            ?: throw IllegalArgumentException("The property '${kotlinProp}' must return class")
-        if (immutableProp.isAssociation != this.isAssociation) {
-            throw IllegalArgumentException("The property '${kotlinProp}' returns '${classifier.qualifiedName}' but its category is ${category}, this is not allowed")
-        }
-        when (category) {
-            EntityPropCategory.REFERENCE, EntityPropCategory.MAPPED_REFERENCE ->
-                if (!immutableProp.isReference) {
-                    throw IllegalArgumentException("The property '${kotlinProp}' must returns another ${Immutable::class.qualifiedName} when category is $category")
-                }
-            EntityPropCategory.LIST, EntityPropCategory.MAPPED_LIST ->
-                if (!immutableProp.isList) {
-                    throw IllegalArgumentException("The property '${kotlinProp}' must returns another ${List::class.qualifiedName} when category is $category")
-                }
-            EntityPropCategory.CONNECTION, EntityPropCategory.MAPPED_CONNECTION ->
-                if (!immutableProp.isConnection) {
-                    throw IllegalArgumentException("The property '${kotlinProp}' must returns another ${Connection::class.qualifiedName} when category is $category")
-                }
-            else ->
-                if (immutableProp.isAssociation) {
-                    throw IllegalArgumentException("The property '${kotlinProp}' cannot returns connection, list or another immutable type when category is $category")
-                }
         }
     }
 

@@ -4,6 +4,7 @@ import org.babyfish.graphql.provider.server.EntityMapper
 import org.babyfish.graphql.provider.server.QueryService
 import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.server.dsl.EntityTypeDSL
+import org.babyfish.graphql.provider.server.meta.EntityType
 import org.babyfish.graphql.provider.server.meta.impl.EntityTypeImpl
 import org.babyfish.graphql.provider.server.meta.impl.ResolvingPhase
 import org.babyfish.kimmer.Connection
@@ -11,20 +12,19 @@ import org.babyfish.kimmer.meta.ImmutableType
 import org.springframework.core.GenericTypeResolver
 import kotlin.reflect.KClass
 
-internal class EntityTypeParser(
-    queryServices: List<QueryService>,
-    assemblers: List<EntityMapper<*>>
+internal class EntityTypeGenerator(
+    private val queryServices: List<QueryService>,
+    private val assemblers: List<EntityMapper<*>>
 ) {
-    private val entityTypeMap = mutableMapOf<Class<*>, EntityTypeImpl>()
+    private val entityTypeMap = mutableMapOf<ImmutableType, EntityTypeImpl>()
 
-    init {
+    val entityTypes: Map<ImmutableType, EntityType>
+        get() = entityTypeMap
+
+    fun generate() {
         for (assembler in assemblers) {
-            val type = GenericTypeResolver.resolveTypeArgument(
-                assembler::class.java,
-                EntityMapper::class.java
-            ) as Class<out Immutable>
             (assembler as EntityMapper<Immutable>).apply {
-                val entityType = get(type.kotlin)
+                val entityType = get(assembler.immutableType)
                 entityType.isAssembled = true
                 EntityTypeDSL<Immutable>(entityType).map()
             }
@@ -46,24 +46,17 @@ internal class EntityTypeParser(
         }
     }
 
-    operator fun get(type: KClass<out Immutable>): EntityTypeImpl =
-        entityTypeMap[type.java] ?: create(type)
+    operator fun get(immutableType: ImmutableType): EntityTypeImpl =
+        entityTypeMap[immutableType] ?: create(immutableType)
 
-    private fun create(type: KClass<out Immutable>): EntityTypeImpl {
-        val immutableType = if (Connection::class.java.isAssignableFrom(type.java)) {
-            throw IllegalArgumentException(
-                "Type '${type.qualifiedName}' cannot be considered as entity " +
-                    "because it implements '${Connection::class.qualifiedName}'")
-        } else {
-            ImmutableType.of(type)
-        }
+    private fun create(immutableType: ImmutableType): EntityTypeImpl {
         val entityType = EntityTypeImpl(immutableType)
-        entityTypeMap[type.java] = entityType
+        entityTypeMap[immutableType] = entityType
         for (superType in immutableType.superTypes) {
-            this[superType.kotlinType]
+            this[superType]
         }
         for (prop in immutableType.declaredProps.values) {
-            prop.targetType?.kotlinType?.let {
+            prop.targetType?.let {
                 this[it]
             }
         }

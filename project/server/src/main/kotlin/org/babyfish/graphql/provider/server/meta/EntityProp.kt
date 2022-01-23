@@ -4,31 +4,21 @@ import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KProperty1
 import kotlin.time.Duration
 
-interface EntityProp {
+interface EntityProp: Prop {
 
     val declaringType: EntityType
-
-    val category: EntityPropCategory
-
-    val isAssociation: Boolean
-        get() = immutableProp.isAssociation
-
-    val isMapped: Boolean
-        get() = category == EntityPropCategory.MAPPED_REFERENCE ||
-            category == EntityPropCategory.MAPPED_LIST ||
-            category == EntityPropCategory.MAPPED_CONNECTION
 
     val immutableProp: ImmutableProp
 
     val kotlinProp: KProperty1<*, *>
         get() = immutableProp.kotlinProp
 
-    val name: String
+    override val name: String
         get() = kotlinProp.name
 
-    val targetType: EntityType?
-
     val oppositeProp: EntityProp?
+
+    val isId: Boolean
 
     val column: Column?
 

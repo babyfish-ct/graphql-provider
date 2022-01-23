@@ -1,8 +1,7 @@
 package org.babyfish.graphql.provider.server.dsl.redis
 
-import org.babyfish.graphql.provider.server.dsl.EvalDSL
 import org.babyfish.graphql.provider.server.dsl.GraphQLProviderDSL
-import org.babyfish.graphql.provider.server.meta.MetadataException
+import org.babyfish.graphql.provider.server.ModelException
 import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.server.meta.impl.FilterRedisDependencyImpl
@@ -12,7 +11,7 @@ import kotlin.reflect.KProperty1
 @GraphQLProviderDSL
 class FilterRedisDSL<E> internal constructor(
     private val dependencyMap: MutableMap<String, FilterRedisDependencyImpl>
-): EvalDSL() {
+) {
 
     fun dependsOn(prop: KProperty1<E, *>) {
         dependsOn(Kind.SCALAR, prop)
@@ -56,7 +55,7 @@ class FilterRedisDSL<E> internal constructor(
         prop: KProperty1<*, *>
     ): FilterRedisDependencyImpl {
         if (this.dependencyMap.containsKey(prop.name)) {
-            throw MetadataException("Cannot depends on '${prop.name}' twice")
+            throw ModelException("Cannot depends on '${prop.name}' twice")
         }
         val classifier = prop.returnType.classifier as? KClass<*>
             ?: throw IllegalArgumentException("The prop '$prop' must return class")
@@ -66,7 +65,7 @@ class FilterRedisDSL<E> internal constructor(
         val isScalar = !isReference && !isList && !isConnection
         when (kind) {
             Kind.SCALAR -> if (!isScalar) {
-                throw MetadataException("Cannot add '$prop' as scalar dependency because it's not scalar dependency")
+                throw ModelException("Cannot add '$prop' as scalar dependency because it's not scalar dependency")
             }
             Kind.REFERENCE -> if (!isReference) {
                 throw IllegalArgumentException("Cannot add '$prop' as scalar dependency because it's not reference dependency")

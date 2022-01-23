@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.server.meta
 
+import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableType
 import kotlin.reflect.KClass
 import kotlin.time.Duration
@@ -10,7 +11,7 @@ interface EntityType {
 
     val immutableType: ImmutableType
 
-    val kotlinType: KClass<*>
+    val kotlinType: KClass<out Immutable>
         get() = immutableType.kotlinType
 
     val superTypes: List<EntityType>

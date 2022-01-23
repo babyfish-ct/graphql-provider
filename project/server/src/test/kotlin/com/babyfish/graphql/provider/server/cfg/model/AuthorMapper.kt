@@ -14,21 +14,7 @@ class AuthorMapper: EntityMapper<Author>() {
 
         id(Author::id)
 
-        mappedList(Author::books, Book::authors) {
-
-            optionalArgument(
-                "name",
-                String::class
-            ) {
-
-                db {
-                    where(table[Book::name] ilike it)
-                }
-                redis {
-                    dependsOn(Book::name)
-                }
-            }
-        }
+        mappedList(Author::books, Book::authors)
     }
 
     fun books(name: String?) {
