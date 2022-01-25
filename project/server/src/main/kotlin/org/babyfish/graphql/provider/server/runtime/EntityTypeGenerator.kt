@@ -29,20 +29,17 @@ internal class EntityTypeGenerator(
                 EntityTypeDSL<Immutable>(entityType).map()
             }
         }
+        resolve(ResolvingPhase.SUPER_TYPE)
+        resolve(ResolvingPhase.DECLARED_PROPS)
+        resolve(ResolvingPhase.PROPS)
+        resolve(ResolvingPhase.PROP_TARGET)
+        resolve(ResolvingPhase.PROP_MAPPED_BY)
+        resolve(ResolvingPhase.ID_PROP)
+    }
+
+    private fun resolve(phase: ResolvingPhase) {
         for (entityType in entityTypeMap.values) {
-            entityType.resolve(this, ResolvingPhase.SUPER_TYPE)
-        }
-        for (entityType in entityTypeMap.values) {
-            entityType.resolve(this, ResolvingPhase.DECLARED_PROPS)
-        }
-        for (entityType in entityTypeMap.values) {
-            entityType.resolve(this, ResolvingPhase.PROPS)
-        }
-        for (entityType in entityTypeMap.values) {
-            entityType.resolve(this, ResolvingPhase.PROP_DETAIL)
-        }
-        for (entityType in entityTypeMap.values) {
-            entityType.resolve(this, ResolvingPhase.ID_PROP)
+            entityType.resolve(this, phase)
         }
     }
 

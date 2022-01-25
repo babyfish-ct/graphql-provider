@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.server.meta.impl
 
+import org.babyfish.graphql.provider.server.ModelException
 import org.babyfish.graphql.provider.server.runtime.EntityTypeGenerator
 import org.babyfish.graphql.provider.server.meta.*
 import org.babyfish.kimmer.meta.ImmutableProp
@@ -14,7 +15,7 @@ internal class EntityPropImpl(
     mappedBy: KProperty1<*, *>? = null
 ): EntityProp {
 
-    private val mappedBy: String? = mappedBy?.name
+    var _mappedBy: Any? = mappedBy?.name
 
     override val immutableProp: ImmutableProp =
         declaringType.immutableType.props[kotlinProp.name]
@@ -47,15 +48,51 @@ internal class EntityPropImpl(
     override val isTargetNullable: Boolean
         get() = immutableProp.isTargetNullable
 
-    fun resolve(generator: EntityTypeGenerator) {
+    override val mappedBy: EntityProp?
+        get() = _mappedBy as EntityProp?
+
+    fun resolve(generator: EntityTypeGenerator, phase: ResolvingPhase) {
+        if (phase == ResolvingPhase.PROP_TARGET) {
+            resolveTarget(generator)
+        } else if (phase == ResolvingPhase.PROP_MAPPED_BY) {
+            resolvedMappedBy(generator)
+        }
+    }
+
+    private fun resolveTarget(generator: EntityTypeGenerator) {
         immutableProp.targetType?.let {
             val tgtType = generator[it]
             targetType = tgtType
-            if (mappedBy !== null) {
-                val opposite = tgtType.props[mappedBy] as EntityPropImpl? ?: error("Internal bug")
+            if (_mappedBy !== null) {
+                val opposite = tgtType.props[_mappedBy] as EntityPropImpl? ?: error("Internal bug")
                 oppositeProp = opposite
                 opposite.oppositeProp = this
             }
+        }
+    }
+
+    private fun resolvedMappedBy(generator: EntityTypeGenerator) {
+        if (_mappedBy is String) {
+            val mappedByProp = (targetType!!.props[_mappedBy] as EntityPropImpl?)
+                ?: throw ModelException(
+                    "The attribute 'mappedBy' of property '${kotlinProp}' is specified as '${_mappedBy}', " +
+                        "but there is not property named '${_mappedBy}' in the target type '${targetType}' "
+                )
+            if (mappedByProp.targetType !== declaringType) {
+                throw ModelException(
+                    "The attribute 'mappedBy' of property '${kotlinProp}' is specified as '${_mappedBy}'," +
+                        "but the property named '${_mappedBy}' in the target type '${targetType}' is not " +
+                        "association point to current type '${declaringType}'"
+                )
+            }
+            if (mappedByProp._mappedBy !== null) {
+                throw ModelException(
+                    "The attribute 'mappedBy' of property '${kotlinProp}' is specified as '${_mappedBy}'," +
+                        "but the property named '${_mappedBy}' in the target type '${targetType}' is specified " +
+                        "with 'mappedBy' too, there is not allowed"
+                )
+            }
+            _mappedBy = mappedByProp
         }
     }
 

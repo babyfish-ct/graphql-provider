@@ -22,6 +22,7 @@ dependencies {
     implementation("org.babyfish.kimmer:kimmer:0.0.3")
     implementation(project(":graphql-provider-r2dbc"))
     implementation("com.graphql-java:graphql-java:17.3")
+    implementation("org.springframework:spring-r2dbc:5.3.15")
 
     testImplementation(kotlin("test"))
 }

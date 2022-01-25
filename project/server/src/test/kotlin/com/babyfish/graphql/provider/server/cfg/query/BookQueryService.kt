@@ -3,9 +3,7 @@ package com.babyfish.graphql.provider.server.cfg.query
 import com.babyfish.graphql.provider.server.cfg.Book
 import com.babyfish.graphql.provider.server.cfg.BookSortedField
 import org.babyfish.graphql.provider.server.QueryService
-import org.babyfish.graphql.provider.server.runtime.ge
-import org.babyfish.graphql.provider.server.runtime.ilike
-import org.babyfish.graphql.provider.server.runtime.le
+import org.babyfish.graphql.provider.server.runtime.expression.*
 import org.babyfish.kimmer.Connection
 import java.math.BigDecimal
 import kotlin.reflect.KProperty1

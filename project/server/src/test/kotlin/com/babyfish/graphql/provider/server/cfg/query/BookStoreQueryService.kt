@@ -2,7 +2,7 @@ package com.babyfish.graphql.provider.server.cfg.query
 
 import com.babyfish.graphql.provider.server.cfg.BookStore
 import org.babyfish.graphql.provider.server.QueryService
-import org.babyfish.graphql.provider.server.runtime.ilike
+import org.babyfish.graphql.provider.server.runtime.expression.ilike
 import org.babyfish.kimmer.Connection
 import org.springframework.stereotype.Component
 

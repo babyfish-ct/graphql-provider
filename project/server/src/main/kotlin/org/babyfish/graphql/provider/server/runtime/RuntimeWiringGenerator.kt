@@ -6,8 +6,9 @@ import graphql.schema.idl.TypeRuntimeWiring
 import org.babyfish.graphql.provider.server.QueryService
 import org.babyfish.graphql.provider.server.meta.EntityType
 import org.babyfish.kimmer.Immutable
+import org.springframework.r2dbc.core.DatabaseClient
 
-class RuntimeWiringGenerator(
+internal class RuntimeWiringGenerator(
     private val queryServices: Collection<QueryService>,
     private val entityTypes: List<EntityType>
 ) {

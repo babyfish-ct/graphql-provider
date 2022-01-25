@@ -20,6 +20,8 @@ interface EntityProp: Prop {
 
     val isId: Boolean
 
+    val mappedBy: EntityProp?
+
     val column: Column?
 
     val middleTable: MiddleTable?

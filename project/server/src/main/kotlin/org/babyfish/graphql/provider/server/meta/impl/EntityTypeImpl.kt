@@ -51,8 +51,8 @@ internal class EntityTypeImpl(
                 ResolvingPhase.SUPER_TYPE -> resolveSuperTypes(generator)
                 ResolvingPhase.DECLARED_PROPS -> resolveDeclaredProps(generator)
                 ResolvingPhase.PROPS -> resolveProps(generator)
-                ResolvingPhase.PROP_DETAIL -> resolvePropDetail(generator)
                 ResolvingPhase.ID_PROP -> resolveIdProp()
+                else -> resolvePropDetail(generator, phase)
             }
         }
     }
@@ -119,9 +119,9 @@ internal class EntityTypeImpl(
         }
     }
 
-    private fun resolvePropDetail(generator: EntityTypeGenerator) {
+    private fun resolvePropDetail(generator: EntityTypeGenerator, phase: ResolvingPhase) {
         for (declaredProp in declaredProps.values) {
-            declaredProp.resolve(generator)
+            declaredProp.resolve(generator, phase)
         }
     }
 
