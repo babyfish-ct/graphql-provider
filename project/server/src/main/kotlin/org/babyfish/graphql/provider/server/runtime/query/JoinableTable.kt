@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.server.runtime
+package org.babyfish.graphql.provider.server.runtime.query
 
 import org.babyfish.kimmer.Connection
 import org.babyfish.kimmer.Immutable

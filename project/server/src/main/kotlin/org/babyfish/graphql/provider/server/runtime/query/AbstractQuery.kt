@@ -1,9 +1,6 @@
 package org.babyfish.graphql.provider.server.runtime.query
 
 import org.babyfish.graphql.provider.server.meta.EntityType
-import org.babyfish.graphql.provider.server.runtime.DatabaseQuery
-import org.babyfish.graphql.provider.server.runtime.DatabaseSubQuery
-import org.babyfish.graphql.provider.server.runtime.JoinableTable
 import org.babyfish.graphql.provider.server.runtime.expression.Expression
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableType
@@ -13,7 +10,7 @@ internal abstract class AbstractQuery<T: Immutable>(
     val tableAliasAllocator: TableAliasAllocator,
     val entityTypeMap: Map<ImmutableType, EntityType>,
     type: KClass<T>
-): DatabaseQuery<T>, Renderable {
+): DatabaseQuery<T> {
 
     private val predicates = mutableListOf<Expression<Boolean>>()
 
@@ -41,19 +38,10 @@ internal abstract class AbstractQuery<T: Immutable>(
 
     override fun <X : Immutable> subQuery(
         type: KClass<X>,
-        block: DatabaseSubQuery<T, X, Unit>.() -> Unit
-    ): DatabaseSubQuery<T, X, Unit> =
-        SubQueryImpl<T, X, Unit>(this, type, null).apply {
-            block
-        }
-
-    override fun <X : Immutable, R> subQuery(
-        type: KClass<X>,
-        selectionExpressionSupplier: (JoinableTable<X>) -> Expression<R>,
-        block: DatabaseSubQuery<T, X, R>.() -> Unit
-    ): DatabaseSubQuery<T, X, R> =
-        SubQueryImpl(this, type, selectionExpressionSupplier).apply {
-            block
+        block: (DatabaseSubQuery<T, X>.() -> Unit)?
+    ): DatabaseSubQuery<T, X> =
+        SubQueryImpl(this, type).apply {
+            block?.invoke(this)
         }
 
     protected fun SqlBuilder.renderWithoutSelection() {

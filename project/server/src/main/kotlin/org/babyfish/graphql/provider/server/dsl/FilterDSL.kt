@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.server.dsl
 
 import org.babyfish.graphql.provider.server.dsl.redis.FilterRedisDSL
-import org.babyfish.graphql.provider.server.runtime.DatabaseQuery
+import org.babyfish.graphql.provider.server.runtime.query.DatabaseQuery
 import org.babyfish.kimmer.Immutable
 
 class FilterDSL<E: Immutable> internal constructor(

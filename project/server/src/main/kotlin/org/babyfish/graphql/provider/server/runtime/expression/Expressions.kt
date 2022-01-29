@@ -1,6 +1,7 @@
 package org.babyfish.graphql.provider.server.runtime.expression
 
-import org.babyfish.graphql.provider.server.runtime.DatabaseSubQuery
+import org.babyfish.graphql.provider.server.runtime.query.DatabaseSubQuery
+import org.babyfish.graphql.provider.server.runtime.query.TypedDatabaseSubQuery
 import kotlin.reflect.KClass
 
 fun <X: Any> sql(
@@ -158,6 +159,18 @@ val Expression<*>.isNull: Expression<*>
 val Expression<*>.isNotNull: Expression<*>
     get() = NullityExpression(false, this)
 
+fun <A, B> tuple(
+    a: Expression<A>,
+    b: Expression<B>
+): Expression<Pair<A, B>> =
+    PairExpression(a, b)
+
+fun <A, B, C> tuple(
+    a: Expression<A>,
+    b: Expression<B>,
+    c: Expression<C>
+): Expression<Triple<A, B, C>> =
+    TripleExpression(a, b, c)
 
 infix fun <T> Expression<T>.valueIn(
     values: Collection<T>
@@ -171,22 +184,26 @@ infix fun <T> Expression<T>.valueNotIn(
 
 
 infix fun <T> Expression<T>.valueIn(
-    subQuery: DatabaseSubQuery<*, *, T>
+    subQuery: TypedDatabaseSubQuery<*, *, T>
 ): Expression<Boolean> =
-    InSubQueryExpression<T>(false, this, subQuery)
+    InSubQueryExpression(false, this, subQuery)
 
 infix fun <T> Expression<T>.valueNotIn(
-    subQuery: DatabaseSubQuery<*, *, T>
+    subQuery: TypedDatabaseSubQuery<*, *, T>
 ): Expression<Boolean> =
-    InSubQueryExpression<T>(true, this, subQuery)
+    InSubQueryExpression(true, this, subQuery)
 
 
 fun exists(
-    subQuery: DatabaseSubQuery<*, *, *>
+    subQuery: DatabaseSubQuery<*, *>
 ): Expression<Boolean> =
     ExistsExpression(false, subQuery)
 
 fun notExists(
-    subQuery: DatabaseSubQuery<*, *, *>
+    subQuery: DatabaseSubQuery<*, *>
 ): Expression<Boolean> =
     ExistsExpression(true, subQuery)
+
+
+fun <T: Number> constant(value: T): Expression<T> =
+    ConstantExpression(value)

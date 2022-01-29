@@ -1,13 +1,12 @@
 package org.babyfish.graphql.provider.server.runtime.expression
 
 import org.babyfish.graphql.provider.server.meta.EntityProp
-import org.babyfish.graphql.provider.server.runtime.DatabaseSubQuery
+import org.babyfish.graphql.provider.server.runtime.query.*
 import org.babyfish.graphql.provider.server.runtime.query.Renderable
 import org.babyfish.graphql.provider.server.runtime.query.SqlBuilder
 import org.babyfish.graphql.provider.server.runtime.query.TableImpl
 
-interface Expression<T> {
-}
+interface Expression<T>
 
 internal abstract class AbstractExpression<T>: Expression<T>, Renderable {
 
@@ -180,6 +179,38 @@ internal class NullityExpression(
     }
 }
 
+internal class PairExpression<A, B>(
+    private val a: Expression<A>,
+    private val b: Expression<B>
+): AbstractExpression<Pair<A, B>>() {
+
+    override fun SqlBuilder.render() {
+        sql("(")
+        render(a)
+        sql(", ")
+        render(b)
+        sql(")")
+    }
+}
+
+internal class TripleExpression<A, B, C>(
+    private val a: Expression<A>,
+    private val b: Expression<B>,
+    private val c: Expression<C>
+): AbstractExpression<Triple<A, B, C>>() {
+
+    override fun SqlBuilder.render() {
+
+        sql("(")
+        render(a)
+        sql(", ")
+        render(b)
+        sql(", ")
+        render(c)
+        sql(")")
+    }
+}
+
 internal class InListExpression<T>(
     private val negative: Boolean,
     private val expression: Expression<T>,
@@ -209,7 +240,7 @@ internal class InListExpression<T>(
 internal class InSubQueryExpression<T>(
     private val negative: Boolean,
     private val expression: Expression<T>,
-    private val subQuery: DatabaseSubQuery<*, *, T>
+    private val subQuery: TypedDatabaseSubQuery<*, *, T>
 ): AbstractExpression<Boolean>() {
 
     override fun SqlBuilder.render() {
@@ -221,12 +252,12 @@ internal class InSubQueryExpression<T>(
 
 internal class ExistsExpression(
     private val negative: Boolean,
-    private val subQuery: DatabaseSubQuery<*, *, *>
+    private val subQuery: DatabaseSubQuery<*, *>
 ): AbstractExpression<Boolean>() {
 
     override fun SqlBuilder.render() {
         sql(if (negative) "not exists" else "exists")
-        render(subQuery)
+        render(subQuery.select { constant(1) })
     }
 }
 
@@ -236,5 +267,17 @@ internal class ValueExpression<T>(
 
     override fun SqlBuilder.render() {
         variable(value)
+    }
+}
+
+internal class ConstantExpression<T: Number>(
+    private val value: T
+): AbstractExpression<T>() {
+
+    override fun SqlBuilder.render() {
+        if (value::class == String::class) {
+            error("In order to avoid injection attack, constant expression is not supported for string")
+        }
+        sql(value.toString())
     }
 }

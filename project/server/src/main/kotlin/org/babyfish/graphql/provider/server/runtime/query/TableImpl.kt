@@ -2,8 +2,6 @@ package org.babyfish.graphql.provider.server.runtime.query
 
 import org.babyfish.graphql.provider.server.meta.EntityProp
 import org.babyfish.graphql.provider.server.meta.EntityType
-import org.babyfish.graphql.provider.server.runtime.JoinType
-import org.babyfish.graphql.provider.server.runtime.JoinableTable
 import org.babyfish.graphql.provider.server.runtime.expression.Expression
 import org.babyfish.graphql.provider.server.runtime.expression.PropExpression
 import org.babyfish.kimmer.Connection
