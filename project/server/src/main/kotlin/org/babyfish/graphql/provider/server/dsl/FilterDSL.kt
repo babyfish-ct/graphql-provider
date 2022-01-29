@@ -11,7 +11,7 @@ class FilterDSL<E: Immutable> internal constructor(
 
     }
 
-    fun redis(block: FilterRedisDSL<E>.() -> Unit) {
+    fun redis(block: FilterRedisDSL.() -> Unit) {
 
     }
 

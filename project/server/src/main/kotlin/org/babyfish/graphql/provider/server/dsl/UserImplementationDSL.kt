@@ -15,7 +15,7 @@ class UserImplementationDSL<E: Immutable, T> internal constructor(
 
     fun batch(block: suspend BatchImplementationContext<E>.() -> Map<out Any, T>) {}
 
-    fun redis(block: FilterRedisDSL<E>.() -> Unit) {
+    fun redis(block: FilterRedisDSL.() -> Unit) {
 
     }
 }

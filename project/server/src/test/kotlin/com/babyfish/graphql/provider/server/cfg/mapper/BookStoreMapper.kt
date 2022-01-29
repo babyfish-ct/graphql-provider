@@ -38,9 +38,8 @@ class BookStoreMapper(
                 bookRepository.findAvgPrices(rows.map { it.id })
             }
             redis {
-                dependsOnList(BookStore::books) {
-                    dependsOn(Book::name)
-                }
+                dependsOn(BookStore::books)
+                dependsOn(Book::name)
             }
         }
     }

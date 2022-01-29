@@ -24,7 +24,7 @@ interface DatabaseQuery<T: Immutable> {
 
     fun <X: Immutable, R> subQuery(
         type: KClass<X>,
-        selectionExpressionSupplier: (JoinableTable<X>) -> Expression<R>,
+        selectionExpressionSupplier: DatabaseSubQuery<T, X, R>.() -> Expression<R>,
         block: DatabaseSubQuery<T, X, R>.() -> Unit
     ): DatabaseSubQuery<T, X, R>
 
@@ -33,5 +33,5 @@ interface DatabaseQuery<T: Immutable> {
         selectionProp: KProperty1<X, R>,
         block: DatabaseSubQuery<T, X, R>.() -> Unit
     ): DatabaseSubQuery<T, X, R> =
-        subQuery(type, { it[selectionProp] }, block)
+        subQuery(type, { table[selectionProp] }, block)
 }
