@@ -127,4 +127,3 @@ class EntityTypeDSL<E: Immutable> internal constructor(
         }
     }
 }
-

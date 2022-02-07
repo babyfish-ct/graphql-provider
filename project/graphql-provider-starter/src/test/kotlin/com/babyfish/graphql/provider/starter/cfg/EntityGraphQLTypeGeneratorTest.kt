@@ -11,7 +11,7 @@ import org.babyfish.graphql.provider.starter.runtime.EntityTypeGenerator
 
 import kotlin.test.Test
 
-class EntityTypeGeneratorTest {
+class EntityGraphQLTypeGeneratorTest {
 
     private val entityTypeGenerator =
         EntityTypeGenerator(

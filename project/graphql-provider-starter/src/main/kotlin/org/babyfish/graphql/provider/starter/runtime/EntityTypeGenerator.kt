@@ -7,6 +7,8 @@ import org.babyfish.graphql.provider.starter.meta.EntityType
 import org.babyfish.graphql.provider.starter.meta.impl.EntityTypeImpl
 import org.babyfish.graphql.provider.starter.meta.impl.ResolvingPhase
 import org.babyfish.kimmer.meta.ImmutableType
+import kotlin.reflect.KVisibility
+import kotlin.reflect.full.declaredFunctions
 
 internal class EntityTypeGenerator(
     private val entityMappers: List<EntityMapper<*>>
@@ -17,6 +19,19 @@ internal class EntityTypeGenerator(
         get() = entityTypeMap
 
     fun generate() {
+        filterRegistryScope {
+            for (entityMapper in entityMappers) {
+                for (function in entityMapper::class.declaredFunctions) {
+                    if (function.name != "config") {
+                        if (function.visibility == KVisibility.PUBLIC) {
+                            filterRegistryFunScope(function) {
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
         for (entityMapper in entityMappers) {
             (entityMapper as EntityMapper<Immutable>).apply {
                 val entityType = get(entityMapper.immutableType)

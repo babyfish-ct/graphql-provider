@@ -6,9 +6,11 @@ import org.babyfish.graphql.provider.starter.ModelException
 import org.babyfish.graphql.provider.starter.QueryService
 import org.babyfish.graphql.provider.starter.meta.EntityProp
 import org.babyfish.graphql.provider.starter.meta.EntityType
+import org.babyfish.kimmer.graphql.Connection
 import java.math.BigDecimal
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
+import kotlin.reflect.KType
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredFunctions
 
@@ -80,7 +82,12 @@ internal class TypeDefinitionRegistryGenerator(
         }
         return FieldDefinition.newFieldDefinition().apply {
             name(function.name)
-            type(TypeName("String"))
+            val fieldType = (
+                function.returnType.classifier as? KClass<*>
+                    ?: ModelException("Query function '${function}' must return class")
+            ).let {
+
+            }
         }.build()
     }
 

@@ -5,6 +5,7 @@ import org.babyfish.graphql.provider.starter.runtime.EntityTypeGenerator
 import org.babyfish.graphql.provider.starter.meta.*
 import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
 import kotlin.time.Duration
 
@@ -15,7 +16,7 @@ internal class EntityPropImpl(
     mappedBy: KProperty1<*, *>? = null
 ): EntityProp {
 
-    var _mappedBy: Any? = mappedBy?.name
+    private var _mappedBy: Any? = mappedBy?.name
 
     override val immutableProp: ImmutableProp =
         declaringType.immutableType.props[kotlinProp.name]
@@ -30,6 +31,7 @@ internal class EntityPropImpl(
     override var middleTable: EntityProp.MiddleTable? = null
 
     override var redis = RedisImpl()
+
     override val returnType: KClass<*>
         get() = immutableProp.returnType
 
@@ -50,6 +52,8 @@ internal class EntityPropImpl(
 
     override val mappedBy: EntityProp?
         get() = _mappedBy as EntityProp?
+
+    override val arguments: List<Argument> = emptyList()
 
     fun resolve(generator: EntityTypeGenerator, phase: ResolvingPhase) {
         if (phase == ResolvingPhase.PROP_TARGET) {

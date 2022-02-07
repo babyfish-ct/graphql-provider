@@ -1,15 +1,21 @@
 package org.babyfish.graphql.provider.starter.meta
 
 import org.babyfish.graphql.provider.starter.ModelException
+import org.babyfish.kimmer.Immutable
+import org.babyfish.kimmer.graphql.Connection
+import org.babyfish.kimmer.graphql.Input
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
+import kotlin.reflect.KType
 
 class Argument internal constructor(
     val name: String,
     val type: KClass<*>,
-    val list: Boolean,
-    val nullable: Boolean,
-    val isTargetNullable: Boolean
+    val isNullable: Boolean,
+    val isList: Boolean,
+    val elementType: KClass<*>?,
+    val isElementNullable: Boolean
 ) {
     companion object {
         @JvmStatic
@@ -18,50 +24,64 @@ class Argument internal constructor(
                 .parameters
                 .let { it.subList(1, it.size) }
                 .map {
-                    val name = it.name ?: throw ModelException("Illegal function, each parameter must have name")
-                    val classifier = it.type.classifier
-                    if (classifier !is KClass<*>) {
-                        throw ModelException("Illegal function, the type of its parameter '$name' is not class")
-                    }
-                    if (classifier.java.isArray) {
-                        throw ModelException("Illegal function, the type of its parameter '$name' cannot be array")
-                    }
-                    if (Map::class.java.isAssignableFrom(classifier.java)) {
-                        throw ModelException("Illegal function, the type of its parameter '$name' cannot be map")
-                    }
-                    if (Collection::class.java.isAssignableFrom(classifier.java)) {
-                        if (List::class != classifier) {
-                            throw ModelException(
-                                "Illegal function, the type of its parameter '$name' " +
-                                    "is collection but not 'kotlin.collections.List'"
-                            )
-                        }
-                    }
-                    val isList = List::class == classifier
-                    val type = if (isList) {
-                        val targetType = it.type.arguments[0].type?.classifier
-                        if (targetType !is KClass<*>) {
-                            throw ModelException(
-                                "Illegal function, the type of its parameter '$name' " +
-                                    "is list but the type argument is not class"
-                            )
-                        }
-                        targetType
-                    } else {
-                        classifier
-                    }
-                    val isTargetNullable = if (isList) {
-                        it.type.arguments[0].type?.isMarkedNullable == true
-                    } else {
-                        function.returnType.isMarkedNullable
-                    }
+                    val elementType = validateAndGetElementType(
+                        function,
+                        it.name!!,
+                        it.type,
+                        false
+                    )
                     Argument(
-                        name,
-                        type,
-                        false,
+                        it.name!!,
+                        it.type.classifier as KClass<*>,
                         it.type.isMarkedNullable,
-                        isTargetNullable
+                        elementType !== null,
+                        elementType?.classifier as KClass<*>?,
+                        elementType?.isMarkedNullable ?:false
                     )
                 }
+
+        @JvmStatic
+        private fun validateAndGetElementType(
+            function: KFunction<*>,
+            name: String,
+            type: KType,
+            isListElement: Boolean
+        ): KType? {
+            val err: (message: String) -> Nothing = {
+                if (isListElement) {
+                    throw ModelException("Illegal function, the type of the element of its parameter 'name' $it")
+                } else {
+                    throw ModelException("Illegal function, the type of its parameter 'name' $it")
+                }
+            }
+            val classifier = type.classifier as? KClass<*>
+                ?: err("is not class")
+            if (classifier.java.isArray) {
+                err("cannot be array")
+            }
+            if (Map::class.java.isAssignableFrom(classifier.java)) {
+                err("cannot be map")
+            }
+            if (Immutable::class.java.isAssignableFrom(classifier.java) &&
+                !Input::class.java.isAssignableFrom(classifier.java)) {
+                err("cannot be type inherits 'Immutable' but does not inherits 'Input'")
+            }
+            if (Collection::class.java.isAssignableFrom(classifier.java)) {
+                if (isListElement) {
+                    err("can not be list whose type argument is specified by nested list")
+                }
+                if (List::class != classifier) {
+                    err("is collection but not 'kotlin.collections.List'")
+                }
+            }
+            val isList = List::class == classifier
+            return if (isList) {
+                (type.arguments[0].type ?: error("Internal bug")).also {
+                    validateAndGetElementType(function, name, type, true)
+                }
+            } else {
+                null
+            }
+        }
     }
 }

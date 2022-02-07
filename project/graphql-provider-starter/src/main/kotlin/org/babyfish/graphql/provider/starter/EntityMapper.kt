@@ -4,6 +4,8 @@ import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.starter.dsl.EntityTypeDSL
 import org.babyfish.graphql.provider.starter.dsl.FilterDSL
 import org.babyfish.graphql.provider.starter.dsl.UserImplementationDSL
+import org.babyfish.graphql.provider.starter.runtime.filterExecutionContext
+import org.babyfish.graphql.provider.starter.runtime.registryEntityField
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.meta.ImmutableType
 import org.springframework.core.GenericTypeResolver
@@ -51,13 +53,18 @@ abstract class EntityMapper<E: Immutable> {
         prop: KProperty1<E, List<X>?>,
         block: FilterDSL<X>.() -> Unit
     ) {
-
+        if (!registryEntityField(prop, this)) {
+            FilterDSL<X>(filterExecutionContext).block()
+        }
     }
 
     protected fun <X: Immutable> filterConnection(
         prop: KProperty1<E, out Collection<X>?>,
         block: FilterDSL<X>.() -> Unit
     ) {
+        if (!registryEntityField(prop, this)) {
+            FilterDSL<X>(filterExecutionContext).block()
+        }
     }
 
     protected fun <T> userImplementation(

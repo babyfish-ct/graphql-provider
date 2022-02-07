@@ -2,7 +2,7 @@ package org.babyfish.graphql.provider.starter.meta
 
 import kotlin.reflect.KClass
 
-interface Prop {
+interface GraphQLProp {
     val name: String
     val returnType: KClass<*>
     val isReference: Boolean
@@ -11,4 +11,5 @@ interface Prop {
     val isNullable: Boolean
     val isTargetNullable: Boolean
     val targetType: EntityType?
+    val arguments: List<Argument>
 }

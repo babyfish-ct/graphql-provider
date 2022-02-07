@@ -4,7 +4,7 @@ import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KProperty1
 import kotlin.time.Duration
 
-interface EntityProp: Prop {
+interface EntityProp: GraphQLProp {
 
     val declaringType: EntityType
 
