@@ -7,6 +7,7 @@ import org.babyfish.graphql.provider.starter.meta.EntityType
 import org.babyfish.graphql.provider.starter.meta.impl.EntityTypeImpl
 import org.babyfish.graphql.provider.starter.meta.impl.ResolvingPhase
 import org.babyfish.kimmer.meta.ImmutableType
+import kotlin.reflect.KFunction
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredFunctions
 
@@ -24,9 +25,7 @@ internal class EntityTypeGenerator(
                 for (function in entityMapper::class.declaredFunctions) {
                     if (function.name != "config") {
                         if (function.visibility == KVisibility.PUBLIC) {
-                            filterRegistryFunScope(function) {
-
-                            }
+                            invokeByRegistryMode(entityMapper, function)
                         }
                     }
                 }
@@ -70,3 +69,15 @@ internal class EntityTypeGenerator(
         return entityType
     }
 }
+
+private fun invokeByRegistryMode(owner: Any, function: KFunction<*>) {
+    filterRegistryFunScope(function) {
+        val args = Array<Any?>(function.parameters.size) { null }
+        args[0] = owner
+        for (index in it.indices) {
+            args[index + 1] = it[index].defaultValue()
+        }
+        function.call(*args)
+    }
+}
+

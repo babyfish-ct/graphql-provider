@@ -17,14 +17,16 @@ internal class FilterRegistry {
     fun add(
         prop: KProperty1<out Immutable, *>,
         mapper: EntityMapper<out Immutable>,
-        fn: KFunction<*>
+        fn: KFunction<*>,
+        fnArguments: List<Argument>
     ) {
         map[prop]?.let {
             throw ModelException("Conflict entity mapper function: '${it.fn}' and '${registryFun}'")
         }
         map[prop] = FilterImpl(
             mapper,
-            fn
+            fn,
+            fnArguments
         )
     }
 }
@@ -32,6 +34,8 @@ internal class FilterRegistry {
 private var registry: FilterRegistry? = null
 
 private var registryFun: KFunction<*>? = null
+
+private var registryFunArguments: List<Argument>? = null
 
 internal fun filterRegistryScope(block: () -> Unit) {
     registry = FilterRegistry()
@@ -42,21 +46,23 @@ internal fun filterRegistryScope(block: () -> Unit) {
     }
 }
 
-internal fun filterRegistryFunScope(fn: KFunction<*>, block: () -> Unit) {
+internal fun filterRegistryFunScope(fn: KFunction<*>, block: (List<Argument>) -> Unit) {
+    val args = Argument.of(fn)
+    registryFunArguments = args
     registryFun = fn
     try {
-        block()
+        block(args)
     } finally {
         registryFun = null
+        registryFunArguments = null
     }
 }
 
 private class FilterImpl(
     val fnOwner: Any,
-    val fn: KFunction<*>
+    val fn: KFunction<*>,
+    override val arguments: List<Argument>
 ): Filter {
-
-    override val arguments: List<Argument> = Argument.of(fn)
 
     override fun execute(
         env: DataFetchingEnvironment,
@@ -90,7 +96,7 @@ internal fun registryEntityField(
     if (reg === null || fn === null) {
         return false
     }
-    reg.add(prop, mapper, fn)
+    reg.add(prop, mapper, fn, registryFunArguments ?: error("Internal bug"))
     return true
 }
 
