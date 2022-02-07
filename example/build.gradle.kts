@@ -9,7 +9,6 @@ plugins {
 
 group = "org.babyfish.graphql.provider"
 version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
 	mavenCentral()
@@ -17,11 +16,11 @@ repositories {
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-
-	implementation("com.graphql-java:graphql-java:17.0")
+	implementation("org.springframework.boot:spring-boot-starter-test")
+	implementation(files("/Users/chentao/projects/git/graphql-provider/project/graphql-provider-starter/build/libs/graphql-provider-starter-0.0.0-SNAPSHOT.jar"))
+	implementation("org.babyfish.kimmer:kimmer:0.0.4")
+	implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:4.9.17"))
+	implementation("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.3.1")
 }
 
 tasks.withType<KotlinCompile> {
