@@ -28,15 +28,15 @@ internal class PropExpression<T>(
 
     override fun SqlBuilder.render() {
         if (prop.isId && table.parentProp !== null) {
-            val middleTable = table.parentProp.middleTable
+            val middleTable = table.parentProp.middleTable ?: table.parentProp?.mappedBy?.middleTable
             val inverse = table.parentProp.mappedBy !== null
             if (middleTable !== null) {
-                sql(table.parent!!.middleTableAlias!!)
+                sql(table.middleTableAlias!!)
                 sql(".")
                 sql(if (inverse) {
-                    middleTable.targetJoinColumnName
-                } else {
                     middleTable.joinColumnName
+                } else {
+                    middleTable.targetJoinColumnName
                 })
                 return
             }

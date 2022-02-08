@@ -151,10 +151,10 @@ fun <T: Comparable<T>> Expression<T>.between(
     BetweenExpression(this, min, max)
 
 
-val Expression<*>.isNull: Expression<*>
+val Expression<*>.isNull: Expression<Boolean>
     get() = NullityExpression(true, this)
 
-val Expression<*>.isNotNull: Expression<*>
+val Expression<*>.isNotNull: Expression<Boolean>
     get() = NullityExpression(false, this)
 
 fun <A, B> tuple(

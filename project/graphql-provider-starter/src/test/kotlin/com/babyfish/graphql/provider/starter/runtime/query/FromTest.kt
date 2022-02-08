@@ -3,10 +3,7 @@ package com.babyfish.graphql.provider.starter.runtime.query
 import com.babyfish.graphql.provider.starter.Author
 import com.babyfish.graphql.provider.starter.Book
 import com.babyfish.graphql.provider.starter.BookStore
-import org.babyfish.graphql.provider.starter.runtime.query.JoinType
-import org.babyfish.graphql.provider.starter.runtime.query.ge
-import org.babyfish.graphql.provider.starter.runtime.query.ilike
-import org.babyfish.graphql.provider.starter.runtime.query.le
+import org.babyfish.graphql.provider.starter.runtime.query.*
 import org.junit.Test
 import java.math.BigDecimal
 import kotlin.test.expect
@@ -62,6 +59,81 @@ class FromTest : AbstractTest() {
             |and lower(table_4.NAME) like :3""".trimMarginToOneLine()
         ) { sql }
         expect(listOf(BigDecimal(20), BigDecimal(30), "manning")) { variables }
+    }
+
+    @Test
+    fun testUnnecessaryJoin() {
+        val (sql, variables) = render(
+            query(Book::class).apply {
+                where(table.joinReference(Book::store)[BookStore::id] valueIn listOf("id1", "id2"))
+            }
+        )
+        expect(" from BOOK as table_1 where table_1.STORE_ID in (:1, :2)") {sql}
+        expect(listOf("id1", "id2")) { variables }
+    }
+
+    @Test
+    fun testHalfJoin() {
+        val (sql, variables) = render(
+            query(Book::class).apply {
+                where(table.joinList(Book::authors)[Author::id] valueIn listOf("id1", "id2"))
+            }
+        )
+        expect(""" from BOOK as table_1 
+            |inner join BOOK_AUTHOR_MAPPING as table_2 on table_1.ID = table_2.BOOK_ID 
+            |where table_2.AUTHOR_ID in (:1, :2)""".trimMarginToOneLine()
+        ) { sql }
+        expect(listOf("id1", "id2")) { variables }
+    }
+
+    @Test
+    fun testHalfInverseJoin() {
+        val (sql, variables) = render(
+            query(Author::class).apply {
+                where(table.joinList(Author::books)[Book::id] valueIn listOf("id1", "id2"))
+            }
+        )
+        expect(""" from AUTHOR as table_1 
+            |inner join BOOK_AUTHOR_MAPPING as table_2 on table_1.ID = table_2.AUTHOR_ID 
+            |where table_2.BOOK_ID in (:1, :2)""".trimMarginToOneLine()
+        ) { sql }
+        expect(listOf("id1", "id2")) { variables }
+    }
+
+    @Test
+    fun testOneToManyCannotBeOptimized() {
+        val (sql, variables) = render(
+            query(BookStore::class).apply {
+                where(table.joinList(BookStore::books)[Book::id] valueIn listOf("id1", "id2"))
+            }
+        )
+        expect(""" from BOOK_STORE as table_1 
+            |inner join BOOK as table_2 on table_1.ID = table_2.STORE_ID 
+            |where table_2.ID in (:1, :2)""".trimMarginToOneLine()
+        ) { sql }
+        expect(listOf("id1", "id2")) { variables }
+    }
+
+    @Test
+    fun testOuterJoin() {
+        val (sql, variables) = render(
+            query(Book::class).apply {
+                where(
+                    or(
+                        table.joinReference(Book::store, JoinType.LEFT)[BookStore::id].isNull,
+                        table.joinReference(Book::store, JoinType.LEFT)[BookStore::name] ilike "MANNING"
+                    )
+                )
+            }
+        )
+        expect(""" from BOOK as table_1 
+            |left join BOOK_STORE as table_2 on table_1.STORE_ID = table_2.ID 
+            |where (
+            |table_1.STORE_ID is null 
+            |or lower(table_2.NAME) like :1
+            |)""".trimMarginToOneLine()
+        ) { sql }
+        expect(listOf("manning")) { variables }
     }
 
     private fun String.trimMarginToOneLine() =

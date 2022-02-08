@@ -18,7 +18,7 @@ internal class TableImpl<T: Immutable>(
 
     val middleTableAlias: String?
 
-    private var _nonIdPropAccessed = parent === null
+    private var _used = parent === null
 
     init {
         if ((parent === null) != (parentProp === null)) {
@@ -41,7 +41,7 @@ internal class TableImpl<T: Immutable>(
             )
         }
         if (!entityProp.isId) {
-            _nonIdPropAccessed = true
+            use()
         }
         return PropExpression(this, entityProp)
     }
@@ -61,7 +61,7 @@ internal class TableImpl<T: Immutable>(
         }
         val newTable = TableImpl<X>(query, entityProp.targetEntityType!!, this, entityProp, joinType)
         childTableMap[prop.name] = newTable
-        _nonIdPropAccessed = true
+        use()
         return newTable
     }
 
@@ -79,7 +79,7 @@ internal class TableImpl<T: Immutable>(
         }
         val newTable = TableImpl<X>(query, entityProp.targetEntityType!!, this, entityProp, joinType)
         childTableMap[prop.name] = newTable
-        _nonIdPropAccessed = true
+        use()
         return newTable
     }
 
@@ -97,6 +97,7 @@ internal class TableImpl<T: Immutable>(
         }
         val newTable = TableImpl<X>(query, entityProp.targetEntityType!!, this, entityProp, joinType)
         childTableMap[prop.name] = newTable
+        use()
         return newTable
     }
 
@@ -135,15 +136,17 @@ internal class TableImpl<T: Immutable>(
                 middleTableAlias!!,
                 middleTable.joinColumnName
             )
-            joinImpl(
-                joinType,
-                middleTableAlias!!,
-                middleTable.targetJoinColumnName,
-                entityType.database.tableName,
-                alias,
-                entityType.idProp.column!!.name
-            )
-        } else {
+            if (_used) {
+                joinImpl(
+                    joinType,
+                    middleTableAlias!!,
+                    middleTable.targetJoinColumnName,
+                    entityType.database.tableName,
+                    alias,
+                    entityType.idProp.column!!.name
+                )
+            }
+        } else if (_used) {
             joinImpl(
                 joinType,
                 parent.alias,
@@ -170,15 +173,17 @@ internal class TableImpl<T: Immutable>(
                 middleTableAlias!!,
                 middleTable.targetJoinColumnName
             )
-            joinImpl(
-                joinType,
-                middleTableAlias!!,
-                middleTable.joinColumnName,
-                entityType.database.tableName,
-                alias,
-                entityType.idProp.column!!.name
-            )
-        } else {
+            if (_used) {
+                joinImpl(
+                    joinType,
+                    middleTableAlias!!,
+                    middleTable.joinColumnName,
+                    entityType.database.tableName,
+                    alias,
+                    entityType.idProp.column!!.name
+                )
+            }
+        } else { // One-to-many join cannot be optimized by "_used"
             joinImpl(
                 joinType,
                 parent.alias,
@@ -212,5 +217,12 @@ internal class TableImpl<T: Immutable>(
         sql(newAlias)
         sql(".")
         sql(newColumnName)
+    }
+
+    private fun use() {
+        if (!_used) {
+            _used = true
+            parent?.use()
+        }
     }
 }
