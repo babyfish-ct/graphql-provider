@@ -10,6 +10,9 @@ class ReferenceDSL internal constructor(
 ): AbstractAssociationDSL(entityProp) {
 
     fun db(block: ReferenceDatabaseDSL.() -> Unit) {
-        ReferenceDatabaseDSL(entityProp).block()
+        ReferenceDatabaseDSL(entityProp).apply {
+            block()
+            validate()
+        }
     }
 }

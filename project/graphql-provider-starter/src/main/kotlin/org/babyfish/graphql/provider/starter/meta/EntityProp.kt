@@ -1,10 +1,8 @@
 package org.babyfish.graphql.provider.starter.meta
 
-import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
-import kotlin.time.Duration
 
 interface EntityProp: GraphQLProp {
 
@@ -30,10 +28,12 @@ interface EntityProp: GraphQLProp {
 
     val redis: Redis
 
+    val userImplementation: UserImplementation?
+
     val filter: Filter?
 
-    override val targetType: KClass<out Immutable>?
-        get() = targetEntityType?.kotlinType
+    override val targetType: KClass<*>?
+        get() = immutableProp.targetType?.kotlinType
 
     override val arguments: List<Argument>
         get() = filter?.arguments ?: emptyList()

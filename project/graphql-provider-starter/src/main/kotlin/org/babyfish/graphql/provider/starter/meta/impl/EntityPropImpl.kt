@@ -1,6 +1,8 @@
 package org.babyfish.graphql.provider.starter.meta.impl
 
 import org.babyfish.graphql.provider.starter.ModelException
+import org.babyfish.graphql.provider.starter.dsl.BatchImplementationContext
+import org.babyfish.graphql.provider.starter.dsl.ImplementationContext
 import org.babyfish.graphql.provider.starter.runtime.GraphQLTypeGenerator
 import org.babyfish.graphql.provider.starter.meta.*
 import org.babyfish.kimmer.meta.ImmutableProp
@@ -29,6 +31,8 @@ internal class EntityPropImpl(
     override var column: ColumnImpl? = null
 
     override var middleTable: EntityProp.MiddleTable? = null
+
+    override var userImplementation: UserImplementationImpl? = null
 
     override var redis = RedisImpl()
 
@@ -61,6 +65,7 @@ internal class EntityPropImpl(
             ResolvingPhase.PROP_FILTER -> resolveFilter(generator)
             ResolvingPhase.PROP_TARGET -> resolveTarget(generator)
             ResolvingPhase.PROP_MAPPED_BY -> resolvedMappedBy(generator)
+            ResolvingPhase.PROP_DEFAULT_COLUMN -> resolveDefaultColumn()
         }
     }
 
@@ -102,6 +107,18 @@ internal class EntityPropImpl(
                 )
             }
             _mappedBy = mappedByProp
+        }
+    }
+
+    private fun resolveDefaultColumn() {
+        if (column === null &&
+            _mappedBy === null &&
+            userImplementation === null &&
+            !isReference &&
+            !isList &&
+            !isConnection
+        ) {
+            column = ColumnImpl()
         }
     }
 
@@ -160,5 +177,38 @@ internal class EntityPropImpl(
             val tgt = targetEntityType ?: error("Cannot get the default table name because target is not resolved")
             databaseIdentifier(tgt.kotlinType.simpleName!!) + "_ID"
         }
+    }
+
+    inner class UserImplementationImpl: UserImplementation {
+
+        private var _single: (suspend (ImplementationContext<*>) -> Any?)? = null
+
+        private var _batch: (suspend (BatchImplementationContext<*>) -> Map<*, *>)? = null
+
+        override var batchSize: Int? = null
+
+        override var single: (suspend (ImplementationContext<*>) -> Any?)?
+            get() = _single
+            set(value) {
+                if (value !== null && _batch !== null) {
+                    throw ModelException(
+                        "Cannot specify '${kotlinProp}.userImplementation.single' " +
+                            "because its '.userImplementation.batch' has been specified"
+                    )
+                }
+                _single = value
+            }
+
+        override var batch: (suspend (BatchImplementationContext<*>) -> Map<*, *>)?
+            get() = _batch
+            set(value) {
+                if (value !== null && _single !== null) {
+                    throw ModelException(
+                        "Cannot specify '${kotlinProp}.userImplementation.batch' " +
+                            "because its '.userImplementation.single' has been specified"
+                    )
+                }
+                _batch = value
+            }
     }
 }

@@ -6,13 +6,17 @@ interface Expression<T>
 
 internal abstract class AbstractExpression<T>: Expression<T>, Renderable {
 
+    protected abstract fun SqlBuilder.render()
+
+    override fun renderTo(builder: SqlBuilder) {
+        builder.render()
+    }
+
     companion object {
 
         @JvmStatic
         protected fun SqlBuilder.render(expression: Expression<*>) {
-            (expression as Renderable).apply {
-                render()
-            }
+            (expression as Renderable).renderTo(this)
         }
     }
 }

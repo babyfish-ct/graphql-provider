@@ -12,6 +12,9 @@ class CollectionDSL<E: Immutable> internal constructor(
 ): AbstractAssociationDSL(entityProp) {
 
     fun db(block: AssociationDatabaseDSL.() -> Unit) {
-        ReferenceDatabaseDSL(entityProp).block()
+        AssociationDatabaseDSL(entityProp).apply {
+            block()
+            validate()
+        }
     }
 }

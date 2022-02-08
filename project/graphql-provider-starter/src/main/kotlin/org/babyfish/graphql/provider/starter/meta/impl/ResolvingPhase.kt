@@ -7,5 +7,6 @@ internal enum class ResolvingPhase {
     PROP_FILTER,
     PROP_TARGET,
     PROP_MAPPED_BY,
+    PROP_DEFAULT_COLUMN,
     ID_PROP,
 }

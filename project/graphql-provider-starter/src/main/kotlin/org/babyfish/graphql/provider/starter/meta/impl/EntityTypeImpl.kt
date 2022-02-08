@@ -125,7 +125,7 @@ internal class EntityTypeImpl(
     }
 
     private fun resolveIdProp(): EntityProp? {
-        val props = declaredProps.values.filter { it.isId }
+
         if (superTypes.isNotEmpty()) {
             var superIdProp: EntityProp? = null
             for (superType in _superTypes) {
@@ -138,15 +138,18 @@ internal class EntityTypeImpl(
                 }
                 superIdProp = prop
             }
-            _idProp = superIdProp
-        } else {
-            if (props.size > 1) {
-                throw ModelException(
-                    "More than one 1 id properties is specified for type '${immutableType}'"
-                )
+            if (superIdProp !== null) {
+                _idProp = superIdProp
+                return _idProp
             }
-            _idProp = props.firstOrNull()
         }
+        val idProps = declaredProps.values.filter { it.isId }
+        if (idProps.size > 1) {
+            throw ModelException(
+                "More than one 1 id properties is specified for type '${immutableType}'"
+            )
+        }
+        _idProp = idProps.firstOrNull()
         return _idProp
     }
 

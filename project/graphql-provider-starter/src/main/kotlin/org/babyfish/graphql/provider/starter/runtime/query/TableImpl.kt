@@ -24,7 +24,9 @@ internal class TableImpl<T: Immutable>(
         if ((parent === null) != (parentProp === null)) {
             error("Internal bug: Bad constructor arguments for TableImpl")
         }
-        middleTableAlias = parentProp?.middleTable?.let { query.tableAliasAllocator.allocate() }
+        middleTableAlias = (parentProp?.mappedBy?: parentProp)
+            ?.middleTable
+            ?.let { query.tableAliasAllocator.allocate() }
         alias = query.tableAliasAllocator.allocate()
     }
 
@@ -98,12 +100,10 @@ internal class TableImpl<T: Immutable>(
         return newTable
     }
 
-    override fun SqlBuilder.render() {
-        renderSelf()
+    override fun renderTo(builder: SqlBuilder) {
+        builder.renderSelf()
         for (childTable in childTableMap.values) {
-            childTable.apply {
-                render()
-            }
+            childTable.renderTo(builder)
         }
     }
 

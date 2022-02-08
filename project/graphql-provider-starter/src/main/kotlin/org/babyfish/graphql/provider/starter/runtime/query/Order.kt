@@ -5,11 +5,11 @@ internal class Order(
     private val descending: Boolean
 ): Renderable {
 
-    override fun SqlBuilder.render() {
-        (expression as Renderable).apply {
-            render()
+    override fun renderTo(builder: SqlBuilder) {
+        (expression as Renderable).renderTo(builder)
+        builder.apply {
+            sql(" ")
+            sql(if (descending) "desc" else "asc")
         }
-        sql(" ")
-        sql(if (descending) "desc" else "asc")
     }
 }

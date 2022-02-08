@@ -20,4 +20,10 @@ class ReferenceDatabaseDSL internal constructor(
             ForeignKeyDSL(it).block()
         }
     }
+
+    override fun validate() {
+        if (entityProp.column === null && entityProp.middleTable === null) {
+            throw ModelException("Neither foreign key nor middle table of '${entityProp}.db' is specified")
+        }
+    }
 }

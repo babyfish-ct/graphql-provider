@@ -113,10 +113,6 @@ class EntityTypeDSL<E: Immutable> internal constructor(
         entityType.declaredProps[prop.name] = entityProp
     }
 
-    fun <T> userImplementation(prop: KProperty1<E, T>) {
-
-    }
-
     private fun validateProp(prop: KProperty1<*, *>) {
         entityType.declaredProps[prop.name]?.let {
             if (it.kotlinProp === prop) {

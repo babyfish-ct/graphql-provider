@@ -9,7 +9,7 @@ internal abstract class AbstractQuery<T: Immutable>(
     val tableAliasAllocator: TableAliasAllocator,
     val entityTypeMap: Map<ImmutableType, EntityType>,
     type: KClass<T>
-): DatabaseQuery<T> {
+): DatabaseQuery<T>, Renderable {
 
     private val predicates = mutableListOf<Expression<Boolean>>()
 
@@ -43,35 +43,31 @@ internal abstract class AbstractQuery<T: Immutable>(
             block?.invoke(this)
         }
 
-    protected fun SqlBuilder.renderWithoutSelection() {
-        (table as Renderable).apply {
-            render()
-        }
-        if (predicates.isNotEmpty()) {
-            sql(" where ")
-            var separator: String? = null
-            for (predicate in predicates) {
-                if (separator === null) {
-                    separator = " and "
-                } else {
-                    sql(separator)
-                }
-                (predicate as Renderable).apply {
-                    render()
+    override fun renderTo(builder: SqlBuilder) {
+        (table as Renderable).renderTo(builder)
+        builder.apply {
+            if (predicates.isNotEmpty()) {
+                sql(" where ")
+                var separator: String? = null
+                for (predicate in predicates) {
+                    if (separator === null) {
+                        separator = " and "
+                    } else {
+                        sql(separator)
+                    }
+                    (predicate as Renderable).renderTo(this)
                 }
             }
-        }
-        if (orders.isNotEmpty()) {
-            sql(" order by ")
-            var separator: String? = null
-            for (order in orders) {
-                if (separator === null) {
-                    separator = ", "
-                } else {
-                    sql(separator)
-                }
-                (order as Renderable).apply {
-                    render()
+            if (orders.isNotEmpty()) {
+                sql(" order by ")
+                var separator: String? = null
+                for (order in orders) {
+                    if (separator === null) {
+                        separator = ", "
+                    } else {
+                        sql(separator)
+                    }
+                    (order as Renderable).renderTo(this)
                 }
             }
         }

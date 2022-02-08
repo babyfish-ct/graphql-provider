@@ -17,6 +17,12 @@ class BookStoreMapper(
         id(BookStore::id)
 
         mappedList(BookStore::books, Book::store)
+
+        userImplementation(BookStore::avgPrice) {
+            batch {
+                bookRepository.findAvgPrices(rows.map { it.id })
+            }
+        }
     }
 
     fun books(name: String?) {

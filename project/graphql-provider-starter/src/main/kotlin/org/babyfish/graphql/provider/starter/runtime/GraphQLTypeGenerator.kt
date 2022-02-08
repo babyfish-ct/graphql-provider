@@ -20,7 +20,7 @@ import kotlin.reflect.full.declaredFunctions
 
 internal class GraphQLTypeGenerator(
     private val queries: List<Query>,
-    private val entityMappers: List<EntityMapper<*>>
+    private val mappers: List<EntityMapper<*>>
 ) {
     private val _queryType = QueryTypeImpl()
 
@@ -48,30 +48,26 @@ internal class GraphQLTypeGenerator(
                     }
                 }
             }
-            for (entityMapper in entityMappers) {
-                for (function in entityMapper::class.declaredFunctions) {
+            for (mapper in mappers) {
+                for (function in mapper::class.declaredFunctions) {
                     if (function.name != "config") {
                         if (function.visibility == KVisibility.PUBLIC && !function.isSuspend) {
-                            invokeByRegistryMode(entityMapper, function)
+                            invokeByRegistryMode(mapper, function)
                         }
                     }
                 }
             }
         }
-        for (entityMapper in entityMappers) {
+        for (entityMapper in mappers) {
             (entityMapper as EntityMapper<Immutable>).apply {
                 val entityType = get(entityMapper.immutableType)
                 entityType.isMapped = true
                 EntityTypeDSL<Immutable>(entityType).config()
             }
         }
-        resolve(ResolvingPhase.SUPER_TYPE)
-        resolve(ResolvingPhase.DECLARED_PROPS)
-        resolve(ResolvingPhase.PROPS)
-        resolve(ResolvingPhase.PROP_FILTER)
-        resolve(ResolvingPhase.PROP_TARGET)
-        resolve(ResolvingPhase.PROP_MAPPED_BY)
-        resolve(ResolvingPhase.ID_PROP)
+        for (phase in ResolvingPhase.values()) {
+            resolve(phase)
+        }
     }
 
     private fun resolve(phase: ResolvingPhase) {

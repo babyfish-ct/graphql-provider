@@ -7,18 +7,28 @@ import org.babyfish.kimmer.Immutable
 
 @GraphQLProviderDSL
 class UserImplementationDSL<E: Immutable, T> internal constructor(
-    entityProp: EntityPropImpl
+    private val entityProp: EntityPropImpl
 ) {
-
-    fun single(block: suspend ImplementationContext<E>.() -> T) {
-
+    init {
+        entityProp.userImplementation = entityProp.UserImplementationImpl()
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun single(block: suspend ImplementationContext<E>.() -> T) {
+        entityProp.userImplementation?.apply {
+            single = block as (suspend ImplementationContext<*>.() -> Any?)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
     fun batch(
         batchSize: Int? = null,
         block: suspend BatchImplementationContext<E>.() -> Map<out Any, T>
     ) {
-
+        entityProp.userImplementation?.apply {
+            this.batchSize = batchSize
+            batch = block as (suspend BatchImplementationContext<*>.() -> Map<out Any, *>)
+        }
     }
 
     fun redis(block: FilterRedisDSL.() -> Unit) {

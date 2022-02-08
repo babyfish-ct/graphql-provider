@@ -13,11 +13,17 @@ open class AssociationDatabaseDSL internal constructor(
         if (entityProp.column !== null) {
             throw ModelException("Cannot configure middle table for '${entityProp}' because its foreign key has been configured")
         }
-        if (entityProp.targetEntityType === null) {
-            throw ModelException("Cannot configure foreign key for '${entityProp}' because its category is not association")
+        if (entityProp.targetType === null) {
+            throw ModelException("Cannot configure foreign key for '${entityProp}' because it is not association")
         }
-        val middleTable = entityProp.MiddleTableImpl().also {
+        entityProp.middleTable = entityProp.MiddleTableImpl().also {
             MiddleTableDSL(it).block()
+        }
+    }
+
+    internal open fun validate() {
+        if (entityProp.middleTable === null) {
+            throw ModelException("Middle table of '${entityProp}.db' is not specified")
         }
     }
 }
