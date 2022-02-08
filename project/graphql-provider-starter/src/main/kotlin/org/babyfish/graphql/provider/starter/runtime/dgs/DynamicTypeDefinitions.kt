@@ -4,22 +4,22 @@ import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsTypeDefinitionRegistry
 import graphql.schema.idl.TypeDefinitionRegistry
 import org.babyfish.graphql.provider.starter.EntityMapper
-import org.babyfish.graphql.provider.starter.QueryService
-import org.babyfish.graphql.provider.starter.runtime.EntityTypeGenerator
+import org.babyfish.graphql.provider.starter.Query
+import org.babyfish.graphql.provider.starter.runtime.GraphQLTypeGenerator
 import org.babyfish.graphql.provider.starter.runtime.TypeDefinitionRegistryGenerator
 
 @DgsComponent
 open class DynamicTypeDefinitions(
-    private val queryServices: List<QueryService>,
+    private val queries: List<Query>,
     private val entityMappers: List<EntityMapper<*>>
 ) {
 
     @DgsTypeDefinitionRegistry
     open fun registry(): TypeDefinitionRegistry {
-        val entityTypes = EntityTypeGenerator(entityMappers).run {
+        val (queryType, entityTypes) = GraphQLTypeGenerator(queries, entityMappers).run {
             generate()
-            entityTypes
+            queryType to entityTypes.values
         }
-        return TypeDefinitionRegistryGenerator(queryServices, entityTypes.values).generate()
+        return TypeDefinitionRegistryGenerator(queryType, entityTypes).generate()
     }
 }

@@ -1,13 +1,13 @@
-package com.babyfish.graphql.provider.starter.cfg.query
+package com.babyfish.graphql.provider.starter.query
 
-import com.babyfish.graphql.provider.starter.cfg.BookStore
-import org.babyfish.graphql.provider.starter.QueryService
-import org.babyfish.graphql.provider.starter.runtime.expression.ilike
+import com.babyfish.graphql.provider.starter.BookStore
+import org.babyfish.graphql.provider.starter.Query
+import org.babyfish.graphql.provider.starter.runtime.query.ilike
 import org.babyfish.kimmer.graphql.Connection
 import org.springframework.stereotype.Component
 
 @Component
-class BookStoreQueryService : QueryService() {
+class BookStoreQuery : Query() {
 
     suspend fun findBookStores(
         name: String?

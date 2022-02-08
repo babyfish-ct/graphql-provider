@@ -1,15 +1,18 @@
 package org.babyfish.graphql.provider.starter.meta.impl
 
 import org.babyfish.graphql.provider.starter.ModelException
-import org.babyfish.graphql.provider.starter.meta.Argument
 import org.babyfish.graphql.provider.starter.meta.EntityType
 import org.babyfish.graphql.provider.starter.meta.GraphQLProp
+import org.babyfish.graphql.provider.starter.runtime.GraphQLTypeGenerator
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.graphql.Connection
+import org.babyfish.kimmer.graphql.Input
+import org.babyfish.kimmer.meta.ImmutableType
 import org.springframework.core.GenericTypeResolver
 import kotlin.reflect.*
 
-abstract class GraphQLPropImpl internal constructor(
+internal abstract class AbstractRootPropImpl internal constructor(
+    generator: GraphQLTypeGenerator,
     function: KFunction<*>
 ): GraphQLProp {
 
@@ -21,9 +24,11 @@ abstract class GraphQLPropImpl internal constructor(
 
     final override val isNullable: Boolean
 
-    final override val isTargetNullable: Boolean
+    final override val isElementNullable: Boolean
 
-    private var _targetType: Any?
+    final override val targetType: KClass<*>?
+
+    final override val targetEntityType: EntityType?
 
     init {
 
@@ -33,15 +38,15 @@ abstract class GraphQLPropImpl internal constructor(
         isList = Collection::class == pc
         isReference = Immutable::class == pc
 
-        if (isList && List::class != pc) {
+        if (isList && List::class != function.returnType.classifier) {
             error(
                 "Illegal function '${function}', collection function " +
                     "can only return 'kotlin.collections.List'")
         }
         isNullable = function.returnType.isMarkedNullable
-        isTargetNullable = isList && function.returnType.arguments[0].type!!.isMarkedNullable
+        isElementNullable = isList && function.returnType.arguments[0].type!!.isMarkedNullable
 
-        _targetType = when {
+        targetType = when {
             isReference -> function.returnType.classifier as KClass<*>
             isList -> function.returnType.arguments[0].type!!.classifier as KClass<*>
             isConnection -> if (function.returnType.arguments.isNotEmpty()) {
@@ -54,6 +59,9 @@ abstract class GraphQLPropImpl internal constructor(
             }
             else -> null
         }
+        targetEntityType = targetType?.let {
+            convertTargetEntityType(targetType, generator, function)
+        }
     }
 
     override val name: String =
@@ -63,10 +71,20 @@ abstract class GraphQLPropImpl internal constructor(
         function.returnType.classifier as? KClass<*>
             ?: throw ModelException("Illegal function '${function}', its return type is not class")
 
-    override val targetType: EntityType?
-        get() = _targetType as EntityType?
-
-    override val arguments: List<Argument> = Argument.of(function)
+    @Suppress("UNCHECKED_CAST")
+    private fun convertTargetEntityType(
+        cls: KClass<*>,
+        generator: GraphQLTypeGenerator,
+        function: KFunction<*>
+    ): EntityType {
+        if (!Immutable::class.java.isAssignableFrom(cls.java)) {
+            throw ModelException("Illegal function ${function}, its target type does not inherit Immutable")
+        }
+        if (Input::class.java.isAssignableFrom(cls.java)) {
+            throw ModelException("Illegal function ${function}, its target type cannot not inherit Input")
+        }
+        return generator[ImmutableType.of(cls as KClass<out Immutable>)]
+    }
 }
 
 private fun primaryClass(function: KFunction<*>): KClass<*>? {

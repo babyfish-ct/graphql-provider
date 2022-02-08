@@ -1,6 +1,5 @@
 package org.babyfish.graphql.provider.starter.runtime.query
 
-import org.babyfish.graphql.provider.starter.runtime.expression.Expression
 import org.babyfish.kimmer.Immutable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1

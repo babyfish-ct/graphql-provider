@@ -1,10 +1,6 @@
-package org.babyfish.graphql.provider.starter.runtime.expression
+package org.babyfish.graphql.provider.starter.runtime.query
 
 import org.babyfish.graphql.provider.starter.meta.EntityProp
-import org.babyfish.graphql.provider.starter.runtime.query.*
-import org.babyfish.graphql.provider.starter.runtime.query.Renderable
-import org.babyfish.graphql.provider.starter.runtime.query.SqlBuilder
-import org.babyfish.graphql.provider.starter.runtime.query.TableImpl
 
 interface Expression<T>
 

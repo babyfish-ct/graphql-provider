@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.starter.runtime.expression
+package org.babyfish.graphql.provider.starter.runtime.query
 
 enum class LikeMode(
     val startExact: Boolean,

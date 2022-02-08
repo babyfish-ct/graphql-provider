@@ -1,3 +1,8 @@
 package org.babyfish.graphql.provider.example.model
 
-interface Book
+import org.babyfish.kimmer.Immutable
+
+interface Book: Immutable {
+    val id: String
+    val name: String
+}

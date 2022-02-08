@@ -2,12 +2,11 @@ package org.babyfish.graphql.provider.starter.runtime
 
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.TypeRuntimeWiring
-import org.babyfish.graphql.provider.starter.QueryService
+import org.babyfish.graphql.provider.starter.Query
 import org.babyfish.graphql.provider.starter.meta.EntityType
 import org.babyfish.kimmer.Immutable
 
 internal class RuntimeWiringGenerator(
-    private val queryServices: Collection<QueryService>,
     private val entityTypes: List<EntityType>
 ) {
 

@@ -1,4 +1,4 @@
-package com.babyfish.graphql.provider.starter.cfg.mapper
+package com.babyfish.graphql.provider.starter.mapper
 
 import java.math.BigDecimal
 

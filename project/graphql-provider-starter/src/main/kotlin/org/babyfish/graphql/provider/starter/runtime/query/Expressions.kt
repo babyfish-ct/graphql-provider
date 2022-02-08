@@ -1,7 +1,5 @@
-package org.babyfish.graphql.provider.starter.runtime.expression
+package org.babyfish.graphql.provider.starter.runtime.query
 
-import org.babyfish.graphql.provider.starter.runtime.query.DatabaseSubQuery
-import org.babyfish.graphql.provider.starter.runtime.query.TypedDatabaseSubQuery
 import kotlin.reflect.KClass
 
 fun <X: Any> sql(

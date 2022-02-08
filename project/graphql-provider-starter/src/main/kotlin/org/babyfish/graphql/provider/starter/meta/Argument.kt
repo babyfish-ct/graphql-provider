@@ -2,7 +2,6 @@ package org.babyfish.graphql.provider.starter.meta
 
 import org.babyfish.graphql.provider.starter.ModelException
 import org.babyfish.kimmer.Immutable
-import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.graphql.Input
 import org.babyfish.kimmer.produce
 import java.math.BigDecimal
@@ -12,7 +11,6 @@ import java.time.LocalDateTime
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
-import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 
 class Argument internal constructor(
@@ -93,21 +91,26 @@ class Argument internal constructor(
 
     @Suppress("UNCHECKED")
     fun defaultValue(): Any? =
-        when (type) {
-            Boolean::class -> false
-            Char::class -> 0 as Char
-            Byte::class -> 0 as Byte
-            Short::class -> 0 as Short
-            Int::class -> 0L
-            Long::class -> 0F
-            Double::class -> 0.0
-            BigInteger::class -> BigInteger.ZERO
-            BigDecimal::class -> BigDecimal.ZERO
-            UUID::class -> UUID.randomUUID()
-            LocalDate::class -> LocalDate.MIN
-            LocalDateTime::class -> LocalDateTime.MIN
-            is Collection<*> -> emptyList<Any>()
-            is Immutable -> produce(type as KClass<Immutable>) {}
-            else -> error("Internal bug, cannot determine default value for class '$type'")
+        if (isNullable) {
+            null
+        } else {
+            when (type) {
+                Boolean::class -> false
+                Char::class -> 0 as Char
+                Byte::class -> 0 as Byte
+                Short::class -> 0 as Short
+                Int::class -> 0L
+                Long::class -> 0F
+                Double::class -> 0.0
+                BigInteger::class -> BigInteger.ZERO
+                BigDecimal::class -> BigDecimal.ZERO
+                String::class -> ""
+                UUID::class -> UUID.randomUUID()
+                LocalDate::class -> LocalDate.MIN
+                LocalDateTime::class -> LocalDateTime.MIN
+                is Collection<*> -> emptyList<Any>()
+                is Immutable -> produce(type as KClass<Immutable>) {}
+                else -> error("Internal bug, cannot determine default value for class '$type'")
+            }
         }
 }

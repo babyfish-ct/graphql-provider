@@ -1,10 +1,9 @@
 package org.babyfish.graphql.provider.starter.meta.impl
 
 import org.babyfish.graphql.provider.starter.ModelException
-import org.babyfish.graphql.provider.starter.runtime.EntityTypeGenerator
+import org.babyfish.graphql.provider.starter.runtime.GraphQLTypeGenerator
 import org.babyfish.graphql.provider.starter.meta.*
 import org.babyfish.kimmer.meta.ImmutableType
-import kotlin.time.Duration
 
 internal class EntityTypeImpl(
     override val immutableType: ImmutableType
@@ -45,7 +44,7 @@ internal class EntityTypeImpl(
     override val props: Map<String, EntityProp>
         get() = _props ?: error("Properties have not been resolved")
 
-    fun resolve(generator: EntityTypeGenerator, phase: ResolvingPhase) {
+    fun resolve(generator: GraphQLTypeGenerator, phase: ResolvingPhase) {
         if (shouldResolve(phase)) {
             when (phase) {
                 ResolvingPhase.SUPER_TYPE -> resolveSuperTypes(generator)
@@ -65,7 +64,7 @@ internal class EntityTypeImpl(
             false
         }
 
-    private fun resolveSuperTypes(generator: EntityTypeGenerator) {
+    private fun resolveSuperTypes(generator: GraphQLTypeGenerator) {
         for (superImmutableType in immutableType.superTypes) {
             val superType = generator[superImmutableType]
             _superTypes += superType
@@ -73,7 +72,7 @@ internal class EntityTypeImpl(
         }
     }
 
-    private fun resolveDeclaredProps(generator: EntityTypeGenerator) {
+    private fun resolveDeclaredProps(generator: GraphQLTypeGenerator) {
         for (immutableProp in immutableType.declaredProps.values) {
             if (!declaredProps.containsKey(immutableProp.name)) {
                 if (immutableProp.isAssociation) {
@@ -90,7 +89,7 @@ internal class EntityTypeImpl(
         }
     }
 
-    private fun resolveProps(generator: EntityTypeGenerator) {
+    private fun resolveProps(generator: GraphQLTypeGenerator) {
         for (superType in _superTypes) {
             superType.resolve(generator, ResolvingPhase.PROPS)
         }
@@ -119,7 +118,7 @@ internal class EntityTypeImpl(
         }
     }
 
-    private fun resolvePropDetail(generator: EntityTypeGenerator, phase: ResolvingPhase) {
+    private fun resolvePropDetail(generator: GraphQLTypeGenerator, phase: ResolvingPhase) {
         for (declaredProp in declaredProps.values) {
             declaredProp.resolve(generator, phase)
         }
@@ -164,12 +163,6 @@ internal class EntityTypeImpl(
         private val defaultTableName by lazy {
             databaseIdentifier(kotlinType.simpleName!!)
         }
-    }
-
-    class RedisImpl: EntityType.Redis {
-        override var enabled: Boolean = true
-        override var timeout: Duration? = null
-        override var nullTimeout: Duration? = null
     }
 
     class GraphQLImpl: EntityType.GraphQL {

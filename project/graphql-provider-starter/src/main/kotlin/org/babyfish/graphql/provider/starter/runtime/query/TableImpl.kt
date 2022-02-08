@@ -2,8 +2,6 @@ package org.babyfish.graphql.provider.starter.runtime.query
 
 import org.babyfish.graphql.provider.starter.meta.EntityProp
 import org.babyfish.graphql.provider.starter.meta.EntityType
-import org.babyfish.graphql.provider.starter.runtime.expression.Expression
-import org.babyfish.graphql.provider.starter.runtime.expression.PropExpression
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.Immutable
 import kotlin.reflect.KProperty1
@@ -34,7 +32,7 @@ internal class TableImpl<T: Immutable>(
 
     override fun <X> get(prop: KProperty1<T, X?>): Expression<X> {
         val entityProp = entityType.props[prop.name] ?: error("No property '${prop.name}'")
-        if (entityProp.targetType !== null) {
+        if (entityProp.targetEntityType !== null) {
             throw IllegalArgumentException(
                 "Can not get '${prop.name}' form table because it's association, " +
                     "please use joinReference, joinList or joinConnection"
@@ -59,7 +57,7 @@ internal class TableImpl<T: Immutable>(
             }
             return existing as JoinableTable<X>
         }
-        val newTable = TableImpl<X>(query, entityProp.targetType!!, this, entityProp, joinType)
+        val newTable = TableImpl<X>(query, entityProp.targetEntityType!!, this, entityProp, joinType)
         childTableMap[prop.name] = newTable
         _nonIdPropAccessed = true
         return newTable
@@ -77,7 +75,7 @@ internal class TableImpl<T: Immutable>(
             }
             return existing as JoinableTable<X>
         }
-        val newTable = TableImpl<X>(query, entityProp.targetType!!, this, entityProp, joinType)
+        val newTable = TableImpl<X>(query, entityProp.targetEntityType!!, this, entityProp, joinType)
         childTableMap[prop.name] = newTable
         _nonIdPropAccessed = true
         return newTable
@@ -95,7 +93,7 @@ internal class TableImpl<T: Immutable>(
             }
             return existing as JoinableTable<X>
         }
-        val newTable = TableImpl<X>(query, entityProp.targetType!!, this, entityProp, joinType)
+        val newTable = TableImpl<X>(query, entityProp.targetEntityType!!, this, entityProp, joinType)
         childTableMap[prop.name] = newTable
         return newTable
     }

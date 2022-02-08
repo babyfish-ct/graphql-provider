@@ -1,11 +1,11 @@
-package com.babyfish.graphql.provider.starter.cfg.query
+package com.babyfish.graphql.provider.starter.query
 
-import com.babyfish.graphql.provider.starter.cfg.Author
-import org.babyfish.graphql.provider.starter.QueryService
-import org.babyfish.graphql.provider.starter.runtime.expression.ilike
+import com.babyfish.graphql.provider.starter.Author
+import org.babyfish.graphql.provider.starter.Query
+import org.babyfish.graphql.provider.starter.runtime.query.ilike
 import org.babyfish.kimmer.graphql.Connection
 
-class AuthorQueryService: QueryService() {
+class AuthorQuery: Query() {
 
     suspend fun findAuthors(
         name: String?

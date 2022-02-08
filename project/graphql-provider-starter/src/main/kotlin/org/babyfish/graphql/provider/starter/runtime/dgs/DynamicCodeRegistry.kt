@@ -9,13 +9,13 @@ import graphql.schema.idl.TypeDefinitionRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactor.mono
 import org.babyfish.graphql.provider.starter.EntityMapper
-import org.babyfish.graphql.provider.starter.QueryService
+import org.babyfish.graphql.provider.starter.Query
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredFunctions
 
 @DgsComponent
 class DynamicCodeRegistry(
-    private val queryServices: List<QueryService>,
+    private val queries: List<Query>,
     private val entityMappers: List<EntityMapper<*>>
 ) {
 
@@ -25,7 +25,7 @@ class DynamicCodeRegistry(
         registry: TypeDefinitionRegistry
     ): GraphQLCodeRegistry.Builder {
 
-        for (queryService in queryServices) {
+        for (queryService in queries) {
             for (function in queryService::class.declaredFunctions) {
                 if (function.visibility == KVisibility.PUBLIC) {
                     val coordinates = FieldCoordinates.coordinates("Query", "findBooks");

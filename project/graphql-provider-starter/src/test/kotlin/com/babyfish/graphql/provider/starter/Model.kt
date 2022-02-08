@@ -1,4 +1,4 @@
-package com.babyfish.graphql.provider.starter.cfg
+package com.babyfish.graphql.provider.starter
 
 import org.babyfish.kimmer.Immutable
 import java.math.BigDecimal

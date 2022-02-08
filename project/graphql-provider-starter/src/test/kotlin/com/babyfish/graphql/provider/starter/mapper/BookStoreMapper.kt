@@ -1,10 +1,10 @@
-package com.babyfish.graphql.provider.starter.cfg.mapper
+package com.babyfish.graphql.provider.starter.mapper
 
-import com.babyfish.graphql.provider.starter.cfg.Book
-import com.babyfish.graphql.provider.starter.cfg.BookStore
+import com.babyfish.graphql.provider.starter.Book
+import com.babyfish.graphql.provider.starter.BookStore
 import org.babyfish.graphql.provider.starter.EntityMapper
 import org.babyfish.graphql.provider.starter.dsl.EntityTypeDSL
-import org.babyfish.graphql.provider.starter.runtime.expression.ilike
+import org.babyfish.graphql.provider.starter.runtime.query.ilike
 import org.springframework.stereotype.Component
 
 @Component

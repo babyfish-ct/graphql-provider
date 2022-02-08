@@ -3,25 +3,22 @@ package org.babyfish.graphql.provider.starter.runtime
 import graphql.language.*
 import graphql.schema.idl.TypeDefinitionRegistry
 import org.babyfish.graphql.provider.starter.ModelException
-import org.babyfish.graphql.provider.starter.QueryService
-import org.babyfish.graphql.provider.starter.meta.EntityProp
+import org.babyfish.graphql.provider.starter.Query
 import org.babyfish.graphql.provider.starter.meta.EntityType
-import org.babyfish.kimmer.graphql.Connection
+import org.babyfish.graphql.provider.starter.meta.GraphQLProp
+import org.babyfish.graphql.provider.starter.meta.QueryType
+import org.babyfish.kimmer.Immutable
 import java.math.BigDecimal
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.KType
-import kotlin.reflect.KVisibility
-import kotlin.reflect.full.declaredFunctions
 
 internal class TypeDefinitionRegistryGenerator(
-    private val queryServices: Collection<QueryService>,
+    private val queryType: QueryType,
     private val entityTypes: Collection<EntityType>
 ) {
     init {
-        if (queryServices.isEmpty()) {
+        if (queryType.props.isEmpty()) {
             throw ModelException(
-                "No bean whose type is '${QueryService::class.qualifiedName}'," +
+                "No bean whose type is '${Query::class.qualifiedName}'," +
                     "at least one needs to be defined"
             )
         }
@@ -36,14 +33,8 @@ internal class TypeDefinitionRegistryGenerator(
     private fun generateQueryType(): ObjectTypeDefinition =
         ObjectTypeDefinition.newObjectTypeDefinition().apply {
             name("Query")
-            var hasFunction = false
-            for (queryService in queryServices) {
-                for (function in queryService::class.declaredFunctions) {
-                    if (function.visibility == KVisibility.PUBLIC) {
-                        fieldDefinition(generateQueryField(function))
-                        hasFunction = true
-                    }
-                }
+            for (prop in queryType.props.values) {
+                fieldDefinition(generateField(prop))
             }
         }.build()
 
@@ -66,53 +57,81 @@ internal class TypeDefinitionRegistryGenerator(
         ObjectTypeDefinition.newObjectTypeDefinition().apply {
             name(entityType.name)
             implementz(entityType.superTypes.map { TypeName(it.name) })
-            fieldDefinitions(entityType.declaredProps.values.map { generateEntityField(it) })
+            fieldDefinitions(entityType.declaredProps.values.map { generateField(it) })
         }.build()
 
     private fun generateInterfaceType(entityType: EntityType): InterfaceTypeDefinition =
         InterfaceTypeDefinition.newInterfaceTypeDefinition().apply {
             name(entityType.name)
             implementz(entityType.superTypes.map { TypeName(it.name) })
-            definitions(entityType.declaredProps.values.map { generateEntityField(it) })
+            definitions(entityType.declaredProps.values.map { generateField(it) })
         }.build()
 
-    private fun generateQueryField(function: KFunction<*>): FieldDefinition {
-        if (function.returnType.classifier == Unit::class) {
-            throw ModelException("Query function '${function}' cannot return Unit")
-        }
-        return FieldDefinition.newFieldDefinition().apply {
-            name(function.name)
-            val fieldType = (
-                function.returnType.classifier as? KClass<*>
-                    ?: ModelException("Query function '${function}' must return class")
-            ).let {
-
-            }
-        }.build()
-    }
-
-    private fun generateEntityField(prop: EntityProp): FieldDefinition =
+    private fun generateField(prop: GraphQLProp): FieldDefinition =
         FieldDefinition.newFieldDefinition().apply {
             name(prop.name)
-            val immutableProp = prop.immutableProp
             val fieldType = when {
-                immutableProp.isConnection ->
+                prop.isConnection ->
                     TODO()
-                immutableProp.isList ->
+                prop.isList ->
                     ListType(
-                        TypeName(immutableProp.targetType!!.simpleName)
-                            .asNullable(immutableProp.isTargetNullable)
-                    ).asNullable(immutableProp.isNullable)
-                immutableProp.isReference ->
+                        TypeName(prop.targetEntityType!!.name)
+                            .asNullable(prop.isElementNullable)
+                    ).asNullable(prop.isNullable)
+                prop.isReference ->
                     TypeName(
-                        immutableProp.targetType!!.simpleName
-                    ).asNullable(immutableProp.isTargetNullable)
+                        prop.targetEntityType!!.name
+                    ).asNullable(prop.isElementNullable)
                 else ->
-                    scalarType(prop.kotlinProp.returnType.classifier as KClass<*>)
-                        .asNullable(immutableProp.isTargetNullable)
+                    scalarType(prop.returnType)
+                        .asNullable(prop.isElementNullable)
             }
             type(fieldType)
+            for (argument in prop.arguments) {
+                inputValueDefinition(
+                    InputValueDefinition.newInputValueDefinition().apply {
+                        name(argument.name)
+                        type(
+                            argumentType(
+                                argument.type,
+                                argument.isNullable,
+                                argument.elementType,
+                                argument.isElementNullable
+                            )
+                        )
+                    }.build()
+                )
+            }
         }.build()
+
+    private fun argumentType(
+        type: KClass<*>,
+        isNullable: Boolean,
+        elementType: KClass<*>?,
+        isElementNullable: Boolean
+    ): Type<*> =
+        when {
+            !isNullable -> NonNullType(
+                argumentType(
+                    type,
+                    true,
+                    elementType,
+                    isElementNullable
+                )
+            )
+            elementType !== null -> ListType(
+                argumentType(
+                    elementType,
+                    isElementNullable,
+                    null,
+                    false
+                )
+            )
+            Immutable::class.java.isAssignableFrom(type.java) ->
+                TypeName(type.simpleName!!)
+            else ->
+                scalarType(type)
+        }
 
     private fun scalarType(type: KClass<*>): TypeName =
         when (type) {

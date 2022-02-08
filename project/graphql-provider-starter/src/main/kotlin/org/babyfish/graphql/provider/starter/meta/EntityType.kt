@@ -5,9 +5,7 @@ import org.babyfish.kimmer.meta.ImmutableType
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
-interface EntityType {
-
-    val name: String
+interface EntityType : GraphQLType {
 
     val immutableType: ImmutableType
 
@@ -30,16 +28,10 @@ interface EntityType {
 
     val declaredProps: Map<String, EntityProp>
 
-    val props: Map<String, EntityProp>
+    override val props: Map<String, EntityProp>
 
     interface Database {
         val tableName: String
-    }
-
-    interface Redis {
-        val enabled: Boolean
-        val timeout: Duration?
-        val nullTimeout: Duration?
     }
 
     interface GraphQL {

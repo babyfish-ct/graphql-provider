@@ -1,13 +1,11 @@
 package org.babyfish.graphql.provider.starter.meta.impl
 
 import org.babyfish.graphql.provider.starter.ModelException
-import org.babyfish.graphql.provider.starter.runtime.EntityTypeGenerator
+import org.babyfish.graphql.provider.starter.runtime.GraphQLTypeGenerator
 import org.babyfish.graphql.provider.starter.meta.*
 import org.babyfish.kimmer.meta.ImmutableProp
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
-import kotlin.time.Duration
 
 internal class EntityPropImpl(
     override val declaringType: EntityType,
@@ -18,11 +16,13 @@ internal class EntityPropImpl(
 
     private var _mappedBy: Any? = mappedBy?.name
 
+    private var _filter: Filter? = null
+
     override val immutableProp: ImmutableProp =
         declaringType.immutableType.props[kotlinProp.name]
             ?: throw IllegalArgumentException("No prop '${kotlinProp.name}' of type '${declaringType.kotlinType.qualifiedName}'")
 
-    override var targetType: EntityType? = null
+    override var targetEntityType: EntityType? = null
 
     override var oppositeProp: EntityProp? = null
 
@@ -47,26 +47,31 @@ internal class EntityPropImpl(
     override val isNullable: Boolean
         get() = immutableProp.isNullable
 
-    override val isTargetNullable: Boolean
+    override val isElementNullable: Boolean
         get() = immutableProp.isTargetNullable
 
     override val mappedBy: EntityProp?
         get() = _mappedBy as EntityProp?
 
-    override val arguments: List<Argument> = emptyList()
+    override val filter: Filter?
+        get() = _filter
 
-    fun resolve(generator: EntityTypeGenerator, phase: ResolvingPhase) {
-        if (phase == ResolvingPhase.PROP_TARGET) {
-            resolveTarget(generator)
-        } else if (phase == ResolvingPhase.PROP_MAPPED_BY) {
-            resolvedMappedBy(generator)
+    fun resolve(generator: GraphQLTypeGenerator, phase: ResolvingPhase) {
+        when (phase) {
+            ResolvingPhase.PROP_FILTER -> resolveFilter(generator)
+            ResolvingPhase.PROP_TARGET -> resolveTarget(generator)
+            ResolvingPhase.PROP_MAPPED_BY -> resolvedMappedBy(generator)
         }
     }
 
-    private fun resolveTarget(generator: EntityTypeGenerator) {
+    private fun resolveFilter(generator: GraphQLTypeGenerator) {
+        _filter = generator.dynamicConfigurationRegistry.filter(kotlinProp)
+    }
+
+    private fun resolveTarget(generator: GraphQLTypeGenerator) {
         immutableProp.targetType?.let {
             val tgtType = generator[it]
-            targetType = tgtType
+            targetEntityType = tgtType
             if (_mappedBy !== null) {
                 val opposite = tgtType.props[_mappedBy] as EntityPropImpl? ?: error("Internal bug")
                 oppositeProp = opposite
@@ -75,24 +80,24 @@ internal class EntityPropImpl(
         }
     }
 
-    private fun resolvedMappedBy(generator: EntityTypeGenerator) {
+    private fun resolvedMappedBy(generator: GraphQLTypeGenerator) {
         if (_mappedBy is String) {
-            val mappedByProp = (targetType!!.props[_mappedBy] as EntityPropImpl?)
+            val mappedByProp = (targetEntityType!!.props[_mappedBy] as EntityPropImpl?)
                 ?: throw ModelException(
                     "The attribute 'mappedBy' of property '${kotlinProp}' is specified as '${_mappedBy}', " +
-                        "but there is not property named '${_mappedBy}' in the target type '${targetType}' "
+                        "but there is not property named '${_mappedBy}' in the target type '${targetEntityType}' "
                 )
-            if (mappedByProp.targetType !== declaringType) {
+            if (mappedByProp.targetEntityType !== declaringType) {
                 throw ModelException(
                     "The attribute 'mappedBy' of property '${kotlinProp}' is specified as '${_mappedBy}'," +
-                        "but the property named '${_mappedBy}' in the target type '${targetType}' is not " +
+                        "but the property named '${_mappedBy}' in the target type '${targetEntityType}' is not " +
                         "association point to current type '${declaringType}'"
                 )
             }
             if (mappedByProp._mappedBy !== null) {
                 throw ModelException(
                     "The attribute 'mappedBy' of property '${kotlinProp}' is specified as '${_mappedBy}'," +
-                        "but the property named '${_mappedBy}' in the target type '${targetType}' is specified " +
+                        "but the property named '${_mappedBy}' in the target type '${targetEntityType}' is specified " +
                         "with 'mappedBy' too, there is not allowed"
                 )
             }
@@ -143,7 +148,7 @@ internal class EntityPropImpl(
             get() = userTargetJoinColumnName ?: defaultTargetJoinColumnName
 
         private val defaultTableName by lazy {
-            val tgt = targetType ?: error("Cannot get the default table name because target is not resolved")
+            val tgt = targetEntityType ?: error("Cannot get the default table name because target is not resolved")
             "${declaringType.database.tableName}_${tgt.database.tableName}_MAPPING"
         }
 
@@ -152,14 +157,8 @@ internal class EntityPropImpl(
         }
 
         private val defaultTargetJoinColumnName by lazy {
-            val tgt = targetType ?: error("Cannot get the default table name because target is not resolved")
+            val tgt = targetEntityType ?: error("Cannot get the default table name because target is not resolved")
             databaseIdentifier(tgt.kotlinType.simpleName!!) + "_ID"
         }
-    }
-
-    class RedisImpl: EntityProp.Redis {
-        override var enabled: Boolean = false
-        override var timeout: Duration? = null
-        override var nullTimeout: Duration? = null
     }
 }

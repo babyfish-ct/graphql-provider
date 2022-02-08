@@ -1,6 +1,8 @@
 package org.babyfish.graphql.provider.starter.meta
 
+import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.meta.ImmutableProp
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.time.Duration
 
@@ -28,6 +30,14 @@ interface EntityProp: GraphQLProp {
 
     val redis: Redis
 
+    val filter: Filter?
+
+    override val targetType: KClass<out Immutable>?
+        get() = targetEntityType?.kotlinType
+
+    override val arguments: List<Argument>
+        get() = filter?.arguments ?: emptyList()
+
     interface Column {
         val name: String
         val nullable: Boolean
@@ -41,12 +51,6 @@ interface EntityProp: GraphQLProp {
         val tableName: String
         val joinColumnName: String
         val targetJoinColumnName: String
-    }
-
-    interface Redis {
-        val enabled: Boolean
-        val timeout: Duration?
-        val nullTimeout: Duration?
     }
 }
 
