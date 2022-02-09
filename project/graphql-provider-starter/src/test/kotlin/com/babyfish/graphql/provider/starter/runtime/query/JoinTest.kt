@@ -8,7 +8,7 @@ import org.junit.Test
 import java.math.BigDecimal
 import kotlin.test.expect
 
-class FromTest : AbstractTest() {
+class JoinTest : AbstractTest() {
 
     @Test
     fun testSingle() {
@@ -120,7 +120,7 @@ class FromTest : AbstractTest() {
             query(Book::class).apply {
                 where(
                     or(
-                        table.joinReference(Book::store, JoinType.LEFT)[BookStore::id].isNull,
+                        table.joinReference(Book::store, JoinType.LEFT)[BookStore::id].isNull(),
                         table.joinReference(Book::store, JoinType.LEFT)[BookStore::name] ilike "MANNING"
                     )
                 )
@@ -128,16 +128,9 @@ class FromTest : AbstractTest() {
         )
         expect(""" from BOOK as table_1 
             |left join BOOK_STORE as table_2 on table_1.STORE_ID = table_2.ID 
-            |where (
-            |table_1.STORE_ID is null 
-            |or lower(table_2.NAME) like :1
-            |)""".trimMarginToOneLine()
+            |where table_1.STORE_ID is null 
+            |or lower(table_2.NAME) like :1""".trimMarginToOneLine()
         ) { sql }
         expect(listOf("manning")) { variables }
     }
-
-    private fun String.trimMarginToOneLine() =
-        trimMargin()
-            .replace("\r", "")
-            .replace("\n", "")
 }

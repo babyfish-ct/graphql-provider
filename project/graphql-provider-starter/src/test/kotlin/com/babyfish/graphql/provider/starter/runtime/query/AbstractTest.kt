@@ -59,5 +59,11 @@ abstract class AbstractTest {
             testHelperType.companionObject!!.memberFunctions
                 .find { it.name == "render" }
                 ?: fail("No TestHelper.render")
+
+        @JvmStatic
+        protected fun String.trimMarginToOneLine() =
+            trimMargin()
+                .replace("\r", "")
+                .replace("\n", "")
     }
 }

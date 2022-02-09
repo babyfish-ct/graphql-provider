@@ -75,7 +75,7 @@ fun Expression<String>.ilike(
 
 infix fun <T: Comparable<T>> Expression<T>.eq(
     value: T
-): Expression<Boolean> = eq(ValueExpression(value))
+): Expression<Boolean> = eq(value(value))
 
 infix fun <T: Comparable<T>> Expression<T>.eq(
     other: Expression<T>
@@ -86,7 +86,7 @@ infix fun <T: Comparable<T>> Expression<T>.eq(
 infix fun <T: Comparable<T>> Expression<T>.ne(
     value: T
 ): Expression<Boolean> =
-    ne(ValueExpression(value))
+    ne(value(value))
 
 infix fun <T: Comparable<T>> Expression<T>.ne(
     other: Expression<T>
@@ -97,7 +97,7 @@ infix fun <T: Comparable<T>> Expression<T>.ne(
 infix fun <T: Comparable<T>> Expression<T>.lt(
     value: T
 ): Expression<Boolean> =
-    lt(ValueExpression(value))
+    lt(value(value))
 
 infix fun <T: Comparable<T>> Expression<T>.lt(
     other: Expression<T>
@@ -108,7 +108,7 @@ infix fun <T: Comparable<T>> Expression<T>.lt(
 infix fun <T: Comparable<T>> Expression<T>.le(
     value: T
 ): Expression<Boolean> =
-    le(ValueExpression(value))
+    le(value(value))
 
 infix fun <T: Comparable<T>> Expression<T>.le(
     other: Expression<T>
@@ -119,7 +119,7 @@ infix fun <T: Comparable<T>> Expression<T>.le(
 infix fun <T: Comparable<T>> Expression<T>.gt(
     value: T
 ): Expression<Boolean> =
-    gt(ValueExpression(value))
+    gt(value(value))
 
 infix fun <T: Comparable<T>> Expression<T>.gt(
     other: Expression<T>
@@ -130,7 +130,7 @@ infix fun <T: Comparable<T>> Expression<T>.gt(
 infix fun <T: Comparable<T>> Expression<T>.ge(
     value: T
 ): Expression<Boolean> =
-    ge(ValueExpression(value))
+    ge(value(value))
 
 infix fun <T: Comparable<T>> Expression<T>.ge(
     other: Expression<T>
@@ -142,7 +142,7 @@ fun <T: Comparable<T>> Expression<T>.between(
     min: T,
     max: T
 ): Expression<Boolean> =
-    between(ValueExpression(min), ValueExpression(max))
+    between(value(min), value(max))
 
 fun <T: Comparable<T>> Expression<T>.between(
     min: Expression<T>,
@@ -151,11 +151,74 @@ fun <T: Comparable<T>> Expression<T>.between(
     BetweenExpression(this, min, max)
 
 
-val Expression<*>.isNull: Expression<Boolean>
-    get() = NullityExpression(true, this)
+operator fun <T: Number> Expression<T>.plus(
+    value: T
+): Expression<T> =
+    plus(value(value))
 
-val Expression<*>.isNotNull: Expression<Boolean>
-    get() = NullityExpression(false, this)
+operator fun <T: Number> Expression<T>.plus(
+    other: Expression<T>
+): Expression<T> =
+    BinaryExpression("+", this, other)
+
+
+operator fun <T: Number> Expression<T>.minus(
+    value: T
+): Expression<T> =
+    plus(value(value))
+
+operator fun <T: Number> Expression<T>.minus(
+    other: Expression<T>
+): Expression<T> =
+    BinaryExpression("-", this, other)
+
+
+operator fun <T: Number> Expression<T>.times(
+    value: T
+): Expression<T> =
+    plus(value(value))
+
+operator fun <T: Number> Expression<T>.times(
+    other: Expression<T>
+): Expression<T> =
+    BinaryExpression("*", this, other)
+
+
+operator fun <T: Number> Expression<T>.div(
+    value: T
+): Expression<T> =
+    plus(value(value))
+
+operator fun <T: Number> Expression<T>.div(
+    other: Expression<T>
+): Expression<T> =
+    BinaryExpression("/", this, other)
+
+
+operator fun <T: Number> Expression<T>.rem(
+    value: T
+): Expression<T> =
+    plus(value(value))
+
+operator fun <T: Number> Expression<T>.rem(
+    other: Expression<T>
+): Expression<T> =
+    BinaryExpression("%", this, other)
+
+
+operator fun <T: Number> Expression<T>.unaryPlus(): Expression<T> =
+    UnaryExpression("+", this)
+
+
+operator fun <T: Number> Expression<T>.unaryMinus(): Expression<T> =
+    UnaryExpression("-", this)
+
+
+fun Expression<*>.isNull(): Expression<Boolean> =
+    NullityExpression(true, this)
+
+fun Expression<*>.isNotNull(): Expression<Boolean> =
+    NullityExpression(false, this)
 
 fun <A, B> tuple(
     a: Expression<A>,
@@ -169,6 +232,7 @@ fun <A, B, C> tuple(
     c: Expression<C>
 ): Expression<Triple<A, B, C>> =
     TripleExpression(a, b, c)
+
 
 infix fun <T> Expression<T>.valueIn(
     values: Collection<T>
@@ -203,5 +267,54 @@ fun notExists(
     ExistsExpression(true, subQuery)
 
 
+fun <T> all(
+    subQuery: TypedDatabaseSubQuery<*, *, T>
+): Expression<T> =
+    OperatorSubQueryExpression("all", subQuery)
+
+fun <T> any(
+    subQuery: TypedDatabaseSubQuery<*, *, T>
+): Expression<T> =
+    OperatorSubQueryExpression("any", subQuery)
+
+fun <T> some(
+    subQuery: TypedDatabaseSubQuery<*, *, T>
+): Expression<T> =
+    OperatorSubQueryExpression("some", subQuery)
+
+fun <T> value(value: T): Expression<T> =
+    ValueExpression(value)
+
 fun <T: Number> constant(value: T): Expression<T> =
     ConstantExpression(value)
+
+fun <C> case(expression: Expression<C>): SimpleCaseStartBuilder<C> =
+    SimpleCaseStartBuilderImpl(expression)
+
+fun case(): CaseStartBuilder =
+    CaseStartBuilderImpl()
+
+fun concat(block: ConcatContext.() -> Unit): Expression<String> =
+    ConcatContext().let {
+        it.block()
+        it.createExpression()
+    }
+
+fun Expression<*>.count(distinct: Boolean = false): Expression<Long> =
+    AggregationExpression(
+        "count",
+        this,
+        if (distinct) "distinct" else null
+    )
+
+fun <T: Number> Expression<T>.min(): Expression<T> =
+    AggregationExpression("min", this)
+
+fun <T: Number> Expression<T>.max(): Expression<T> =
+    AggregationExpression("max", this)
+
+fun <T: Number> Expression<T>.sum(): Expression<T> =
+    AggregationExpression("sum", this)
+
+fun <T: Number> Expression<T>.avg(): Expression<T> =
+    AggregationExpression("avg", this)
