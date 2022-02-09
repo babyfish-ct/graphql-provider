@@ -8,4 +8,4 @@ import kotlin.reflect.KClass
 internal class QueryImpl<T: Immutable>(
     entityTypeMap: Map<ImmutableType, EntityType>,
     type: KClass<T>
-): AbstractQuery<T>(TableAliasAllocator(), entityTypeMap, type)
+): AbstractQuery<T>(TableAliasAllocator(), entityTypeMap, type), DatabaseQuery<T>

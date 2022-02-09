@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.starter.runtime.query
 
+import org.babyfish.kimmer.Immutable
 import kotlin.reflect.KClass
 
 fun <X: Any> sql(

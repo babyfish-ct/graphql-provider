@@ -23,7 +23,7 @@ internal class TestHelper {
                 it.generate()
                 it.entityTypes
             }.let {
-                QueryImpl<T>(it, type)
+                QueryImpl(it, type)
             }
 
         @JvmStatic

@@ -9,9 +9,13 @@ internal abstract class AbstractQuery<T: Immutable>(
     val tableAliasAllocator: TableAliasAllocator,
     val entityTypeMap: Map<ImmutableType, EntityType>,
     type: KClass<T>
-): DatabaseQuery<T>, Renderable {
+): AbstractDatabaseQuery<T>, Renderable {
 
     private val predicates = mutableListOf<Expression<Boolean>>()
+
+    private val groupByExpressions = mutableListOf<Expression<*>>()
+
+    private val havingPredicates = mutableListOf<Expression<Boolean>>()
 
     private val orders = mutableListOf<Order>()
 
@@ -29,10 +33,38 @@ internal abstract class AbstractQuery<T: Immutable>(
         }
     }
 
+    override fun groupBy(vararg expression: Expression<*>) {
+        groupByExpressions += expression
+    }
+
+    override fun having(vararg predicates: Expression<Boolean>?) {
+        for (predicate in predicates) {
+            predicate?.let {
+                this.havingPredicates += it
+            }
+        }
+    }
+
     override fun orderBy(expression: Expression<*>?, descending: Boolean) {
         expression?.let {
             orders += Order(expression, descending)
         }
+    }
+
+    override fun clearWhereClauses() {
+        predicates.clear()
+    }
+
+    override fun clearGroupByClauses() {
+        groupByExpressions.clear()
+    }
+
+    override fun clearHavingClauses() {
+        havingPredicates.clear()
+    }
+
+    override fun clearOrderByClauses() {
+        orders.clear()
     }
 
     override fun <X : Immutable> subQuery(
@@ -43,13 +75,49 @@ internal abstract class AbstractQuery<T: Immutable>(
             block?.invoke(this)
         }
 
+    override fun <X : Immutable, R> typedSubQuery(
+        type: KClass<X>,
+        block: DatabaseSubQuery<T, X>.() -> TypedDatabaseSubQuery<T, X, R>
+    ): TypedDatabaseSubQuery<T, X, R> =
+        SubQueryImpl(this, type).run {
+            block?.invoke(this)
+        }
+
     override fun renderTo(builder: SqlBuilder) {
+        renderWithoutSelection(builder)
+    }
+
+    fun renderWithoutSelection(builder: SqlBuilder) {
         (table as Renderable).renderTo(builder)
         builder.apply {
             if (predicates.isNotEmpty()) {
                 sql(" where ")
                 var separator: String? = null
                 for (predicate in predicates) {
+                    if (separator === null) {
+                        separator = " and "
+                    } else {
+                        sql(separator)
+                    }
+                    (predicate as Renderable).renderTo(this)
+                }
+            }
+            if (groupByExpressions.isNotEmpty()) {
+                sql(" group by ")
+                var separator: String? = null
+                for (expression in groupByExpressions) {
+                    if (separator === null) {
+                        separator = ", "
+                    } else {
+                        sql(separator)
+                    }
+                    (expression as Renderable).renderTo(this)
+                }
+            }
+            if (havingPredicates.isNotEmpty()) {
+                sql(" having ")
+                var separator: String? = null
+                for (predicate in havingPredicates) {
                     if (separator === null) {
                         separator = " and "
                     } else {
@@ -71,5 +139,15 @@ internal abstract class AbstractQuery<T: Immutable>(
                 }
             }
         }
+    }
+
+    companion object {
+        @JvmStatic
+        fun form(query: Filterable<*>): AbstractQuery<*> =
+            when (query) {
+                is TypedSubQueryImpl<*, *, *> -> query.baseQuery
+                is TypedQueryImpl<*, *> -> query.baseQuery
+                else -> query as AbstractQuery<out Immutable>
+            }
     }
 }

@@ -27,8 +27,8 @@ internal abstract class AbstractExpression<T>: Expression<T>, Renderable {
     protected abstract val precedence: Int
 
     protected fun SqlBuilder.render(expression: Expression<*>) {
-        (expression as AbstractExpression<*>).let {
-            if (it.precedence <= precedence) {
+        (expression as Renderable).let {
+            if (it !is AbstractExpression<*> || it.precedence <= precedence) {
                 it.renderTo(this)
             } else {
                 sql("(")
@@ -367,8 +367,10 @@ internal class ExistsExpression(
         get() = 0
 
     override fun SqlBuilder.render() {
-        sql(if (negative) "not exists" else "exists")
-        render(subQuery.select { constant(1) })
+        sql(if (negative) "not " else "")
+        sql("exists(select *")
+        AbstractQuery.form(subQuery).renderWithoutSelection(this)
+        sql(")")
     }
 }
 
