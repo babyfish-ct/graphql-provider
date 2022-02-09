@@ -103,8 +103,10 @@ internal class TableImpl<T: Immutable>(
 
     override fun renderTo(builder: SqlBuilder) {
         builder.renderSelf()
-        for (childTable in childTableMap.values) {
-            childTable.renderTo(builder)
+        if (_used) {
+            for (childTable in childTableMap.values) {
+                childTable.renderTo(builder)
+            }
         }
     }
 
