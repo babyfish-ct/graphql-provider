@@ -19,7 +19,7 @@ class BookStoreMapper(
 
         userImplementation(BookStore::avgPrice) {
             batch {
-                bookRepository.findAvgPrices(rows.map { it.id })
+                bookRepository.findAvgPricesByStoreIds(rows.map { it.id })
             }
         }
     }
@@ -40,7 +40,7 @@ class BookStoreMapper(
     fun avgPrice() {
         userImplementation(BookStore::avgPrice) {
             batch {
-                bookRepository.findAvgPrices(rows.map { it.id })
+                bookRepository.findAvgPricesByStoreIds(rows.map { it.id })
             }
             redis {
                 dependsOn(BookStore::books)

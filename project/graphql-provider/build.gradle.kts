@@ -18,8 +18,8 @@ dependencies {
     implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:4.9.17"))
     implementation("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.3.1")
 
-    api("org.babyfish.kimmer:kimmer-sql:0.2.1")
-    kspTest("org.babyfish.kimmer:kimmer-ksp:0.2.1")
+    api("org.babyfish.kimmer:kimmer-sql:0.2.2")
+    kspTest("org.babyfish.kimmer:kimmer-ksp:0.2.2")
 
     implementation("com.graphql-java:graphql-java:17.3")
     implementation("org.springframework:spring-r2dbc:5.3.15")

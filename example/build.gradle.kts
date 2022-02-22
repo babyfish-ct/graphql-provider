@@ -17,8 +17,8 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-test")
-	implementation(files("/Users/chentao/projects/git/graphql-provider/project/graphql-provider-starter/build/libs/graphql-provider-starter-0.0.0-SNAPSHOT.jar"))
-	implementation("org.babyfish.kimmer:kimmer:0.0.4")
+	implementation("org.babyfish.kimmer:kimmer-sql:0.2.2")
+	implementation(files("/Users/chentao/projects/git/graphql-provider/project/graphql-provider/build/libs/graphql-provider-0.0.0-SNAPSHOT.jar"))
 	implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:4.9.17"))
 	implementation("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.3.1")
 }

@@ -10,13 +10,13 @@ internal class ModelPropImpl(
 ): EntityPropImpl(declaringType, kotlinProp), ModelProp {
 
     override val cache: Cache
-        get() = TODO("Not yet implemented")
+        get() = Cache(CacheLevel.NO_CACHE)
 
     override val filter: Filter?
-        get() = TODO("Not yet implemented")
+        get() = null
 
     override val userImplementation: UserImplementation?
-        get() = TODO("Not yet implemented")
+        get() = null
 
     override val targetType: ModelType?
         get() = super.targetType as ModelType?

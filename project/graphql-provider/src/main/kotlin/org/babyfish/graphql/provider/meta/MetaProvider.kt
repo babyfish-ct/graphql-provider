@@ -1,8 +1,9 @@
 package org.babyfish.graphql.provider.meta
 
-import org.babyfish.kimmer.meta.ImmutableType
+import org.babyfish.kimmer.sql.Entity
+import kotlin.reflect.KClass
 
 class MetaProvider internal constructor(
     val queryType: QueryType,
-    val modelTypes: Map<ImmutableType, ModelType>
+    val modelTypes: Map<KClass<out Entity<*>>, ModelType>
 )

@@ -8,9 +8,11 @@ import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.sql.ast.ge
 import org.babyfish.kimmer.sql.ast.ilike
 import org.babyfish.kimmer.sql.ast.le
+import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import kotlin.reflect.KProperty1
 
+@Component
 class BookQuery: Query() {
 
     suspend fun findBooks(

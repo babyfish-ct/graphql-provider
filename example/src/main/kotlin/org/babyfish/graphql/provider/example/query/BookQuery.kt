@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.example.query
 
 import org.babyfish.graphql.provider.example.model.Book
-import org.babyfish.graphql.provider.starter.Query
+import org.babyfish.graphql.provider.Query
 import org.springframework.stereotype.Component
 
 @Component

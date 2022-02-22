@@ -1,10 +1,10 @@
 package org.babyfish.graphql.provider
 
-import org.babyfish.graphql.provider.dsl.EntityTypeDSL
-import org.babyfish.graphql.provider.dsl.FilterDSL
-import org.babyfish.graphql.provider.dsl.UserImplementationDSL
-import org.babyfish.graphql.provider.runtime.filterExecutionContext
-import org.babyfish.graphql.provider.runtime.registerEntityField
+import  org.babyfish.graphql.provider.dsl.EntityTypeDSL
+import  org.babyfish.graphql.provider.dsl.FilterDSL
+import  org.babyfish.graphql.provider.dsl.UserImplementationDSL
+import  org.babyfish.graphql.provider.runtime.filterExecutionContext
+import  org.babyfish.graphql.provider.runtime.registerEntityField
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.meta.ImmutableType
 import org.babyfish.kimmer.sql.Entity
@@ -16,31 +16,32 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
     val immutableType: ImmutableType
 
     init {
-        val entityJavaType =
+        val arguments =
             GenericTypeResolver
-                .resolveTypeArgument(this::class.java, org.babyfish.graphql.provider.EntityMapper::class.java)
-                ?: throw org.babyfish.graphql.provider.ModelException(
+                .resolveTypeArguments(this::class.java,  EntityMapper::class.java)
+                ?: throw ModelException(
                     "Illegal class '${this::class.qualifiedName}', " +
-                        "type argument of '${org.babyfish.graphql.provider.EntityMapper::class.qualifiedName}' is not specified"
+                        "type argument of '${ EntityMapper::class.qualifiedName}' is not specified"
                 )
+        val entityJavaType = arguments[0]
         if (entityJavaType.simpleName == "Query") {
-            throw org.babyfish.graphql.provider.ModelException(
+            throw ModelException(
                 "Illegal class'${this::class.qualifiedName}', " +
-                    "type argument of '${org.babyfish.graphql.provider.EntityMapper::class.qualifiedName}' " +
+                    "type argument of '${ EntityMapper::class.qualifiedName}' " +
                     "cannot be specified as 'Query'"
             )
         }
         if (!entityJavaType.isInterface && !Entity::class.java.isAssignableFrom(entityJavaType)) {
-            throw org.babyfish.graphql.provider.ModelException(
+            throw ModelException(
                 "Illegal class'${this::class.qualifiedName}', " +
-                    "type argument of '${org.babyfish.graphql.provider.EntityMapper::class.qualifiedName}' " +
+                    "type argument of '${ EntityMapper::class.qualifiedName}' " +
                     "must be specified as derived interface of '${Entity::class.qualifiedName}'"
             )
         }
         if (Connection::class.java.isAssignableFrom(entityJavaType)) {
-            throw org.babyfish.graphql.provider.ModelException(
+            throw ModelException(
                 "Illegal class'${this::class.qualifiedName}', " +
-                    "type argument of '${org.babyfish.graphql.provider.EntityMapper::class.qualifiedName}' " +
+                    "type argument of '${ EntityMapper::class.qualifiedName}' " +
                     "cannot be specified as derived interface of '${Connection::class.qualifiedName}'"
             )
         }

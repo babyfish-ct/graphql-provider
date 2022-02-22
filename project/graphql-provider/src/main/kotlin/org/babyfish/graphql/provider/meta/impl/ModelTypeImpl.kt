@@ -21,7 +21,7 @@ internal class ModelTypeImpl(
     override val props: Map<String, ModelProp>
         get() = super.props as Map<String, ModelProp>
 
-    override var isMapped: Boolean
+    var isMapped: Boolean
         get() = _isMapped
         set(value) { _isMapped = true }
 }

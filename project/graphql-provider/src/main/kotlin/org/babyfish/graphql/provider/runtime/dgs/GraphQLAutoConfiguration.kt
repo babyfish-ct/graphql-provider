@@ -2,14 +2,15 @@ package org.babyfish.graphql.provider.runtime.dgs
 
 import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.MetaProvider
-import org.babyfish.graphql.provider.meta.ModelClient
 import org.babyfish.graphql.provider.meta.ModelType
-import org.babyfish.graphql.provider.meta.QueryType
 import org.babyfish.graphql.provider.runtime.DataFetchers
-import org.babyfish.graphql.provider.runtime.GraphQLTypeGenerator
+import org.babyfish.graphql.provider.runtime.createMetaProvider
+import org.babyfish.graphql.provider.runtime.createSqlClientByEntityMappers
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.SqlClient
-import org.babyfish.kimmer.sql.spi.createSqlClient
+import org.babyfish.kimmer.sql.runtime.Dialect
+import org.babyfish.kimmer.sql.runtime.JdbcExecutor
+import org.babyfish.kimmer.sql.runtime.R2dbcExecutor
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
@@ -22,25 +23,24 @@ open class GraphQLAutoConfiguration(
     private val mappers: List<org.babyfish.graphql.provider.EntityMapper<*, *>>
 ) {
     @Bean
-    open fun modelClient(): ModelClient {
-        val generator = GraphQLTypeGenerator(queries, mappers)
-        val sqlClient = createSqlClient {
-            generator.generate(this)
-        }
-        return ModelClientImpl(sqlClient, generator.queryType)
-    }
+    open fun sqlClient(
+        jdbcExecutor: JdbcExecutor?,
+        r2dbcExecutor: R2dbcExecutor?,
+        dialect: Dialect?
+    ): SqlClient =
+        createSqlClientByEntityMappers(mappers, jdbcExecutor, r2dbcExecutor, dialect)
+
+    @Suppress("UNCHECKED_CAST")
+    @Bean
+    open fun metaProvider(
+        sqlClient: SqlClient
+    ): MetaProvider =
+        createMetaProvider(
+            queries,
+            sqlClient.entityTypeMap as Map<KClass<out Entity<*>>, ModelType>
+        )
 
     @Bean
     internal open fun dataFetchers(): DataFetchers =
         DataFetchers()
-
-    private class ModelClientImpl(
-        private val sqlClient: SqlClient,
-        override val queryType: QueryType
-    ): ModelClient, SqlClient by sqlClient {
-
-        @Suppress("UNCHECKED_CAST")
-        override val entityTypeMap: Map<KClass<out Entity<*>>, ModelType>
-            get() = sqlClient.entityTypeMap as Map<KClass<out Entity<*>>, ModelType>
-    }
 }

@@ -10,16 +10,16 @@ import org.babyfish.kimmer.sql.spi.databaseIdentifier
 class MiddleTableDSL internal constructor(
     private val modelProp: ModelProp,
 ) {
-    var tableName: String? = null
-    var joinColumnName: String? = null
-    var targetJoinColumnName: String? = null
+    var tableName: String = ""
+    var joinColumnName: String = ""
+    var targetJoinColumnName: String = ""
     internal fun create(): MiddleTable =
         MiddleTable(
-            tableName = tableName?.takeIf { it.isNotEmpty() }
-                ?: "${databaseIdentifier(modelProp.declaringType.tableName)}_${databaseIdentifier(modelProp.targetType!!.tableName)}_MAPPING",
-            joinColumnName = joinColumnName?.takeIf { it.isNotEmpty() }
-                ?: "${databaseIdentifier(modelProp.declaringType.tableName)}_ID",
-            targetJoinColumnName = targetJoinColumnName?.takeIf { it.isNotEmpty() }
-                ?: "${databaseIdentifier(modelProp.targetType!!.tableName)}_ID"
+            tableName = tableName.takeIf { it.isNotEmpty() }
+                ?: throw ModelException("tableName of middle table must be specified"),
+            joinColumnName = joinColumnName.takeIf { it.isNotEmpty() }
+                ?: throw ModelException("joinColumnName of middle table must be specified"),
+            targetJoinColumnName = targetJoinColumnName.takeIf { it.isNotEmpty() }
+                ?: throw ModelException("targetJoinColumnName of middle table must be specified")
         )
 }

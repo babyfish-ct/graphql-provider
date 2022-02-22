@@ -9,6 +9,7 @@ import org.babyfish.graphql.provider.meta.GraphQLProp
 import org.babyfish.graphql.provider.meta.QueryType
 import org.babyfish.kimmer.Immutable
 import java.math.BigDecimal
+import java.util.*
 import kotlin.reflect.KClass
 
 internal class TypeDefinitionRegistryGenerator(
@@ -26,9 +27,24 @@ internal class TypeDefinitionRegistryGenerator(
 
     fun generate(): TypeDefinitionRegistry =
         TypeDefinitionRegistry().apply {
+            addScalarTypes()
             add(generateQueryType())
             addAll(modelTypes.map { generateEntityType(it) })
         }
+
+    private fun TypeDefinitionRegistry.addScalarTypes() {
+        var hasUUID = false
+        for (modelType in modelTypes) {
+            for (prop in modelType.declaredProps.values) {
+                if (prop.returnType == UUID::class) {
+                    hasUUID = true
+                }
+            }
+        }
+        if (hasUUID) {
+            add(ScalarTypeDefinition.newScalarTypeDefinition().name("UUID").build())
+        }
+    }
 
     private fun generateQueryType(): ObjectTypeDefinition =
         ObjectTypeDefinition.newObjectTypeDefinition().apply {
@@ -141,6 +157,7 @@ internal class TypeDefinitionRegistryGenerator(
             Int::class -> TypeName("String")
             Boolean::class -> TypeName("String")
             BigDecimal::class -> TypeName("Float")
+            UUID::class -> TypeName("UUID")
             else -> error("Unsupported type ${type.qualifiedName}")
         }
 }
