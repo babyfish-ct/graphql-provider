@@ -44,15 +44,15 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
 
     fun <T> scalar(
         prop: KProperty1<E, T>,
-        block: ScalarDSL<T>.() -> Unit
+        block: ScalarDSL<E, ID, T>.() -> Unit
     ) {
         val modelProp = builder.prop(prop) as ModelPropImpl
         if (modelProp.targetType !== null) {
             throw ModelException("Cannot map '${prop}' as scalar property")
         }
-        ScalarDSL<T>(prop.name).run {
+        ScalarDSL(prop).run {
             block()
-            column
+            create()
         }?.let {
             builder.storage(prop, it)
         }
@@ -60,13 +60,20 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
 
     fun <T: Entity<*>> reference(
         prop: KProperty1<E, T?>,
-        block: ReferenceDSL.() -> Unit
+        block: (ReferenceDSL.() -> Unit)? = null
     ) {
         val modelProp = builder.prop(prop) as ModelPropImpl
         if (!modelProp.isReference) {
             throw ModelException("Cannot map '${prop}' as reference property")
         }
-        ReferenceDSL(modelProp).block()
+        ReferenceDSL(modelProp).run {
+            if (block !== null) {
+                block()
+            }
+            create()
+        }.let {
+            builder.storage(prop, it)
+        }
     }
 
     fun <T: Entity<*>> list(
@@ -77,7 +84,12 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
         if (!modelProp.isList) {
             throw ModelException("Cannot map '${prop}' as list property")
         }
-        CollectionDSL(modelProp).block()
+        CollectionDSL(modelProp).run {
+            block()
+            create()
+        }.let {
+            builder.storage(prop, it)
+        }
     }
 
     fun <T: Entity<*>> connection(
@@ -88,7 +100,12 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
         if (!modelProp.isConnection) {
             throw ModelException("Cannot map '${prop}' as list property")
         }
-        CollectionDSL(modelProp).block()
+        CollectionDSL(modelProp).run {
+            block()
+            create()
+        }.let {
+            builder.storage(prop, it)
+        }
     }
 
     fun <T: Entity<*>> mappedReference(

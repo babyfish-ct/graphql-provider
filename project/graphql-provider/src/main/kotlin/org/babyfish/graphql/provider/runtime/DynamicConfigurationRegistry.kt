@@ -7,7 +7,10 @@ import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.Argument
 import org.babyfish.graphql.provider.meta.CacheLevel
 import org.babyfish.graphql.provider.meta.Filter
+import org.babyfish.graphql.provider.meta.impl.NoReturnValue
 import org.babyfish.kimmer.sql.Entity
+import java.lang.reflect.InvocationTargetException
+import java.util.*
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.javaGetter
@@ -119,6 +122,10 @@ private class FilterImpl(
         filterExecutionContextLocal.set(ctx)
         try {
             fn.call(*args)
+        } catch (ex: InvocationTargetException) {
+            if (ex.targetException !is NoReturnValue) {
+                throw ex.targetException
+            }
         } finally {
             if (oldContext !== null) {
                 filterExecutionContextLocal.set(oldContext)

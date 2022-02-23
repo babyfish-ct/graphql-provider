@@ -4,6 +4,7 @@ import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.meta.ModelType
 import org.babyfish.graphql.provider.runtime.DataFetchers
+import org.babyfish.graphql.provider.runtime.R2dbcClient
 import org.babyfish.graphql.provider.runtime.createMetaProvider
 import org.babyfish.graphql.provider.runtime.createSqlClientByEntityMappers
 import org.babyfish.kimmer.sql.Entity
@@ -14,6 +15,7 @@ import org.babyfish.kimmer.sql.runtime.R2dbcExecutor
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
+import org.springframework.r2dbc.core.DatabaseClient
 import kotlin.reflect.KClass
 
 @Configuration
@@ -30,6 +32,13 @@ open class GraphQLAutoConfiguration(
     ): SqlClient =
         createSqlClientByEntityMappers(mappers, jdbcExecutor, r2dbcExecutor, dialect)
 
+    @Bean
+    open fun r2dbcClient(
+        sqlClient: SqlClient,
+        databaseClient: DatabaseClient
+    ): R2dbcClient =
+        R2dbcClient(sqlClient, databaseClient)
+
     @Suppress("UNCHECKED_CAST")
     @Bean
     open fun metaProvider(
@@ -41,6 +50,8 @@ open class GraphQLAutoConfiguration(
         )
 
     @Bean
-    internal open fun dataFetchers(): DataFetchers =
-        DataFetchers()
+    internal open fun dataFetchers(
+        r2dbcClient: R2dbcClient
+    ): DataFetchers =
+        DataFetchers(r2dbcClient)
 }

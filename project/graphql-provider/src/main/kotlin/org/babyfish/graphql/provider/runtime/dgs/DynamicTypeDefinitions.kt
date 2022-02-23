@@ -7,7 +7,7 @@ import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.runtime.TypeDefinitionRegistryGenerator
 
 @DgsComponent
-open class DynamicTypeDefinitions(
+internal open class DynamicTypeDefinitions(
     private val metaProvider: MetaProvider
 ) {
 

@@ -81,7 +81,7 @@ class Argument internal constructor(
             val isList = List::class == classifier
             return if (isList) {
                 (type.arguments[0].type ?: error("Internal bug")).also {
-                    validateAndGetElementType(function, name, type, true)
+                    validateAndGetElementType(function, name, it, true)
                 }
             } else {
                 null

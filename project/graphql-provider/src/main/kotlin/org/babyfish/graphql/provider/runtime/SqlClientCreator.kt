@@ -19,7 +19,7 @@ import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredFunctions
 
 @Suppress("UNCHECKED_CAST")
-fun createSqlClientByEntityMappers(
+internal fun createSqlClientByEntityMappers(
     mappers: List<EntityMapper<out Entity<*>, *>>,
     jdbcExecutor: JdbcExecutor?,
     r2dbcExecutor: R2dbcExecutor?,

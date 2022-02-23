@@ -11,11 +11,7 @@ class BookMapper: EntityMapper<Book, UUID>() {
 
     override fun EntityTypeDSL<Book, UUID>.config() {
 
-        reference(Book::store) {
-            db {
-                foreignKey()
-            }
-        }
+        reference(Book::store)
 
         list(Book::authors) {
             db {

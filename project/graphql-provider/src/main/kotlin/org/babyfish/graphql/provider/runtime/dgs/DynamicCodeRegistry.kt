@@ -9,11 +9,16 @@ import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.idl.TypeDefinitionRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactor.mono
+import org.babyfish.graphql.provider.meta.MetaProvider
+import org.babyfish.graphql.provider.runtime.DataFetchers
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredFunctions
 
 @DgsComponent
-class DynamicCodeRegistry {
+internal class DynamicCodeRegistry(
+    private val dataFetchers: DataFetchers,
+    private val metaProvider: MetaProvider,
+) {
 
     @DgsCodeRegistry
     open fun registry(
@@ -22,16 +27,18 @@ class DynamicCodeRegistry {
     ): GraphQLCodeRegistry.Builder {
 
         val queryType = registry.getType("Query").orElse(null) as ImplementingTypeDefinition
-        if (queryType !== null) {
-            for (field in queryType.fieldDefinitions) {
-                val coordinates = FieldCoordinates.coordinates("Query", "findBooks");
-                val dataFetcher = DataFetcher {
-                    mono(Dispatchers.Unconfined) {
-                        "Implementation of Query.${field.name}"
-                    }.toFuture()
-                }
-                builder.dataFetcher(coordinates, dataFetcher)
+        for (field in queryType.fieldDefinitions) {
+            val coordinates = FieldCoordinates.coordinates("Query", "findBooks");
+            val dataFetcher = DataFetcher {
+                mono(Dispatchers.Unconfined) {
+                    dataFetchers.fetch(
+                        metaProvider.queryType.props[field.name]
+                            ?: error("Non mapped query field: '${field.name}'"),
+                        it
+                    )
+                }.toFuture()
             }
+            builder.dataFetcher(coordinates, dataFetcher)
         }
         return builder
     }

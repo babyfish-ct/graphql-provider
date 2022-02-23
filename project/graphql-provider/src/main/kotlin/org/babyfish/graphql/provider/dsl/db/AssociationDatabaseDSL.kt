@@ -23,9 +23,6 @@ open class AssociationDatabaseDSL internal constructor(
         }
     }
 
-    internal open fun validate() {
-        if (storage === null) {
-            throw ModelException("Middle table of '${prop}.db' is not specified")
-        }
-    }
+    internal open fun create(): Storage? =
+        storage
 }

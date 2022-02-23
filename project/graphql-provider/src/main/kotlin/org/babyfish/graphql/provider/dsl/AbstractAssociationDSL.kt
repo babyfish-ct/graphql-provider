@@ -5,7 +5,7 @@ import org.babyfish.graphql.provider.meta.ModelProp
 
 @GraphQLProviderDSL
 abstract class AbstractAssociationDSL internal constructor(
-    protected val modelProp: ModelProp
+    protected val prop: ModelProp
 ) {
     fun redis(block: EntityPropGraphQLDSL.() -> Unit) {
 

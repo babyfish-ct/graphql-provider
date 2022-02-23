@@ -37,8 +37,10 @@ class BookMapper: org.babyfish.graphql.provider.EntityMapper<Book, UUID>() {
 
         scalar(Book::price) {
             db {
-                precision = 10
-                scale = 2
+                column {
+                    precision = 10
+                    scale = 2
+                }
             }
         }
     }

@@ -4,6 +4,7 @@ import org.babyfish.graphql.provider.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.meta.ModelProp
 import org.babyfish.kimmer.sql.meta.config.Column
+import org.babyfish.kimmer.sql.meta.config.Storage
 import org.babyfish.kimmer.sql.spi.databaseIdentifier
 
 @GraphQLProviderDSL
@@ -28,5 +29,7 @@ class ReferenceDatabaseDSL internal constructor(
         }
     }
 
-    override fun validate() {}
+    override fun create(): Storage? =
+        storage
+
 }

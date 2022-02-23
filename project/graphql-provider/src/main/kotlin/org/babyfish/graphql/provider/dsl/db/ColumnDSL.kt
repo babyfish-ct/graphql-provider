@@ -3,19 +3,18 @@ package org.babyfish.graphql.provider.dsl.db
 import org.babyfish.graphql.provider.dsl.GraphQLProviderDSL
 import org.babyfish.kimmer.sql.meta.config.Column
 import org.babyfish.kimmer.sql.spi.databaseIdentifier
-import java.math.BigDecimal
 
 @GraphQLProviderDSL
 class ColumnDSL<@Suppress("UNUSED") T> internal constructor(
     private val propName: String
 ) {
-    var columnName: String? = null
+    var name: String? = null
     internal var _length: Int? = null
     internal var _precision: Int? = null
     internal var _scale: Int? = null
     internal fun create(): Column =
         Column(
-            name = columnName ?: databaseIdentifier(propName),
+            name = name ?: databaseIdentifier(propName),
             length = _length,
             precision = _precision,
             scale = _scale

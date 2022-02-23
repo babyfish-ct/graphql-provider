@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredFunctions
 
-fun createMetaProvider(
+internal fun createMetaProvider(
     queries: List<Query>,
     modelTypeMap: Map<KClass<out Entity<*>>, ModelType>
 ): MetaProvider {
