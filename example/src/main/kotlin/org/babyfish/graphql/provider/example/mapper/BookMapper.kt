@@ -21,6 +21,8 @@ class BookMapper: EntityMapper<Book, UUID>() {
                     targetJoinColumnName = "AUTHOR_ID"
                 }
             }
+            redis {  }
+            graphql { }
         }
     }
 }

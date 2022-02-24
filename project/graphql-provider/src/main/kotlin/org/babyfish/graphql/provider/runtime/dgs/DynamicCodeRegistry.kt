@@ -10,6 +10,7 @@ import graphql.schema.idl.TypeDefinitionRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactor.mono
 import org.babyfish.graphql.provider.meta.MetaProvider
+import org.babyfish.graphql.provider.meta.ModelProp
 import org.babyfish.graphql.provider.runtime.DataFetchers
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredFunctions
@@ -26,19 +27,27 @@ internal class DynamicCodeRegistry(
         registry: TypeDefinitionRegistry
     ): GraphQLCodeRegistry.Builder {
 
-        val queryType = registry.getType("Query").orElse(null) as ImplementingTypeDefinition
-        for (field in queryType.fieldDefinitions) {
-            val coordinates = FieldCoordinates.coordinates("Query", "findBooks");
+        for (prop in metaProvider.queryType.props.values) {
+            val coordinates = FieldCoordinates.coordinates("Query", prop.name)
             val dataFetcher = DataFetcher {
                 mono(Dispatchers.Unconfined) {
-                    dataFetchers.fetch(
-                        metaProvider.queryType.props[field.name]
-                            ?: error("Non mapped query field: '${field.name}'"),
-                        it
-                    )
+                    dataFetchers.fetch(prop, it)
                 }.toFuture()
             }
             builder.dataFetcher(coordinates, dataFetcher)
+        }
+        for (modelType in metaProvider.modelTypes.values) {
+            for (prop in modelType.declaredProps.values) {
+                if (prop.isReference || prop.isList || prop.isConnection) {
+                    val coordinates = FieldCoordinates.coordinates(modelType.name, prop.name)
+                    val dataFetcher = DataFetcher {
+                        mono(Dispatchers.Unconfined) {
+                            dataFetchers.fetch(prop as ModelProp, it)
+                        }.toFuture()
+                    }
+                    builder.dataFetcher(coordinates, dataFetcher)
+                }
+            }
         }
         return builder
     }
