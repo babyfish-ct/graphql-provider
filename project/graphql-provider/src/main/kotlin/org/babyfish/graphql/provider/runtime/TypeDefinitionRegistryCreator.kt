@@ -2,19 +2,32 @@ package org.babyfish.graphql.provider.runtime
 
 import graphql.language.*
 import graphql.schema.idl.TypeDefinitionRegistry
+import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.Query
-import org.babyfish.graphql.provider.meta.ModelType
-import org.babyfish.graphql.provider.meta.GraphQLProp
-import org.babyfish.graphql.provider.meta.QueryType
+import org.babyfish.graphql.provider.meta.*
 import org.babyfish.kimmer.Immutable
+import org.babyfish.kimmer.graphql.Input
+import org.babyfish.kimmer.sql.Entity
 import java.math.BigDecimal
 import java.util.*
 import kotlin.reflect.KClass
 
-internal class TypeDefinitionRegistryGenerator(
+fun MetaProvider.createTypeDefinitionRegistry(): TypeDefinitionRegistry =
+    TypeDefinitionRegistryGenerator(
+        queryType,
+        mutationType,
+        modelTypes,
+        rootImplicitInputTypeMap,
+        allImplicitInputTypes
+    ).generate()
+
+private class TypeDefinitionRegistryGenerator(
     private val queryType: QueryType,
-    private val modelTypes: Collection<ModelType>
+    private val mutationType: MutationType,
+    private val modelTypeMap: Map<KClass<out Entity<*>>, ModelType>,
+    private val rootImplicitInputTypeMap: Map<KClass<out InputMapper<*, *>>, ImplicitInputType>,
+    private val allImplicitInputTypes: List<ImplicitInputType>
 ) {
     init {
         if (queryType.props.isEmpty()) {
@@ -29,12 +42,14 @@ internal class TypeDefinitionRegistryGenerator(
         TypeDefinitionRegistry().apply {
             addScalarTypes()
             add(generateQueryType())
-            addAll(modelTypes.map { generateEntityType(it) })
+            add(generateMutationType())
+            addAll(modelTypeMap.values.map { generateEntityType(it) })
+            addAll(allImplicitInputTypes.map { generateInputType(it) })
         }
 
     private fun TypeDefinitionRegistry.addScalarTypes() {
         var hasUUID = false
-        for (modelType in modelTypes) {
+        for (modelType in modelTypeMap.values) {
             for (prop in modelType.declaredProps.values) {
                 if (prop.returnType == UUID::class) {
                     hasUUID = true
@@ -50,6 +65,14 @@ internal class TypeDefinitionRegistryGenerator(
         ObjectTypeDefinition.newObjectTypeDefinition().apply {
             name("Query")
             for (prop in queryType.props.values) {
+                fieldDefinition(generateField(prop))
+            }
+        }.build()
+
+    private fun generateMutationType(): ObjectTypeDefinition =
+        ObjectTypeDefinition.newObjectTypeDefinition().apply {
+            name("Mutation")
+            for (prop in mutationType.props.values) {
                 fieldDefinition(generateField(prop))
             }
         }.build()
@@ -85,6 +108,16 @@ internal class TypeDefinitionRegistryGenerator(
             definitions(modelType.declaredProps.values.map { generateField(it as GraphQLProp) })
         }.build()
 
+    private fun generateInputType(
+        implicitInputType: ImplicitInputType
+    ): InputObjectTypeDefinition =
+        InputObjectTypeDefinition.newInputObjectDefinition().apply {
+            name(implicitInputType.name)
+            inputValueDefinitions(
+                implicitInputType.props.values.map { generateInputValue(it) }
+            )
+        }.build()
+
     private fun generateField(prop: GraphQLProp): FieldDefinition =
         FieldDefinition.newFieldDefinition().apply {
             name(prop.name)
@@ -93,8 +126,9 @@ internal class TypeDefinitionRegistryGenerator(
                     TODO()
                 prop.isList ->
                     ListType(
-                        TypeName(prop.targetType!!.name)
-                            .asNullable(prop.isTargetNullable)
+                        TypeName(
+                            prop.targetType!!.name
+                        ).asNullable(prop.isTargetNullable)
                     ).asNullable(prop.isNullable)
                 prop.isReference ->
                     TypeName(
@@ -112,6 +146,7 @@ internal class TypeDefinitionRegistryGenerator(
                         type(
                             argumentType(
                                 argument.type,
+                                argument.inputMapperType,
                                 argument.isNullable,
                                 argument.elementType,
                                 argument.isElementNullable
@@ -122,8 +157,35 @@ internal class TypeDefinitionRegistryGenerator(
             }
         }.build()
 
+    private fun generateInputValue(prop: ImplicitInputProp): InputValueDefinition =
+        InputValueDefinition.newInputValueDefinition().apply {
+            name(prop.name)
+            val fieldType = when {
+                prop.isList && prop.targetScalarType !== null ->
+                    ListType(
+                        scalarType(prop.targetScalarType!!)
+                            .asNullable(false)
+                    ).asNullable(prop.isNullable)
+                prop.isList && prop.targetImplicitType !== null ->
+                    ListType(
+                        TypeName(prop.targetImplicitType!!.name)
+                            .asNullable(false)
+                    ).asNullable(prop.isNullable)
+                prop.isReference && prop.targetScalarType !== null ->
+                    scalarType(prop.targetScalarType!!).asNullable(prop.isNullable)
+                prop.isReference && prop.targetImplicitType !== null ->
+                    TypeName(prop.targetImplicitType!!.name)
+                        .asNullable(prop.isNullable)
+                else ->
+                    scalarType(prop.modelProp.returnType)
+                        .asNullable(prop.isNullable)
+            }
+            type(fieldType)
+        }.build()
+
     private fun argumentType(
         type: KClass<*>,
+        inputMapperType: KClass<out InputMapper<*, *>>?,
         isNullable: Boolean,
         elementType: KClass<*>?,
         isElementNullable: Boolean
@@ -132,6 +194,7 @@ internal class TypeDefinitionRegistryGenerator(
             !isNullable -> NonNullType(
                 argumentType(
                     type,
+                    inputMapperType,
                     true,
                     elementType,
                     isElementNullable
@@ -140,11 +203,20 @@ internal class TypeDefinitionRegistryGenerator(
             elementType !== null -> ListType(
                 argumentType(
                     elementType,
+                    inputMapperType,
                     isElementNullable,
                     null,
                     false
                 )
             )
+            inputMapperType !== null ->
+                TypeName(
+                    rootImplicitInputTypeMap[inputMapperType]?.name
+                        ?: throw ModelException(
+                            "The input mapper type '${inputMapperType.qualifiedName}' " +
+                                "is not manged by spring"
+                        )
+                )
             Immutable::class.java.isAssignableFrom(type.java) ->
                 TypeName(type.simpleName!!)
             else ->

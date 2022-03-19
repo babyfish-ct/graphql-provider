@@ -5,11 +5,14 @@ import org.babyfish.graphql.provider.meta.ModelType
 import org.babyfish.graphql.provider.meta.impl.ModelTypeImpl
 
 @GraphQLProviderDSL
-class EntityTypeGraphQLDSL internal constructor() {
-    var defaultBatchSize: Int? = null
-    var defaultCollectionBatchSize: Int? = null
+class EntityTypeGraphQLDSL internal constructor(
+    private var name: String
+) {
+    private var defaultBatchSize: Int? = null
+    private var defaultCollectionBatchSize: Int? = null
     internal fun create(): ModelType.GraphQL =
         ModelType.GraphQL(
+            name = name,
             defaultBatchSize = defaultBatchSize,
             defaultCollectionBatchSize = defaultCollectionBatchSize
         )

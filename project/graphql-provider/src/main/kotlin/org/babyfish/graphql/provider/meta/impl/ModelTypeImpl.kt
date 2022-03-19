@@ -4,7 +4,6 @@ import org.babyfish.graphql.provider.meta.*
 import org.babyfish.kimmer.meta.ImmutableType
 import org.babyfish.kimmer.sql.meta.spi.EntityTypeImpl
 import org.babyfish.kimmer.sql.meta.spi.MetaFactory
-import java.util.*
 
 internal class ModelTypeImpl(
     metaFactory: MetaFactory,
@@ -15,13 +14,27 @@ internal class ModelTypeImpl(
 
     override val cache: Cache = Cache(CacheLevel.NO_CACHE)
 
-    override var graphql: ModelType.GraphQL = ModelType.GraphQL(null, null)
+    override var graphql: ModelType.GraphQL = ModelType.GraphQL(immutableType.simpleName, null, null)
 
-    @Suppress("UNCHECKED")
+    override val idProp: ModelProp
+        get() = super.idProp as ModelProp
+
+    override val versionProp: ModelProp?
+        get() = super.versionProp as ModelProp?
+
+    @Suppress("UNCHECKED_CAST")
+    override val declaredProps: Map<String, ModelProp>
+        get() = super.declaredProps as Map<String, ModelProp>
+
+    @Suppress("UNCHECKED_CAST")
     override val props: Map<String, ModelProp>
         get() = super.props as Map<String, ModelProp>
 
+    @Suppress("UNCHECKED_CAST")
+    override val backProps: Set<ModelProp>
+        get() = super.backProps as Set<ModelProp>
+
     var isMapped: Boolean
         get() = _isMapped
-        set(value) { _isMapped = true }
+        set(value) { _isMapped = value }
 }

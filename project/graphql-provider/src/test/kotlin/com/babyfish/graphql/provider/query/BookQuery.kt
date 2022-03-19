@@ -15,7 +15,7 @@ import kotlin.reflect.KProperty1
 @Component
 class BookQuery: Query() {
 
-    suspend fun findBooks(
+    fun findBooks(
         name: String?,
         minPrice: BigDecimal?,
         maxPrice: BigDecimal?,

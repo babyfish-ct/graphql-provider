@@ -4,7 +4,7 @@ import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsTypeDefinitionRegistry
 import graphql.schema.idl.TypeDefinitionRegistry
 import org.babyfish.graphql.provider.meta.MetaProvider
-import org.babyfish.graphql.provider.runtime.TypeDefinitionRegistryGenerator
+import org.babyfish.graphql.provider.runtime.createTypeDefinitionRegistry
 
 @DgsComponent
 internal open class DynamicTypeDefinitions(
@@ -12,7 +12,6 @@ internal open class DynamicTypeDefinitions(
 ) {
 
     @DgsTypeDefinitionRegistry
-    open fun registry(): TypeDefinitionRegistry {
-        return TypeDefinitionRegistryGenerator(metaProvider.queryType, metaProvider.modelTypes.values).generate()
-    }
+    open fun registry(): TypeDefinitionRegistry =
+        metaProvider.createTypeDefinitionRegistry()
 }

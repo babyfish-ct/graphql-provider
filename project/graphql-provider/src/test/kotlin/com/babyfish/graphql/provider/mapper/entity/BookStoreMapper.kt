@@ -1,4 +1,4 @@
-package com.babyfish.graphql.provider.mapper
+package com.babyfish.graphql.provider.mapper.entity
 
 import com.babyfish.graphql.provider.model.Book
 import com.babyfish.graphql.provider.model.BookStore
@@ -9,9 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.*
 
 @Component
-class BookStoreMapper(
-    private val bookRepository: BookRepository
-): org.babyfish.graphql.provider.EntityMapper<BookStore, UUID>() {
+class BookStoreMapper: org.babyfish.graphql.provider.EntityMapper<BookStore, UUID>() {
 
     override fun EntityTypeDSL<BookStore, UUID>.config() {
 
@@ -19,7 +17,8 @@ class BookStoreMapper(
 
         userImplementation(BookStore::avgPrice) {
             batch {
-                bookRepository.findAvgPricesByStoreIds(rows.map { it.id })
+                // bookRepository.findAvgPricesByStoreIds(rows.map { it.id })
+                TODO()
             }
         }
     }
@@ -40,7 +39,8 @@ class BookStoreMapper(
     fun avgPrice() {
         userImplementation(BookStore::avgPrice) {
             batch {
-                bookRepository.findAvgPricesByStoreIds(rows.map { it.id })
+                // bookRepository.findAvgPricesByStoreIds(rows.map { it.id })
+                TODO()
             }
             redis {
                 dependsOn(BookStore::books)

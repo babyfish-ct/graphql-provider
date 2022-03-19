@@ -1,9 +1,12 @@
 package org.babyfish.graphql.provider.meta
 
+import org.babyfish.graphql.provider.ConvertFromInput
+import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.graphql.Input
 import org.babyfish.kimmer.produce
+import org.babyfish.kimmer.sql.Entity
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.LocalDate
@@ -16,6 +19,7 @@ import kotlin.reflect.KType
 class Argument internal constructor(
     val name: String,
     val type: KClass<*>,
+    val inputMapperType: KClass<out InputMapper<*, *>>?,
     val isNullable: Boolean,
     val isList: Boolean,
     val elementType: KClass<*>?,
@@ -28,19 +32,24 @@ class Argument internal constructor(
                 .parameters
                 .let { it.subList(1, it.size) }
                 .map {
+                    val convertFromInput = it.annotations.firstOrNull {
+                            an -> an.annotationClass == ConvertFromInput::class
+                    } as ConvertFromInput?
                     val elementType = validateAndGetElementType(
                         function,
                         it.name!!,
                         it.type,
+                        convertFromInput,
                         false
                     )
                     Argument(
                         it.name!!,
                         it.type.classifier as KClass<*>,
+                        convertFromInput?.value,
                         it.type.isMarkedNullable,
                         elementType !== null,
                         elementType?.classifier as KClass<*>?,
-                        elementType?.isMarkedNullable ?:false
+                        elementType?.isMarkedNullable ?: false
                     )
                 }
 
@@ -49,6 +58,7 @@ class Argument internal constructor(
             function: KFunction<*>,
             name: String,
             type: KType,
+            convertFromInput: ConvertFromInput?,
             isListElement: Boolean
         ): KType? {
             val err: (message: String) -> Nothing = {
@@ -66,9 +76,25 @@ class Argument internal constructor(
             if (Map::class.java.isAssignableFrom(classifier.java)) {
                 err("cannot be map")
             }
-            if (Immutable::class.java.isAssignableFrom(classifier.java) &&
-                !Input::class.java.isAssignableFrom(classifier.java)) {
-                err("cannot be type inherits 'Immutable' but does not inherits 'Input'")
+            if (Immutable::class.java.isAssignableFrom(classifier.java)) {
+                if (Input::class.java.isAssignableFrom(classifier.java)) {
+                    if (convertFromInput !== null) {
+                        err(
+                            "is already input so that " +
+                            "the annotation '@ConvertFromInput' cannot be specified"
+                        )
+                    }
+                } else {
+                    if (convertFromInput === null || !Entity::class.java.isAssignableFrom(classifier.java)) {
+                        err(
+                            "inherits 'Immutable' but does not inherits 'Input'. " +
+                                "There are two choices to resolve this problem: " +
+                                "1. Let the parameter type inherit 'Input'" +
+                                "2. Let the parameter type inherit 'Entity' and " +
+                                "specify the annotation '@ConvertFromInput' for the parameter"
+                        )
+                    }
+                }
             }
             if (Collection::class.java.isAssignableFrom(classifier.java)) {
                 if (isListElement) {
@@ -81,7 +107,7 @@ class Argument internal constructor(
             val isList = List::class == classifier
             return if (isList) {
                 (type.arguments[0].type ?: error("Internal bug")).also {
-                    validateAndGetElementType(function, name, it, true)
+                    validateAndGetElementType(function, name, it, convertFromInput, true)
                 }
             } else {
                 null

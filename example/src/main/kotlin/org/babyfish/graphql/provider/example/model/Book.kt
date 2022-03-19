@@ -5,7 +5,7 @@ import java.util.*
 
 interface Book: Entity<UUID> {
     val name: String
-    val store: BookStore
+    val store: BookStore?
     val edition: Int
     val authors: List<Author>
 }

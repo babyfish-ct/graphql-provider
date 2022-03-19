@@ -20,22 +20,18 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     private val modelType: ModelTypeImpl,
     private val builder: EntityMappingBuilder
 ) {
-    fun db(block: EntityTypeDatabaseDSL.() -> Unit) {
-        val tableName = EntityTypeDatabaseDSL().let {
+    fun db(block: EntityTypeDatabaseDSL<ID>.() -> Unit) {
+        val (tableName, idGenerator) = EntityTypeDatabaseDSL<ID>().let {
             it.block()
-            it.tableName
+            it.tableName to it._idGenerator
         }
         builder.tableName(modelType.kotlinType, tableName
             ?: databaseIdentifier(modelType.kotlinType.simpleName!!)
         )
     }
 
-    fun redis(enabled: Boolean) {
-
-    }
-
     fun graphql(block: EntityTypeGraphQLDSL.() -> Unit) {
-        val graphql = EntityTypeGraphQLDSL().run {
+        val graphql = EntityTypeGraphQLDSL(modelType.kotlinType.simpleName!!).run {
             block()
             create()
         }

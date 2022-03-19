@@ -1,4 +1,4 @@
-package com.babyfish.graphql.provider.mapper
+package com.babyfish.graphql.provider.mapper.entity
 
 import com.babyfish.graphql.provider.model.Author
 import com.babyfish.graphql.provider.model.Book

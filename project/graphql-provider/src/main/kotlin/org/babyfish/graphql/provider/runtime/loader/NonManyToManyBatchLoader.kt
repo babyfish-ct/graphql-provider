@@ -1,0 +1,54 @@
+package org.babyfish.graphql.provider.runtime.loader
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.reactor.mono
+import org.babyfish.graphql.provider.meta.ModelProp
+import org.babyfish.graphql.provider.runtime.FakeID
+import org.babyfish.graphql.provider.runtime.R2dbcClient
+import org.babyfish.kimmer.graphql.Connection
+import org.babyfish.kimmer.sql.Entity
+import org.babyfish.kimmer.sql.ast.valueIn
+import org.dataloader.MappedBatchLoader
+import java.util.concurrent.CompletionStage
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
+
+internal class NonManyToManyBatchLoader(
+    private val r2dbcClient: R2dbcClient,
+    private val prop: ModelProp
+) : MappedBatchLoader<Any, List<Any>> {
+
+    override fun load(
+        keys: Set<Any>
+    ): CompletionStage<Map<Any, List<Any>>> =
+        mono(Dispatchers.Unconfined) {
+            loadImpl(keys)
+        }.toFuture()
+
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun loadImpl(
+        keys: Set<Any>
+    ): Map<Any, List<Any>> {
+        val rows = r2dbcClient.query(prop.targetType!!.kotlinType as KClass<Entity<FakeID>>) {
+            val joinedTable = when {
+                prop.isConnection -> table.`←joinConnection`(
+                    prop.kotlinProp as KProperty1<Entity<FakeID>, Connection<Entity<FakeID>>>
+                )
+                prop.isList -> table.`←joinList`(
+                    prop.kotlinProp as KProperty1<Entity<FakeID>, List<Entity<FakeID>>>
+                )
+                prop.isReference -> table.`←joinReference`(
+                    prop.kotlinProp as KProperty1<Entity<FakeID>, Entity<FakeID>?>
+                )
+                else -> error("Internal bug")
+            }
+            where { joinedTable.id valueIn keys as Collection<FakeID> }
+            select {
+                joinedTable.id then table
+            }
+        } as List<Pair<Any, Entity<*>>>
+        return rows.groupBy({ it.first }) {
+            it.second
+        }
+    }
+}

@@ -26,8 +26,8 @@ internal fun createSqlClientByEntityMappers(
     dialect: Dialect?
 ): SqlClient =
     createSqlClient(
-        jdbcExecutor = jdbcExecutor ?: defaultJdbcExecutor,
-        r2dbcExecutor = r2dbcExecutor ?: defaultR2dbcExecutor,
+        jdbcExecutor = jdbcExecutor ?: DefaultJdbcExecutor,
+        r2dbcExecutor = r2dbcExecutor ?: DefaultR2dbcExecutor,
         dialect = dialect,
         metaFactory = MetaFactoryImpl()
     ) {

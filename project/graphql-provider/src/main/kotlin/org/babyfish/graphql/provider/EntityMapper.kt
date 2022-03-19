@@ -11,6 +11,7 @@ import org.babyfish.kimmer.sql.Entity
 import org.springframework.core.GenericTypeResolver
 import kotlin.reflect.KProperty1
 
+@Suppress("UNCHECKED_CAST")
 abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
 
     val immutableType: ImmutableType
@@ -60,7 +61,7 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
     }
 
     protected fun <X: Entity<XID>, XID: Comparable<XID>> filterConnection(
-        prop: KProperty1<E, out Collection<X>?>,
+        prop: KProperty1<E, Connection<X>?>,
         block: FilterDSL<X, XID>.() -> Unit
     ) {
         if (!registerEntityField(prop, this)) {
