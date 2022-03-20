@@ -115,16 +115,16 @@ class Argument internal constructor(
         }
     }
 
-    @Suppress("UNCHECKED")
+    @Suppress("UNCHECKED_CAST")
     fun defaultValue(): Any? =
         if (isNullable) {
             null
         } else {
             when (type) {
                 Boolean::class -> false
-                Char::class -> 0 as Char
-                Byte::class -> 0 as Byte
-                Short::class -> 0 as Short
+                Char::class -> Char(0)
+                Byte::class -> 0.toByte()
+                Short::class -> 0.toShort()
                 Int::class -> 0L
                 Long::class -> 0F
                 Double::class -> 0.0

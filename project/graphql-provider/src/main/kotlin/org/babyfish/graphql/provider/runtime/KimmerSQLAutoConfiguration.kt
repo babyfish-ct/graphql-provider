@@ -10,9 +10,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.r2dbc.core.DatabaseClient
 
 @Configuration
-open class KimmerSQLAutoConfiguration(
+abstract class KimmerSQLAutoConfiguration(
     private val mappers: List<EntityMapper<*, *>>
 ) {
+
     @Bean
     open fun sqlClient(
         jdbcExecutor: JdbcExecutor?,

@@ -5,12 +5,10 @@ import org.babyfish.graphql.provider.Mutation
 import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.meta.ModelType
-import org.babyfish.graphql.provider.runtime.DataFetchers
-import org.babyfish.graphql.provider.runtime.R2dbcClient
-import org.babyfish.graphql.provider.runtime.createImplicitInputTypes
-import org.babyfish.graphql.provider.runtime.createMetaProvider
+import org.babyfish.graphql.provider.runtime.*
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.SqlClient
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
@@ -40,8 +38,16 @@ open class GraphQLProviderAutoConfiguration(
     }
 
     @Bean
-    internal open fun dataFetchers(
-        r2dbcClient: R2dbcClient
+    open fun dataFetchers(
+        r2dbcClient: R2dbcClient,
+        argumentsConverter: ArgumentsConverter,
+        ctx: ApplicationContext
     ): DataFetchers =
-        DataFetchers(r2dbcClient)
+        DataFetchers(r2dbcClient, argumentsConverter, ctx)
+
+    @Bean
+    open fun argumentsConverter(
+        metaProvider: MetaProvider
+    ): ArgumentsConverter =
+        ArgumentsConverter(metaProvider.rootImplicitInputTypeMap)
 }

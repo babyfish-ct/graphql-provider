@@ -1,6 +1,7 @@
 package org.babyfish.graphql.provider.runtime
 
 import graphql.language.*
+import graphql.schema.GraphQLScalarType
 import graphql.schema.idl.TypeDefinitionRegistry
 import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.ModelException
@@ -10,6 +11,7 @@ import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.graphql.Input
 import org.babyfish.kimmer.sql.Entity
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -226,9 +228,15 @@ private class TypeDefinitionRegistryGenerator(
     private fun scalarType(type: KClass<*>): TypeName =
         when (type) {
             String::class -> TypeName("String")
-            Int::class -> TypeName("String")
-            Boolean::class -> TypeName("String")
-            BigDecimal::class -> TypeName("Float")
+            Boolean::class -> TypeName("Boolean")
+            Byte::class -> TypeName("Byte")
+            Short::class -> TypeName("Short")
+            Int::class -> TypeName("Int")
+            Long::class -> TypeName("Long")
+            Float::class -> TypeName("Float")
+            Double::class -> TypeName("Double")
+            BigInteger::class -> TypeName("BigInteger")
+            BigDecimal::class -> TypeName("BigDecimal")
             UUID::class -> TypeName("UUID")
             else -> error("Unsupported type ${type.qualifiedName}")
         }

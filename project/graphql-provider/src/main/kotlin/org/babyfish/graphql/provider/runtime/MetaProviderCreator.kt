@@ -7,7 +7,6 @@ import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.ImplicitInputType
 import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.meta.ModelType
-import org.babyfish.graphql.provider.meta.impl.*
 import org.babyfish.graphql.provider.meta.impl.MutationPropImpl
 import org.babyfish.graphql.provider.meta.impl.MutationTypeImpl
 import org.babyfish.graphql.provider.meta.impl.QueryPropImpl

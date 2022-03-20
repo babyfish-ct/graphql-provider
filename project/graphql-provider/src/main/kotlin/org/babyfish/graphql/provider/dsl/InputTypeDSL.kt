@@ -232,7 +232,8 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
                 propRef.alias,
                 propRef.prop,
                 targetScalarType,
-                targetImplicitType
+                targetImplicitType,
+                propRef.prop.isId && isIdOptional
             )
             typeImpl.addProp(prop)
         }
@@ -329,7 +330,8 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
         override val name: String,
         override val modelProp: ModelProp,
         override val targetScalarType: KClass<*>?,
-        override val targetImplicitType: ImplicitInputType?
+        override val targetImplicitType: ImplicitInputType?,
+        private val forceNullable: Boolean = false
     ): ImplicitInputProp {
 
         init {
@@ -345,7 +347,7 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
             get() = modelProp.isList
 
         override val isNullable: Boolean
-            get() = modelProp.isNullable
+            get() = modelProp.isNullable || forceNullable
     }
 
     companion object {

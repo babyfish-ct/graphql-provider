@@ -2,8 +2,12 @@ package org.babyfish.graphql.provider.runtime
 
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.future.await
+import org.babyfish.graphql.provider.Mutation
+import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.meta.ModelProp
+import org.babyfish.graphql.provider.meta.MutationProp
 import org.babyfish.graphql.provider.meta.QueryProp
+import org.babyfish.graphql.provider.meta.impl.MutationPropImpl
 import org.babyfish.graphql.provider.runtime.loader.BatchLoaderByParentId
 import org.babyfish.graphql.provider.runtime.loader.ManyToManyBatchLoader
 import org.babyfish.graphql.provider.runtime.loader.NonManyToManyBatchLoader
@@ -15,17 +19,28 @@ import org.babyfish.kimmer.sql.meta.config.Column
 import org.dataloader.DataLoader
 import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderOptions
+import org.springframework.aop.support.AopUtils
+import org.springframework.context.ApplicationContext
 import kotlin.reflect.KClass
+import kotlin.reflect.full.callSuspend
+import kotlin.reflect.jvm.javaMethod
 
 open class DataFetchers(
-    private val r2dbcClient: R2dbcClient
+    private val r2dbcClient: R2dbcClient,
+    private val argumentsConverter: ArgumentsConverter,
+    private val applicationContext: ApplicationContext
 ) {
+
     @Suppress("UNCHECKED_CAST")
     suspend fun fetch(prop: QueryProp, env: DataFetchingEnvironment): Any? =
         r2dbcClient.query(
             prop.targetType!!.kotlinType as KClass<Entity<FakeID>>,
         ) {
-            prop.filter.execute(env, FilterExecutionContext(this, mutableSetOf()))
+            prop.filter.execute(
+                env,
+                FilterExecutionContext(this, mutableSetOf()),
+                argumentsConverter
+            )
             select(table)
         }
 
@@ -78,5 +93,17 @@ open class DataFetchers(
                 DataLoaderOptions().setMaxBatchSize(64)
             )
         }
+    }
+
+    suspend fun fetch(prop: MutationProp, env: DataFetchingEnvironment): Any? {
+        val function = (prop as MutationPropImpl).function
+        val javaMethod = function.javaMethod ?: error("Internal bug: No java method for '$function'")
+        val owner = applicationContext.getBean(javaMethod.declaringClass)
+        val args = argumentsConverter.convert(
+            prop.arguments,
+            owner,
+            env
+        )
+        return function.callSuspend(*args)
     }
 }

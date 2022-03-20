@@ -22,6 +22,15 @@ fun GraphQLCodeRegistry.Builder.registryDynamicCodeRegistry(
         }
         dataFetcher(coordinates, dataFetcher)
     }
+    for (prop in metaProvider.mutationType.props.values) {
+        val coordinates = FieldCoordinates.coordinates("Mutation", prop.name)
+        val dataFetcher = DataFetcher {
+            mono(Dispatchers.Unconfined) {
+                dataFetchers.fetch(prop, it)
+            }.toFuture()
+        }
+        dataFetcher(coordinates, dataFetcher)
+    }
     for (modelType in metaProvider.modelTypes.values) {
         for (prop in modelType.declaredProps.values) {
             if (prop.isReference || prop.isList || prop.isConnection) {

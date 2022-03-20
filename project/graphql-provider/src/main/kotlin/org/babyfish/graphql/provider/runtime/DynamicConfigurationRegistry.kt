@@ -111,13 +111,14 @@ private class FilterImpl(
 
     override fun execute(
         env: DataFetchingEnvironment,
-        ctx: FilterExecutionContext
+        ctx: FilterExecutionContext,
+        argumentsConverter: ArgumentsConverter
     ) {
-        val args = Array<Any?>(fn.parameters.size) { null }
-        args[0] = fnOwner
-        for (index in 1 until fn.parameters.size) {
-            args[index] = env.getArgument(fn.parameters[index].name)
-        }
+        val args = argumentsConverter.convert(
+            arguments,
+            fnOwner,
+            env
+        )
         val oldContext = filterExecutionContextLocal.get()
         filterExecutionContextLocal.set(ctx)
         try {
