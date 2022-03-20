@@ -324,6 +324,9 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
                 parent?.let {
                     "${parent.mapperPath}/${parentAssociation!!.name}"
                 } ?: mapper!!::class.qualifiedName!!
+
+        override fun toString(): String =
+            modelType.toString()
     }
 
     private class ImplicitPropImpl(
@@ -348,6 +351,9 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
 
         override val isNullable: Boolean
             get() = modelProp.isNullable || forceNullable
+
+        override fun toString(): String =
+            modelProp.toString()
     }
 
     companion object {

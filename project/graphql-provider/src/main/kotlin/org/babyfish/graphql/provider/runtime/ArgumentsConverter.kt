@@ -102,7 +102,7 @@ open class ArgumentsConverter(
         produce(implicitInputType.modelType.kotlinType) {
             for (prop in implicitInputType.props.values) {
                 val value = map[prop.name]
-                if (value === null && !prop.isNullable) {
+                if (value === null && !prop.modelProp.isNullable) {
                     continue
                 }
                 val finalValue = when {
@@ -113,7 +113,7 @@ open class ArgumentsConverter(
                     prop.isList && prop.targetScalarType !== null ->
                         prop.modelProp.targetType!!.let { targetType ->
                             (value as List<Any>).map {
-                                produceDraft(targetType.kotlinType) {
+                                produce(targetType.kotlinType) {
                                     Draft.set(this, targetType.idProp.immutableProp, it)
                                 }
                             }
@@ -122,7 +122,7 @@ open class ArgumentsConverter(
                         convertImplicitInput(value as Map<String, Any?>, prop.targetImplicitType!!)
                     prop.targetScalarType !== null ->
                         prop.modelProp.targetType!!.let { targetType ->
-                            produceDraft(targetType.kotlinType) {
+                            produce(targetType.kotlinType) {
                                 Draft.set(this, targetType.idProp.immutableProp, value)
                             }
                         }

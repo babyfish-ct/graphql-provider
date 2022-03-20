@@ -8,6 +8,7 @@ import org.babyfish.graphql.provider.meta.impl.ModelTypeImpl
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.meta.ModelType
 import org.babyfish.graphql.provider.meta.impl.ModelPropImpl
+import org.babyfish.graphql.provider.runtime.FakeID
 import org.babyfish.kimmer.jackson.immutableObjectMapper
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.meta.EntityMappingBuilder
@@ -20,13 +21,16 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     private val modelType: ModelTypeImpl,
     private val builder: EntityMappingBuilder
 ) {
-    fun db(block: EntityTypeDatabaseDSL<ID>.() -> Unit) {
-        val (tableName, idGenerator) = EntityTypeDatabaseDSL<ID>().let {
-            it.block()
-            it.tableName to it._idGenerator
+    fun db(block: EntityTypeDatabaseDSL<E, ID>.() -> Unit) {
+        val dsl = EntityTypeDatabaseDSL<E, ID>().apply {
+            block()
         }
-        builder.tableName(modelType.kotlinType, tableName
-            ?: databaseIdentifier(modelType.kotlinType.simpleName!!)
+
+        builder.entity(
+            modelType.kotlinType,
+            tableName = dsl.tableName ?: databaseIdentifier(modelType.kotlinType.simpleName!!),
+            idGenerator = dsl._idGenerator,
+            versionProp = dsl.versionProp
         )
     }
 

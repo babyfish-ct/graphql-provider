@@ -1,14 +1,12 @@
 package org.babyfish.graphql.provider.runtime
 
 import graphql.language.*
-import graphql.schema.GraphQLScalarType
 import graphql.schema.idl.TypeDefinitionRegistry
 import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.*
 import org.babyfish.kimmer.Immutable
-import org.babyfish.kimmer.graphql.Input
 import org.babyfish.kimmer.sql.Entity
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -236,7 +234,7 @@ private class TypeDefinitionRegistryGenerator(
             Float::class -> TypeName("Float")
             Double::class -> TypeName("Double")
             BigInteger::class -> TypeName("BigInteger")
-            BigDecimal::class -> TypeName("BigDecimal")
+            BigDecimal::class -> TypeName("Int")
             UUID::class -> TypeName("UUID")
             else -> error("Unsupported type ${type.qualifiedName}")
         }

@@ -9,6 +9,7 @@ import org.babyfish.kimmer.meta.ImmutableType
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.SqlClient
 import org.babyfish.kimmer.sql.meta.EntityType
+import org.babyfish.kimmer.sql.meta.config.IdGenerator
 import org.babyfish.kimmer.sql.meta.spi.EntityPropImpl
 import org.babyfish.kimmer.sql.meta.spi.MetaFactory
 import org.babyfish.kimmer.sql.runtime.*
@@ -47,7 +48,7 @@ internal fun createSqlClientByEntityMappers(
         for (mapper in mappers) {
             (mapper as EntityMapper<Entity<*>, *>).apply {
                 val kotlinType = mapper.immutableType.kotlinType as KClass<out Entity<*>>
-                val modelType = entity(kotlinType) as ModelTypeImpl
+                val modelType = entity(kotlinType as KClass<Entity<FakeID>>) as ModelTypeImpl
                 modelType.isMapped = true
                 (mapper as EntityMapper<Entity<String>, String>).apply {
                     EntityTypeDSL<Entity<String>, String>(modelType, this@createSqlClient).config()
