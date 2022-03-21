@@ -2,6 +2,7 @@ package org.babyfish.graphql.provider.meta.impl
 
 import org.babyfish.graphql.provider.meta.*
 import org.babyfish.kimmer.sql.meta.spi.EntityPropImpl
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 internal class ModelPropImpl(
@@ -20,4 +21,7 @@ internal class ModelPropImpl(
 
     override val targetType: ModelType?
         get() = super.targetType as ModelType?
+
+    override val targetRawClass: KClass<*>
+        get() = super.targetType?.kotlinType ?: super.returnType
 }

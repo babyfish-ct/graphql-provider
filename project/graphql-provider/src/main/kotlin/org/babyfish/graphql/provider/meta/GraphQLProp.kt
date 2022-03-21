@@ -10,6 +10,7 @@ interface GraphQLProp {
     val isNullable: Boolean
     val isList: Boolean
     val isTargetNullable: Boolean
+    val targetRawClass: KClass<*>
     val targetType: ModelType?
     val arguments: List<Argument>
 }

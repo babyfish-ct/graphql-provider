@@ -2,12 +2,14 @@ package org.babyfish.graphql.provider.runtime
 
 import graphql.language.*
 import graphql.schema.idl.TypeDefinitionRegistry
+import org.babyfish.graphql.provider.ImplicitInputs
 import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.*
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.sql.Entity
+import org.babyfish.kimmer.sql.EntityMutationResult
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.*
@@ -43,6 +45,7 @@ private class TypeDefinitionRegistryGenerator(
             addScalarTypes()
             add(generateQueryType())
             add(generateMutationType())
+            addAll(generateMutationResultTypes())
             addAll(modelTypeMap.values.map { generateEntityType(it) })
             addAll(allImplicitInputTypes.map { generateInputType(it) })
         }
@@ -127,16 +130,23 @@ private class TypeDefinitionRegistryGenerator(
                 prop.isList ->
                     ListType(
                         TypeName(
-                            prop.targetType!!.name
+                            prop.targetType?.name
+                                ?: prop
+                                    .takeIf { it.targetRawClass == EntityMutationResult::class }
+                                    ?.let { "_EntityMutationResult" }
+                                ?: error("Intern bug Bad list element type")
                         ).asNullable(prop.isTargetNullable)
                     ).asNullable(prop.isNullable)
                 prop.isReference ->
                     TypeName(
                         prop.targetType!!.name
                     ).asNullable(prop.isTargetNullable)
+                prop.returnType == EntityMutationResult::class ->
+                    TypeName("_EntityMutationResult")
+                        .asNullable(prop.isNullable)
                 else ->
                     scalarType(prop.returnType)
-                        .asNullable(prop.isTargetNullable)
+                        .asNullable(prop.isNullable)
             }
             type(fieldType)
             for (argument in prop.arguments) {
@@ -200,28 +210,99 @@ private class TypeDefinitionRegistryGenerator(
                     isElementNullable
                 )
             )
-            elementType !== null -> ListType(
-                argumentType(
-                    elementType,
-                    inputMapperType,
-                    isElementNullable,
-                    null,
-                    false
-                )
-            )
-            inputMapperType !== null ->
+            inputMapperType !== null -> // Must before "elementType !== null"
                 TypeName(
                     rootImplicitInputTypeMap[inputMapperType]?.name
                         ?: throw ModelException(
                             "The input mapper type '${inputMapperType.qualifiedName}' " +
                                 "is not manged by spring"
                         )
+                ).let {
+                    if (type == ImplicitInputs::class) {
+                        ListType(it.asNullable(false))
+                    } else {
+                        it
+                    }
+                }
+            elementType !== null -> ListType(
+                argumentType(
+                    elementType,
+                    null,
+                    isElementNullable,
+                    null,
+                    false
                 )
+            )
             Immutable::class.java.isAssignableFrom(type.java) ->
                 TypeName(type.simpleName!!)
             else ->
                 scalarType(type)
         }
+
+    private fun generateMutationResultTypes(): List<SDLDefinition<*>> {
+        val usedMutationResultType = mutationType.props.values.any {
+            it.targetRawClass == EntityMutationResult::class
+        }
+        if (!usedMutationResultType) {
+            return emptyList()
+        }
+        val totalAffectedRowCountField =
+            FieldDefinition("totalAffectedRowCount", TypeName("Int").asNullable(false))
+        val entityMutationResultFields = listOf(
+            totalAffectedRowCountField,
+            FieldDefinition("type", TypeName("_MutationType").asNullable(false)),
+            FieldDefinition("affectedRowCount", TypeName("Int").asNullable(false)),
+            FieldDefinition("row", TypeName("String").asNullable(false)),
+            FieldDefinition(
+                "associations",
+                ListType(
+                    TypeName("_AssociationMutationResult").asNullable(false)
+                ).asNullable(false)
+            )
+        )
+        return listOf(
+            EnumTypeDefinition.newEnumTypeDefinition().apply {
+                name("_MutationType")
+                enumValueDefinition(EnumValueDefinition("NONE"))
+                enumValueDefinition(EnumValueDefinition("INSERT"))
+                enumValueDefinition(EnumValueDefinition("UPDATE"))
+                enumValueDefinition(EnumValueDefinition("DELETE"))
+            }.build(),
+            ObjectTypeDefinition.newObjectTypeDefinition().apply {
+                name("_EntityMutationResult")
+                fieldDefinitions(entityMutationResultFields)
+            }.build(),
+            ObjectTypeDefinition.newObjectTypeDefinition().apply {
+                name("_AssociationMutationResult")
+                fieldDefinition(FieldDefinition("associationName", TypeName("String").asNullable(false)))
+                fieldDefinition(totalAffectedRowCountField)
+                fieldDefinition(FieldDefinition("middleTableAffectedRowCount", TypeName("Int").asNullable(false)))
+                fieldDefinition(FieldDefinition("middleTableInsertedRowCount", TypeName("Int").asNullable(false)))
+                fieldDefinition(FieldDefinition("middleTableDeletedRowCount", TypeName("Int").asNullable(false)))
+                fieldDefinition(
+                    FieldDefinition(
+                        "targets",
+                        ListType(
+                            TypeName("_AssociatedTargetMutationResult").asNullable(false)
+                        ).asNullable(false)
+                    )
+                )
+                fieldDefinition(
+                    FieldDefinition(
+                        "detachedTargets",
+                        ListType(
+                            TypeName("_AssociatedTargetMutationResult").asNullable(false)
+                        ).asNullable(false)
+                    )
+                )
+            }.build(),
+            ObjectTypeDefinition.newObjectTypeDefinition().apply {
+                name("_AssociatedTargetMutationResult")
+                fieldDefinitions(entityMutationResultFields)
+                fieldDefinition(FieldDefinition("middleTableChanged", TypeName("Boolean").asNullable(false)))
+            }.build()
+        )
+    }
 
     private fun scalarType(type: KClass<*>): TypeName =
         when (type) {

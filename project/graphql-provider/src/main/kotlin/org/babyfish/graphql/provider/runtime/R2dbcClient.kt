@@ -4,7 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.mono
 import org.babyfish.kimmer.sql.Entity
-import org.babyfish.kimmer.sql.RootMutationResult
+import org.babyfish.kimmer.sql.EntityMutationResult
 import org.babyfish.kimmer.sql.SaveOptionsDSL
 import org.babyfish.kimmer.sql.SqlClient
 import org.babyfish.kimmer.sql.ast.MutableDelete
@@ -57,7 +57,7 @@ class R2dbcClient(
     suspend fun <E: Entity<ID>, ID: Comparable<ID>> save(
         entity: E,
         block: (SaveOptionsDSL<E>.() -> Unit)? = null
-    ): RootMutationResult {
+    ): EntityMutationResult {
         val command = sqlClient.entities.saveCommand(entity, block)
         return databaseClient.inConnection {
             mono(Dispatchers.Unconfined) {
@@ -69,7 +69,7 @@ class R2dbcClient(
     suspend fun <E: Entity<ID>, ID: Comparable<ID>> save(
         entities: List<E>,
         block: (SaveOptionsDSL<E>.() -> Unit)? = null
-    ): List<RootMutationResult> {
+    ): List<EntityMutationResult> {
         val command = sqlClient.entities.saveCommand(entities, block)
         return databaseClient.inConnection {
             mono(Dispatchers.Unconfined) {
@@ -82,7 +82,7 @@ class R2dbcClient(
         entityType: KClass<E>,
         id: ID,
         block: (SaveOptionsDSL<E>.() -> Unit)? = null
-    ): RootMutationResult {
+    ): EntityMutationResult {
         val command = sqlClient.entities.deleteCommand(entityType, id)
         return databaseClient.inConnection {
             mono(Dispatchers.Unconfined) {
@@ -95,7 +95,7 @@ class R2dbcClient(
         entityType: KClass<E>,
         ids: List<ID>,
         block: (SaveOptionsDSL<E>.() -> Unit)? = null
-    ): List<RootMutationResult> {
+    ): List<EntityMutationResult> {
         val command = sqlClient.entities.deleteCommand(entityType, ids)
         return databaseClient.inConnection {
             mono(Dispatchers.Unconfined) {

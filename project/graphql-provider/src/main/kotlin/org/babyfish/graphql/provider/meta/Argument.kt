@@ -1,12 +1,12 @@
 package org.babyfish.graphql.provider.meta
 
-import org.babyfish.graphql.provider.ConvertFromInput
+import org.babyfish.graphql.provider.ImplicitInput
+import org.babyfish.graphql.provider.ImplicitInputs
 import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.graphql.Input
 import org.babyfish.kimmer.produce
-import org.babyfish.kimmer.sql.Entity
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.LocalDate
@@ -14,6 +14,7 @@ import java.time.LocalDateTime
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 
 class Argument internal constructor(
@@ -32,33 +33,52 @@ class Argument internal constructor(
                 .parameters
                 .let { it.subList(1, it.size) }
                 .map {
-                    val convertFromInput = it.annotations.firstOrNull {
-                            an -> an.annotationClass == ConvertFromInput::class
-                    } as ConvertFromInput?
                     val elementType = validateAndGetElementType(
                         function,
                         it.name!!,
                         it.type,
-                        convertFromInput,
                         false
                     )
+                    val inputMapperType = inputMapperTypeOf(function, it)
                     Argument(
                         it.name!!,
                         it.type.classifier as KClass<*>,
-                        convertFromInput?.value,
+                        inputMapperType,
                         it.type.isMarkedNullable,
-                        elementType !== null,
+                        elementType !== null || it.type.classifier == ImplicitInputs::class,
                         elementType?.classifier as KClass<*>?,
                         elementType?.isMarkedNullable ?: false
                     )
                 }
+
+        @Suppress("UNCHECKED_CAST")
+        @JvmStatic
+        private fun inputMapperTypeOf(
+            function: KFunction<*>,
+            parameter: KParameter
+        ): KClass<out InputMapper<*, *>>? {
+            val cls = parameter.type.classifier as? KClass<*>
+            if (cls != ImplicitInput::class && cls != ImplicitInputs::class) {
+                return null
+            }
+            val inputMapperType = parameter.type.arguments[1].type!!.classifier
+                as KClass<out InputMapper<*, *>>
+            if (inputMapperType.typeParameters.isNotEmpty()) {
+                throw ModelException(
+                    "Illegal function '$function', " +
+                        "its parameter '${parameter.name}' is ${cls.qualifiedName}, " +
+                        "but the second type argument is not a derived input mapper " +
+                        "type without type arguments"
+                )
+            }
+            return inputMapperType
+        }
 
         @JvmStatic
         private fun validateAndGetElementType(
             function: KFunction<*>,
             name: String,
             type: KType,
-            convertFromInput: ConvertFromInput?,
             isListElement: Boolean
         ): KType? {
             val err: (message: String) -> Nothing = {
@@ -77,23 +97,10 @@ class Argument internal constructor(
                 err("cannot be map")
             }
             if (Immutable::class.java.isAssignableFrom(classifier.java)) {
-                if (Input::class.java.isAssignableFrom(classifier.java)) {
-                    if (convertFromInput !== null) {
-                        err(
-                            "is already input so that " +
-                            "the annotation '@ConvertFromInput' cannot be specified"
-                        )
-                    }
-                } else {
-                    if (convertFromInput === null || !Entity::class.java.isAssignableFrom(classifier.java)) {
-                        err(
-                            "inherits 'Immutable' but does not inherits 'Input'. " +
-                                "There are two choices to resolve this problem: " +
-                                "1. Let the parameter type inherit 'Input'" +
-                                "2. Let the parameter type inherit 'Entity' and " +
-                                "specify the annotation '@ConvertFromInput' for the parameter"
-                        )
-                    }
+                if (!Input::class.java.isAssignableFrom(classifier.java)) {
+                    err(
+                        "cannot be any immutable types except ${Input::class.qualifiedName}"
+                    )
                 }
             }
             if (Collection::class.java.isAssignableFrom(classifier.java)) {
@@ -107,7 +114,12 @@ class Argument internal constructor(
             val isList = List::class == classifier
             return if (isList) {
                 (type.arguments[0].type ?: error("Internal bug")).also {
-                    validateAndGetElementType(function, name, it, convertFromInput, true)
+                    validateAndGetElementType(
+                        function,
+                        name,
+                        it,
+                        true
+                    )
                 }
             } else {
                 null

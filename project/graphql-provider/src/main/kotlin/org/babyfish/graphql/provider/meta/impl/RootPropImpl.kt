@@ -6,6 +6,7 @@ import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.graphql.Input
 import org.babyfish.kimmer.sql.Entity
+import org.babyfish.kimmer.sql.EntityMutationResult
 import org.springframework.core.GenericTypeResolver
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -15,17 +16,19 @@ internal abstract class RootPropImpl internal constructor(
     modelTypeMap: Map<KClass<out Entity<*>>, ModelType>
 ): GraphQLProp {
 
-    override val isReference: Boolean
+    final override val isReference: Boolean
 
-    override val isList: Boolean
+    final override val isList: Boolean
 
-    override val isConnection: Boolean
+    final override val isConnection: Boolean
 
-    override val isNullable: Boolean
+    final override val isNullable: Boolean
 
-    override val isTargetNullable: Boolean
+    final override val isTargetNullable: Boolean
 
-    override val targetType: ModelType?
+    final override val targetType: ModelType?
+
+    final override val targetRawClass: KClass<*>
 
     init {
 
@@ -36,7 +39,7 @@ internal abstract class RootPropImpl internal constructor(
         isReference = Immutable::class == pc
 
         if (isList && List::class != function.returnType.classifier) {
-            error(
+            throw ModelException(
                 "Illegal function '${function}', collection function " +
                     "can only return 'kotlin.collections.List'")
         }
@@ -63,6 +66,7 @@ internal abstract class RootPropImpl internal constructor(
                 function
             )
         }
+        targetRawClass = targetClass ?: function.returnType.classifier as KClass<*>
     }
 
     override val name: String =
@@ -77,7 +81,18 @@ internal abstract class RootPropImpl internal constructor(
         cls: KClass<*>,
         modelTypeMap: Map<KClass<out Entity<*>>, ModelType>,
         function: KFunction<*>
-    ): ModelType {
+    ): ModelType? {
+        val isMutation = this is MutationProp
+        if (EntityMutationResult::class == cls) {
+            if (!isMutation) {
+                throw ModelException(
+                    "Illegal function ${function}, its target type cannot be " +
+                        "'${EntityMutationResult::class.qualifiedName}' " +
+                        "because it's not function of mutation"
+                )
+            }
+            return null
+        }
         if (!Immutable::class.java.isAssignableFrom(cls.java)) {
             throw ModelException("Illegal function ${function}, its target type does not inherit Immutable")
         }
@@ -85,7 +100,15 @@ internal abstract class RootPropImpl internal constructor(
             throw ModelException("Illegal function ${function}, its target type cannot not inherit Input")
         }
         return modelTypeMap[cls as KClass<out Entity<*>>] ?:
-        throw ModelException("Illegal function ${function}, its target type '${cls.qualifiedName}' is not an mapped model type")
+        throw ModelException(
+            "Illegal function ${function}, its target type '${cls.qualifiedName}' " +
+                "is not an mapped model type" +
+                if (isMutation) {
+                    " or '${EntityMutationResult::class.qualifiedName}'"
+                } else {
+                    ""
+                }
+        )
     }
 }
 

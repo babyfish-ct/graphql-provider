@@ -1,6 +1,8 @@
 package org.babyfish.graphql.provider.runtime
 
 import graphql.schema.DataFetchingEnvironment
+import org.babyfish.graphql.provider.ImplicitInput
+import org.babyfish.graphql.provider.ImplicitInputs
 import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.meta.Argument
 import org.babyfish.graphql.provider.meta.ImplicitInputType
@@ -35,10 +37,10 @@ open class ArgumentsConverter(
         env: DataFetchingEnvironment
     ): Any? {
         val value = env.arguments[argument.name] ?: return null
-        return if (argument.isList) {
+        return if (argument.isList && argument.inputMapperType === null) {
             (value as List<Any?>).map {
                 it?.let {
-                    convert(it, argument.elementType!!, argument.inputMapperType)
+                    convert(it, argument.elementType!!, null)
                 }
             }
         } else {
@@ -58,13 +60,32 @@ open class ArgumentsConverter(
                     value as Map<String, Any?>,
                     ImmutableType.of(type as KClass<out Immutable>)
                 )
-            Entity::class.java.isAssignableFrom(type.java) ->
-                convertImplicitInput(
-                    value as Map<String, Any?>,
-                    rootImplicitInputTypeMap[
-                        inputMapperType ?: error("Internal bug: InputMapperType is missed")
-                    ] ?: error("Internal bug: ${inputMapperType.qualifiedName} is not manged by spring")
+            ImplicitInput::class == type -> {
+                val inputMapper = rootImplicitInputTypeMap[
+                    inputMapperType ?: error("Internal bug: InputMapperType is missed")
+                ] ?: error("Internal bug: ${inputMapperType.qualifiedName} is not manged by spring")
+                ImplicitInput(
+                    convertImplicitInputEntity(
+                        value as Map<String, Any?>,
+                        inputMapper
+                    ),
+                    inputMapper.saveOptionsBlock
                 )
+            }
+            ImplicitInputs::class == type -> {
+                val inputMapper = rootImplicitInputTypeMap[
+                    inputMapperType ?: error("Internal bug: InputMapperType is missed")
+                ] ?: error("Internal bug: ${inputMapperType.qualifiedName} is not manged by spring")
+                ImplicitInputs(
+                    (value as List<Map<String, Any?>>).map {
+                        convertImplicitInputEntity(
+                            it,
+                            inputMapper
+                        )
+                    },
+                    inputMapper.saveOptionsBlock
+                )
+            }
             else ->
                 value
         }
@@ -95,7 +116,7 @@ open class ArgumentsConverter(
         }
 
     @Suppress("UNCHECKED_CAST")
-    private fun convertImplicitInput(
+    private fun convertImplicitInputEntity(
         map: Map<String, Any?>,
         implicitInputType: ImplicitInputType
     ): Entity<*> =
@@ -108,7 +129,7 @@ open class ArgumentsConverter(
                 val finalValue = when {
                     prop.isList && prop.targetImplicitType !== null ->
                         (value as List<Map<String, Any?>>).map {
-                            convertImplicitInput(it, prop.targetImplicitType!!)
+                            convertImplicitInputEntity(it, prop.targetImplicitType!!)
                         }
                     prop.isList && prop.targetScalarType !== null ->
                         prop.modelProp.targetType!!.let { targetType ->
@@ -119,7 +140,7 @@ open class ArgumentsConverter(
                             }
                         }
                     prop.targetImplicitType !== null ->
-                        convertImplicitInput(value as Map<String, Any?>, prop.targetImplicitType!!)
+                        convertImplicitInputEntity(value as Map<String, Any?>, prop.targetImplicitType!!)
                     prop.targetScalarType !== null ->
                         prop.modelProp.targetType!!.let { targetType ->
                             produce(targetType.kotlinType) {

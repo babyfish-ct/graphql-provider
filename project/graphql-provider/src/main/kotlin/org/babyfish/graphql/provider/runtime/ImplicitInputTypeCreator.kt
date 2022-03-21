@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.runtime
 
 import org.babyfish.graphql.provider.InputMapper
-import org.babyfish.graphql.provider.dsl.InputTypeDSL
+import org.babyfish.graphql.provider.dsl.input.InputTypeDSL
 import org.babyfish.graphql.provider.meta.ImplicitInputType
 import org.babyfish.graphql.provider.meta.ModelType
 import org.babyfish.kimmer.sql.Entity

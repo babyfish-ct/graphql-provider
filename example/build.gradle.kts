@@ -18,8 +18,8 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-test")
-	implementation("org.babyfish.kimmer:kimmer-sql:0.2.8")
-	ksp("org.babyfish.kimmer:kimmer-ksp:0.2.8")
+	implementation("org.babyfish.kimmer:kimmer-sql:0.2.10")
+	ksp("org.babyfish.kimmer:kimmer-ksp:0.2.10")
 	implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:4.9.21"))
 	implementation("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.9.21")
 	implementation("com.netflix.graphql.dgs:graphql-dgs-extended-scalars:4.9.21")

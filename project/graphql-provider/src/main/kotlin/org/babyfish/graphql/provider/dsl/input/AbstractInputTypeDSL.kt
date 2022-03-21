@@ -1,35 +1,41 @@
-package org.babyfish.graphql.provider.dsl
+package org.babyfish.graphql.provider.dsl.input
 
 import org.babyfish.graphql.provider.InputMapper
-import org.babyfish.graphql.provider.ModelException
-import org.babyfish.graphql.provider.meta.ImplicitInputProp
+import org.babyfish.graphql.provider.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.meta.ImplicitInputType
 import org.babyfish.graphql.provider.meta.ModelProp
 import org.babyfish.graphql.provider.meta.ModelType
+import org.babyfish.graphql.provider.meta.impl.ImplicitInputPropImpl
+import org.babyfish.graphql.provider.meta.impl.ImplicitInputTypeImpl
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.meta.config.Column
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 @GraphQLProviderDSL
-class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
+abstract class AbstractInputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     private val modelType: ModelType
 ) {
     private var name: String? = null
 
-    private var isIdOptional: Boolean = true
+    private var keyProps: List<KProperty1<E, *>>? = null
 
     private var propRefMap = mutableMapOf<ModelProp, PropRef>()
 
+    protected var insertable: Boolean = false
+
+    protected var updatable: Boolean = true
+
+    protected var deleteable: Boolean = false
+
     fun name(name: String) {
         if (name === "") {
-            throw IllegalArgumentException("")
+            throw IllegalArgumentException("name cannot be empty")
         }
     }
 
-    fun optionalId() {
-        propRefMap[modelType.idProp] = PropRef(modelType.idProp)
-        isIdOptional = true
+    fun keyProps(firstProp: KProperty1<E, *>, vararg restProps: KProperty1<E, *>) {
+        keyProps = listOf(firstProp) + restProps.toList()
     }
 
     fun allScalars() {
@@ -108,10 +114,10 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     fun <X: Entity<XID>, XID: Comparable<XID>> reference(
         prop: KProperty1<E, X?>,
         alias: String? = null,
-        block: InputTypeDSL<X, XID>.() -> Unit
+        block: AssociatedInputTypeDSL<X, XID>.() -> Unit
     ) {
         val modelProp = modelProp(prop, PropType.REFERENCE)
-        val targetDsl = InputTypeDSL<X, XID>(modelProp.targetType!!).apply {
+        val targetDsl = AssociatedInputTypeDSL<X, XID>(modelProp.targetType!!).apply {
             block()
         }
         propRefMap[modelProp] = PropRef(
@@ -147,10 +153,10 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     fun <X: Entity<XID>, XID: Comparable<XID>> list(
         prop: KProperty1<E, List<X>>,
         alias: String? = null,
-        block: InputTypeDSL<X, XID>.() -> Unit
+        block: AssociatedInputTypeDSL<X, XID>.() -> Unit
     ) {
         val modelProp = modelProp(prop, PropType.LIST)
-        val targetDsl = InputTypeDSL<X, XID>(modelProp.targetType!!).apply {
+        val targetDsl = AssociatedInputTypeDSL<X, XID>(modelProp.targetType!!).apply {
             block()
         }
         propRefMap[modelProp] = PropRef(
@@ -197,19 +203,29 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
             null,
             null
         )
-    
+
     private fun build(
         mappers: Map<KClass<out InputMapper<*, *>>, InputMapper<*, *>>,
         mapperType: KClass<out InputMapper<*, *>>?,
         resultMap: MutableMap<KClass<out InputMapper<*, *>>, ImplicitInputType>,
         resultList: MutableList<ImplicitInputType>,
-        parent: ImplicitTypeImpl?,
+        parent: ImplicitInputTypeImpl?,
         parentAssociation: ModelProp?
     ): ImplicitInputType {
         val mapper = mapperType?.let {
             mappers[it] ?: error("Internal bug: Illegal mapperType '${mapperType.qualifiedName}'")
         }
-        val typeImpl = ImplicitTypeImpl(name, modelType, mapper, parent, parentAssociation)
+        val typeImpl = ImplicitInputTypeImpl(
+            name,
+            modelType,
+            insertable,
+            updatable,
+            deleteable,
+            keyProps,
+            mapper,
+            parent,
+            parentAssociation
+        )
         for (propRef in propRefMap.values) {
             val targetScalarType: KClass<*>? =
                 propRef.prop.targetType
@@ -228,12 +244,12 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
                         build(mappers, it, resultMap, resultList)
                     }
                 }
-            val prop = ImplicitPropImpl(
+            val prop = ImplicitInputPropImpl(
                 propRef.alias,
                 propRef.prop,
                 targetScalarType,
                 targetImplicitType,
-                propRef.prop.isId && isIdOptional
+                propRef.prop.isId && keyProps !== null
             )
             typeImpl.addProp(prop)
         }
@@ -267,7 +283,7 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     private class PropRef(
         val prop: ModelProp,
         alias: String? = null,
-        val targetDsl: InputTypeDSL<*, *>? = null,
+        val targetDsl: AbstractInputTypeDSL<*, *>? = null,
         val targetMapperType: KClass<out InputMapper<*, *>>? = null
     ) {
         val alias: String = alias ?: prop.name
@@ -277,83 +293,6 @@ class InputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
         MUTABLE_SCALAR,
         REFERENCE,
         LIST
-    }
-    
-    private class ImplicitTypeImpl(
-        name: String?,
-        override val modelType: ModelType,
-        private val mapper: InputMapper<*, *>?,
-        private val parent: ImplicitTypeImpl?,
-        private val parentAssociation: ModelProp?
-    ): ImplicitInputType {
-
-        override val name: String = when {
-            name !== null -> name
-            parent !== null -> "${parent.name}_${parentAssociation!!.name}"
-            else -> (mapper ?: error("Internal bug: root implicit must be created by mapper"))::class
-                .simpleName
-                ?.let {
-                    when {
-                        it.endsWith("InputMapper") ->
-                            it.substring(0, it.length - 6)
-                        it.endsWith("Mapper") ->
-                            "${it.substring(0, it.length - 6)}Input"
-                        else ->
-                            null
-                    }
-                }
-                ?: "${modelType.graphql.name}Input"
-        }
-
-        private val _props = mutableMapOf<String, ImplicitInputProp>()
-
-        override val props: Map<String, ImplicitInputProp>
-            get() = _props
-
-        fun addProp(prop: ImplicitInputProp) {
-            _props.put(prop.name, prop)?.let {
-                throw ModelException(
-                    "Illegal input mapper ${mapperPath}, " +
-                        "The alias '${prop.name}' is used by both '${it.modelProp}' and ${it.modelProp}"
-                )
-            }
-        }
-
-        private val mapperPath: String
-            get() =
-                parent?.let {
-                    "${parent.mapperPath}/${parentAssociation!!.name}"
-                } ?: mapper!!::class.qualifiedName!!
-
-        override fun toString(): String =
-            modelType.toString()
-    }
-
-    private class ImplicitPropImpl(
-        override val name: String,
-        override val modelProp: ModelProp,
-        override val targetScalarType: KClass<*>?,
-        override val targetImplicitType: ImplicitInputType?,
-        private val forceNullable: Boolean = false
-    ): ImplicitInputProp {
-
-        init {
-            if (targetScalarType !== null && targetImplicitType !== null) {
-                error("Internal bug: Both targetScalarType and targetImplicitType are not null")
-            }
-        }
-
-        override val isReference: Boolean
-            get() = modelProp.isReference
-
-        override val isList: Boolean
-            get() = modelProp.isList
-
-        override val isNullable: Boolean
-            get() = modelProp.isNullable || forceNullable
-
-        override fun toString(): String =
-            modelProp.toString()
     }
 
     companion object {

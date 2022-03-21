@@ -1,7 +1,7 @@
 package org.babyfish.graphql.provider.example.mapper.input
 
 import org.babyfish.graphql.provider.InputMapper
-import org.babyfish.graphql.provider.dsl.InputTypeDSL
+import org.babyfish.graphql.provider.dsl.input.InputTypeDSL
 import org.babyfish.graphql.provider.example.model.Book
 import org.springframework.stereotype.Component
 import java.util.*
@@ -11,7 +11,8 @@ class BookShallowTreeInputMapper: InputMapper<Book, UUID> {
 
     override fun InputTypeDSL<Book, UUID>.config() {
 
-        optionalId()
+        // Configure "keyProps" means id is optional
+        keyProps(Book::name, Book::edition)
 
         /*
          * Upsert scalars and associations(exclude associated objects)
