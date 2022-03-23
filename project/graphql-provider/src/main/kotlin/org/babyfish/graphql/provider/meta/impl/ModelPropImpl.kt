@@ -10,11 +10,13 @@ internal class ModelPropImpl(
     kotlinProp: KProperty1<*, *>
 ): EntityPropImpl(declaringType, kotlinProp), ModelProp {
 
+    private var _filter: Filter? = null
+
     override val cache: Cache
         get() = Cache(CacheLevel.NO_CACHE)
 
     override val filter: Filter?
-        get() = null
+        get() = _filter
 
     override val userImplementation: UserImplementation?
         get() = null
@@ -24,4 +26,11 @@ internal class ModelPropImpl(
 
     override val targetRawClass: KClass<*>
         get() = super.targetType?.kotlinType ?: super.returnType
+
+    internal fun setFilter(filter: Filter) {
+        if (_filter !== null) {
+            error("Internal bug: filter of '$this' can only be set once")
+        }
+        _filter = filter
+    }
 }

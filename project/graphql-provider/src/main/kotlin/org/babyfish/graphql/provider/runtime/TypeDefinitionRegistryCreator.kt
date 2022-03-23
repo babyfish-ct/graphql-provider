@@ -21,7 +21,8 @@ fun MetaProvider.createTypeDefinitionRegistry(): TypeDefinitionRegistry =
         mutationType,
         modelTypes,
         rootImplicitInputTypeMap,
-        allImplicitInputTypes
+        allImplicitInputTypes,
+        connectionNodeTypes
     ).generate()
 
 private class TypeDefinitionRegistryGenerator(
@@ -29,7 +30,8 @@ private class TypeDefinitionRegistryGenerator(
     private val mutationType: MutationType,
     private val modelTypeMap: Map<KClass<out Entity<*>>, ModelType>,
     private val rootImplicitInputTypeMap: Map<KClass<out InputMapper<*, *>>, ImplicitInputType>,
-    private val allImplicitInputTypes: List<ImplicitInputType>
+    private val allImplicitInputTypes: List<ImplicitInputType>,
+    private val connectionNodeTypes: Set<ModelType>
 ) {
     init {
         if (queryType.props.isEmpty()) {
@@ -48,6 +50,7 @@ private class TypeDefinitionRegistryGenerator(
             addAll(generateMutationResultTypes())
             addAll(modelTypeMap.values.map { generateEntityType(it) })
             addAll(allImplicitInputTypes.map { generateInputType(it) })
+            addAll(generateConnectionTypes())
         }
 
     private fun TypeDefinitionRegistry.addScalarTypes() {
@@ -126,11 +129,11 @@ private class TypeDefinitionRegistryGenerator(
             name(prop.name)
             val fieldType = when {
                 prop.isConnection ->
-                    TODO()
+                    TypeName("${prop.targetType!!.graphql.name}Connection")
                 prop.isList ->
                     ListType(
                         TypeName(
-                            prop.targetType?.name
+                            prop.targetType?.graphql?.name
                                 ?: prop
                                     .takeIf { it.targetRawClass == EntityMutationResult::class }
                                     ?.let { "_EntityMutationResult" }
@@ -139,7 +142,7 @@ private class TypeDefinitionRegistryGenerator(
                     ).asNullable(prop.isNullable)
                 prop.isReference ->
                     TypeName(
-                        prop.targetType!!.name
+                        prop.targetType!!.graphql.name
                     ).asNullable(prop.isTargetNullable)
                 prop.returnType == EntityMutationResult::class ->
                     TypeName("_EntityMutationResult")
@@ -150,6 +153,13 @@ private class TypeDefinitionRegistryGenerator(
             }
             type(fieldType)
             for (argument in prop.arguments) {
+                if (prop.isConnection && connectionArgumentNames.contains(argument.name)) {
+                    throw ModelException(
+                        "Illegal prop '${prop}', it cannot have an argument named '${argument.name}' " +
+                            "because it's a connection field so that that argument '${argument.name}' " +
+                            "can only be generated automatically"
+                    )
+                }
                 inputValueDefinition(
                     InputValueDefinition.newInputValueDefinition().apply {
                         name(argument.name)
@@ -164,6 +174,12 @@ private class TypeDefinitionRegistryGenerator(
                         )
                     }.build()
                 )
+            }
+            if (prop.isConnection) {
+                inputValueDefinition(InputValueDefinition("first", TypeName("Int")))
+                inputValueDefinition(InputValueDefinition("after", TypeName("String")))
+                inputValueDefinition(InputValueDefinition("last", TypeName("Int")))
+                inputValueDefinition(InputValueDefinition("before", TypeName("String")))
             }
         }.build()
 
@@ -304,6 +320,42 @@ private class TypeDefinitionRegistryGenerator(
         )
     }
 
+    private fun generateConnectionTypes(): List<SDLDefinition<*>> {
+        if (connectionNodeTypes.isEmpty()) {
+            return emptyList()
+        }
+        val definitions = mutableListOf<SDLDefinition<*>>()
+        definitions += ObjectTypeDefinition.newObjectTypeDefinition().apply {
+            name("PageInfo")
+            fieldDefinition(FieldDefinition("hasNextPage", TypeName("Boolean").asNullable(false)))
+            fieldDefinition(FieldDefinition("hasPreviousPage", TypeName("Boolean").asNullable(false)))
+            fieldDefinition(FieldDefinition("startCursor", TypeName("String").asNullable(false)))
+            fieldDefinition(FieldDefinition("endCursor", TypeName("String").asNullable(false)))
+        }.build()
+        for (nodeType in connectionNodeTypes) {
+            val nodeName = nodeType.graphql.name
+            definitions += ObjectTypeDefinition.newObjectTypeDefinition().apply {
+                name("${nodeName}Connection")
+                fieldDefinition(
+                    FieldDefinition(
+                        "edges",
+                        ListType(
+                            TypeName("${nodeName}Edge").asNullable(false)
+                        ).asNullable(false)
+                    )
+                )
+                fieldDefinition(FieldDefinition("pageInfo", TypeName("PageInfo").asNullable(false)))
+                fieldDefinition(FieldDefinition("totalCount", TypeName("Int").asNullable(false)))
+            }.build()
+            definitions += ObjectTypeDefinition.newObjectTypeDefinition().apply {
+                name("${nodeName}Edge")
+                fieldDefinition(FieldDefinition("node", TypeName(nodeName).asNullable(false)))
+                fieldDefinition(FieldDefinition("cursor", TypeName("String").asNullable(false)))
+            }.build()
+        }
+        return definitions
+    }
+
     private fun scalarType(type: KClass<*>): TypeName =
         when (type) {
             String::class -> TypeName("String")
@@ -327,3 +379,5 @@ private fun Type<*>.asNullable(nullable: Boolean): Type<*> =
     } else {
         NonNullType(this)
     }
+
+private val connectionArgumentNames = setOf("first", "after", "last", "before")

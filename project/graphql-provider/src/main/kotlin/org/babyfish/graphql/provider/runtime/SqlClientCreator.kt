@@ -1,6 +1,7 @@
 package org.babyfish.graphql.provider.runtime
 
 import org.babyfish.graphql.provider.EntityMapper
+import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.dsl.EntityTypeDSL
 import org.babyfish.graphql.provider.meta.impl.ModelPropImpl
 import org.babyfish.graphql.provider.meta.impl.ModelTypeImpl
@@ -25,20 +26,25 @@ internal fun createSqlClientByEntityMappers(
     jdbcExecutor: JdbcExecutor?,
     r2dbcExecutor: R2dbcExecutor?,
     dialect: Dialect?
-): SqlClient =
-    createSqlClient(
+): SqlClient {
+
+    val dynamicConfigurationRegistry = DynamicConfigurationRegistry()
+
+    return createSqlClient(
         jdbcExecutor = jdbcExecutor ?: DefaultJdbcExecutor,
         r2dbcExecutor = r2dbcExecutor ?: DefaultR2dbcExecutor,
         dialect = dialect,
         metaFactory = MetaFactoryImpl()
     ) {
-        val dynamicConfigurationRegistry = DynamicConfigurationRegistry()
 
         dynamicConfigurationRegistryScope(dynamicConfigurationRegistry) {
             for (mapper in mappers) {
                 for (function in mapper::class.declaredFunctions) {
-                    if (function.name != "config") {
-                        if (function.visibility == KVisibility.PUBLIC && !function.isSuspend) {
+                    if (function.name != "config" && function.parameters.size > 1) {
+                        if (function.visibility == KVisibility.PUBLIC) {
+                            if (function.isSuspend) {
+                                throw ModelException("Filter function '$function' cannot be suspend")
+                            }
                             invokeByRegistryMode(mapper, function)
                         }
                     }
@@ -55,7 +61,18 @@ internal fun createSqlClientByEntityMappers(
                 }
             }
         }
+    }.apply {
+        for (entityType in this.entityTypeMap.values) {
+            for (prop in entityType.declaredProps.values) {
+                if (prop.isConnection || prop.isList) {
+                    dynamicConfigurationRegistry.filter(prop.kotlinProp)?.let {
+                        (prop as ModelPropImpl).setFilter(it)
+                    }
+                }
+            }
+        }
     }
+}
 
 private class MetaFactoryImpl: MetaFactory {
 

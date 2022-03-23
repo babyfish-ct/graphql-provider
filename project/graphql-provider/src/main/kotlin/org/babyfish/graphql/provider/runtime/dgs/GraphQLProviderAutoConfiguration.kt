@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.runtime.dgs
 
+import org.babyfish.graphql.provider.EntityMapper
 import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.Mutation
 import org.babyfish.graphql.provider.Query

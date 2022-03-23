@@ -42,10 +42,10 @@ class BookStoreMapper: org.babyfish.graphql.provider.EntityMapper<BookStore, UUI
                 // bookRepository.findAvgPricesByStoreIds(rows.map { it.id })
                 TODO()
             }
-            redis {
-                dependsOn(BookStore::books)
-                dependsOn(Book::name)
-            }
+//            redis {
+//                dependsOn(BookStore::books)
+//                dependsOn(Book::name)
+//            }
         }
     }
 }

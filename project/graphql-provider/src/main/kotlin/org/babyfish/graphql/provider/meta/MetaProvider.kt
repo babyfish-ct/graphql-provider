@@ -9,5 +9,6 @@ class MetaProvider internal constructor(
     val mutationType: MutationType,
     val modelTypes: Map<KClass<out Entity<*>>, ModelType>,
     val rootImplicitInputTypeMap: Map<KClass<out InputMapper<*, *>>, ImplicitInputType>,
-    val allImplicitInputTypes: List<ImplicitInputType>
+    val allImplicitInputTypes: List<ImplicitInputType>,
+    val connectionNodeTypes: Set<ModelType>
 )

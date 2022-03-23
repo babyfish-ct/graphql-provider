@@ -2,6 +2,7 @@ package org.babyfish.graphql.provider
 
 import  org.babyfish.graphql.provider.dsl.EntityTypeDSL
 import  org.babyfish.graphql.provider.dsl.FilterDSL
+import org.babyfish.graphql.provider.dsl.ImplementationContext
 import  org.babyfish.graphql.provider.dsl.UserImplementationDSL
 import  org.babyfish.graphql.provider.runtime.filterExecutionContext
 import  org.babyfish.graphql.provider.runtime.registerEntityField
@@ -15,6 +16,10 @@ import kotlin.reflect.KProperty1
 abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
 
     val immutableType: ImmutableType
+
+    private var single: (suspend ImplementationContext<*>.() -> Any?)? = null
+
+    private var batch: (suspend ImplementationContext<*>.() -> Map<out Any, *>)? = null
 
     init {
         val arguments =

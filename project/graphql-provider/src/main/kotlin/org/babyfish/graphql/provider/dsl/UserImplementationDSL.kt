@@ -9,11 +9,17 @@ import org.babyfish.kimmer.Immutable
 class UserImplementationDSL<E: Immutable, T> internal constructor(
     private val entityProp: ModelPropImpl
 ) {
+    private var single: (suspend ImplementationContext<*>.() -> Any?)? = null
+
+    private var batch: (suspend ImplementationContext<*>.() -> Map<out Any, *>)? = null
+
+    private var batchSize: Int = 10
+
     @Suppress("UNCHECKED_CAST")
     fun single(block: suspend ImplementationContext<E>.() -> T) {
-//        entityProp.userImplementation?.apply {
-//            single = block as (suspend ImplementationContext<*>.() -> Any?)
-//        }
+        entityProp.userImplementation?.apply {
+            single = block as (suspend ImplementationContext<*>.() -> Any?)
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -21,15 +27,15 @@ class UserImplementationDSL<E: Immutable, T> internal constructor(
         batchSize: Int? = null,
         block: suspend BatchImplementationContext<E>.() -> Map<out Any, T>
     ) {
-//        entityProp.userImplementation?.apply {
-//            this.batchSize = batchSize
-//            batch = block as (suspend BatchImplementationContext<*>.() -> Map<out Any, *>)
-//        }
+        entityProp.userImplementation?.apply {
+            this.batchSize = batchSize
+            batch = block as (suspend BatchImplementationContext<*>.() -> Map<out Any, *>)
+        }
     }
 
-    fun redis(block: FilterRedisDSL.() -> Unit) {
-
-    }
+//    fun redis(block: FilterRedisDSL.() -> Unit) {
+//
+//    }
 }
 
 interface ImplementationContext<E> {

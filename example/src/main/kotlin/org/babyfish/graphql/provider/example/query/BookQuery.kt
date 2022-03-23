@@ -2,6 +2,7 @@ package org.babyfish.graphql.provider.example.query
 
 import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.example.model.*
+import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.sql.ast.ilike
 import org.babyfish.kimmer.sql.ast.valueIn
 import org.babyfish.kimmer.sql.ast.valueNotIn
@@ -10,6 +11,18 @@ import java.util.*
 
 @Component
 class BookQuery: Query() {
+
+    fun findPagedBooks(
+        name: String?
+    ): Connection<Book> =
+        queryConnection {
+            name?.let {
+                db {
+                    where(table.name ilike it)
+                    orderBy(table.name)
+                }
+            }
+        }
 
     fun findBooks(
         name: String?,

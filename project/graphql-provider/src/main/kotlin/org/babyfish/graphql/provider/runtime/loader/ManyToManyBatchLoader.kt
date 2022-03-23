@@ -5,10 +5,13 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.mono
+import org.babyfish.graphql.provider.meta.Filter
 import org.babyfish.graphql.provider.meta.ModelProp
+import org.babyfish.graphql.provider.runtime.ArgumentsConverter
 import org.babyfish.graphql.provider.runtime.FakeID
 import org.babyfish.graphql.provider.runtime.R2dbcClient
 import org.babyfish.kimmer.sql.Entity
+import org.babyfish.kimmer.sql.ast.query.MutableRootQuery
 import org.babyfish.kimmer.sql.ast.valueIn
 import org.babyfish.kimmer.sql.meta.config.MiddleTable
 import org.dataloader.MappedBatchLoader
@@ -18,7 +21,8 @@ import kotlin.reflect.KClass
 
 internal class ManyToManyBatchLoader(
     private val r2dbcClient: R2dbcClient,
-    private val prop: ModelProp
+    private val prop: ModelProp,
+    private val filterApplier: (MutableRootQuery<Entity<FakeID>, FakeID>) -> Unit
 ) : MappedBatchLoader<Any, List<Any>> {
 
     override fun load(
@@ -42,6 +46,7 @@ internal class ManyToManyBatchLoader(
                 prop.targetType!!.kotlinType as KClass<Entity<FakeID>>
             ) {
                 where { table.id valueIn allTargetIds as Collection<FakeID> }
+                filterApplier(this)
                 select(table)
             } as List<Entity<*>>
         val rowMap = rows.associateBy { it.id }

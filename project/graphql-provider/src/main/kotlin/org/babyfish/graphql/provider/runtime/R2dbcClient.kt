@@ -1,5 +1,6 @@
 package org.babyfish.graphql.provider.runtime
 
+import io.r2dbc.spi.Connection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.mono
@@ -15,9 +16,18 @@ import org.springframework.r2dbc.core.DatabaseClient
 import kotlin.reflect.KClass
 
 class R2dbcClient(
-    private val sqlClient: SqlClient,
+    internal val sqlClient: SqlClient,
     internal val databaseClient: DatabaseClient
 ) {
+    suspend fun <R> execute(
+        block: suspend (Connection) -> R
+    ): R =
+        databaseClient.inConnection {
+            mono(Dispatchers.Unconfined) {
+                block(it)
+            }
+        }.awaitSingle()
+
     suspend fun <E: Entity<ID>, ID: Comparable<ID>, R> query(
         entityType: KClass<E>,
         block: MutableRootQuery<E, ID>.() -> ConfigurableTypedRootQuery<E, ID, R>

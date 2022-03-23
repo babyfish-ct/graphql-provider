@@ -4,7 +4,7 @@ import org.babyfish.graphql.provider.dsl.BatchImplementationContext
 import org.babyfish.graphql.provider.dsl.ImplementationContext
 
 interface UserImplementation {
-    val batchSize: Int?
-    val single: (suspend (ImplementationContext<*>) -> Any?)?
-    val batch: (suspend (BatchImplementationContext<*>) -> Map<*, *>)?
+    var batchSize: Int?
+    var single: (suspend (ImplementationContext<*>) -> Any?)?
+    var batch: (suspend (BatchImplementationContext<*>) -> Map<*, *>)?
 }

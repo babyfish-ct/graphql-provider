@@ -21,8 +21,8 @@ dependencies {
     implementation("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.3.1")
     implementation("com.graphql-java:graphql-java-extended-scalars:17.0")
 
-    api("org.babyfish.kimmer:kimmer-sql:0.2.10")
-    kspTest("org.babyfish.kimmer:kimmer-ksp:0.2.10")
+    api("org.babyfish.kimmer:kimmer-sql:0.2.11")
+    kspTest("org.babyfish.kimmer:kimmer-ksp:0.2.11")
 
     implementation("com.graphql-java:graphql-java:17.3")
     implementation("org.springframework.data:spring-data-r2dbc:1.4.2")
