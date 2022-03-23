@@ -45,8 +45,8 @@ class BookMapper: org.babyfish.graphql.provider.EntityMapper<Book, UUID>() {
         }
     }
 
-    fun authors(name: String?) {
-        filterList(Book::authors) {
+    fun authors(name: String?) =
+        runtime.filterList(Book::authors) {
             name?.let {
                 db {
                     where(table.name ilike it)
@@ -56,5 +56,4 @@ class BookMapper: org.babyfish.graphql.provider.EntityMapper<Book, UUID>() {
                 }
             }
         }
-    }
 }

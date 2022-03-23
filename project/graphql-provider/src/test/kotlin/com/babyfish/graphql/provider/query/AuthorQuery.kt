@@ -10,15 +10,16 @@ class AuthorQuery: Query() {
 
     suspend fun findAuthors(
         name: String?
-    ): Connection<Author> = queryConnection {
-        db {
-            name?.let {
-                where(table.name ilike it)
+    ): Connection<Author> =
+        runtime.queryConnection {
+            db {
+                name?.let {
+                    where(table.name ilike it)
+                }
+                orderBy(table.name)
             }
-            orderBy(table.name)
+            redis {
+                dependsOn(Author::name)
+            }
         }
-        redis {
-            dependsOn(Author::name)
-        }
-    }
 }

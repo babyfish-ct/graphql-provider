@@ -20,40 +20,41 @@ class BookQuery: Query() {
         minPrice: BigDecimal?,
         maxPrice: BigDecimal?,
         descending: Boolean = false
-    ): Connection<Book> = queryConnection {
+    ): Connection<Book> =
+        runtime.queryConnection {
 
-        name?.let {
+            name?.let {
+                db {
+                    where(table.name ilike it)
+                }
+                redis {
+                    dependsOn(Book::name)
+                }
+            }
+
+            minPrice?.let {
+                db {
+                    where(table.price ge it)
+                }
+                redis {
+                    dependsOn(Book::price)
+                }
+            }
+
+            maxPrice?.let {
+                db {
+                    where(table.price le it)
+                }
+                redis {
+                    dependsOn(Book::price)
+                }
+            }
+
             db {
-                where(table.name ilike it)
+                orderBy(table.name)
             }
             redis {
                 dependsOn(Book::name)
             }
         }
-
-        minPrice?.let {
-            db {
-                where(table.price ge it)
-            }
-            redis {
-                dependsOn(Book::price)
-            }
-        }
-
-        maxPrice?.let {
-            db {
-                where(table.price le it)
-            }
-            redis {
-                dependsOn(Book::price)
-            }
-        }
-
-        db {
-            orderBy(table.name)
-        }
-        redis {
-            dependsOn(Book::name)
-        }
-    }
 }

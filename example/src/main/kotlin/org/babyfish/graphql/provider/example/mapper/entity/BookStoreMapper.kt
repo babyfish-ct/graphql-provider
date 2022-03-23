@@ -18,11 +18,5 @@ class BookStoreMapper: EntityMapper<BookStore, UUID>() {
         }
 
         mappedList(BookStore::books, Book::store)
-
-//        userImplementation(BookStore::avgPrice) {
-//            batch {
-//
-//            }
-//        }
     }
 }

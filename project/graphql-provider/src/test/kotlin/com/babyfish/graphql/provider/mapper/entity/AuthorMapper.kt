@@ -16,7 +16,7 @@ class AuthorMapper: org.babyfish.graphql.provider.EntityMapper<Author, UUID>() {
     }
 
     fun books(name: String?) {
-        filterList(Author::books) {
+        runtime.filterList(Author::books) {
             name?.let {
                 db {
                     where(table.name ilike it)

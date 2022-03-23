@@ -15,16 +15,11 @@ class BookStoreMapper: org.babyfish.graphql.provider.EntityMapper<BookStore, UUI
 
         mappedList(BookStore::books, Book::store)
 
-        userImplementation(BookStore::avgPrice) {
-            batch {
-                // bookRepository.findAvgPricesByStoreIds(rows.map { it.id })
-                TODO()
-            }
-        }
+        userImplementation(BookStore::avgPrice)
     }
 
-    fun books(name: String?) {
-        filterList(BookStore::books) {
+    fun books(name: String?) =
+        runtime.filterList(BookStore::books) {
             name?.let {
                 db {
                     where(table.name ilike it)
@@ -34,19 +29,10 @@ class BookStoreMapper: org.babyfish.graphql.provider.EntityMapper<BookStore, UUI
                 }
             }
         }
-    }
 
-    fun avgPrice() {
-        userImplementation(BookStore::avgPrice) {
-            batch {
-                // bookRepository.findAvgPricesByStoreIds(rows.map { it.id })
-                TODO()
-            }
-//            redis {
-//                dependsOn(BookStore::books)
-//                dependsOn(Book::name)
-//            }
-        }
-    }
+//    fun avgPrice() =
+//        runtime.implement(BookStore::avgPrice) {
+//
+//        }
 }
 

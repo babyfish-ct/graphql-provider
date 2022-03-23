@@ -1,9 +1,6 @@
 package org.babyfish.graphql.provider
 
-import  org.babyfish.graphql.provider.dsl.EntityTypeDSL
-import  org.babyfish.graphql.provider.dsl.FilterDSL
-import org.babyfish.graphql.provider.dsl.ImplementationContext
-import  org.babyfish.graphql.provider.dsl.UserImplementationDSL
+import org.babyfish.graphql.provider.dsl.*
 import  org.babyfish.graphql.provider.runtime.filterExecutionContext
 import  org.babyfish.graphql.provider.runtime.registerEntityField
 import org.babyfish.kimmer.graphql.Connection
@@ -13,13 +10,10 @@ import org.springframework.core.GenericTypeResolver
 import kotlin.reflect.KProperty1
 
 @Suppress("UNCHECKED_CAST")
+@GraphQLProviderDSL
 abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
 
     val immutableType: ImmutableType
-
-    private var single: (suspend ImplementationContext<*>.() -> Any?)? = null
-
-    private var batch: (suspend ImplementationContext<*>.() -> Map<out Any, *>)? = null
 
     init {
         val arguments =
@@ -56,28 +50,33 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
 
     abstract fun EntityTypeDSL<E, ID>.config()
 
-    protected fun <X: Entity<XID>, XID: Comparable<XID>> filterList(
-        prop: KProperty1<E, List<X>?>,
-        block: FilterDSL<X, XID>.() -> Unit
-    ) {
-        if (!registerEntityField(prop, this)) {
-            FilterDSL<X, XID>(filterExecutionContext).block()
+    protected val runtime: Runtime = Runtime()
+
+    protected inner class Runtime internal constructor() {
+
+        fun <X: Entity<XID>, XID: Comparable<XID>> filterList(
+            prop: KProperty1<E, List<X>?>,
+            block: FilterDSL<X, XID>.() -> Unit
+        ) {
+            if (!registerEntityField(prop, this@EntityMapper)) {
+                FilterDSL<X, XID>(filterExecutionContext).block()
+            }
         }
-    }
 
-    protected fun <X: Entity<XID>, XID: Comparable<XID>> filterConnection(
-        prop: KProperty1<E, Connection<X>?>,
-        block: FilterDSL<X, XID>.() -> Unit
-    ) {
-        if (!registerEntityField(prop, this)) {
-            FilterDSL<X, XID>(filterExecutionContext).block()
+        fun <X: Entity<XID>, XID: Comparable<XID>> filterConnection(
+            prop: KProperty1<E, Connection<X>?>,
+            block: FilterDSL<X, XID>.() -> Unit
+        ) {
+            if (!registerEntityField(prop, this@EntityMapper)) {
+                FilterDSL<X, XID>(filterExecutionContext).block()
+            }
         }
-    }
 
-    protected fun <T> userImplementation(
-        prop: KProperty1<E, T?>,
-        block: UserImplementationDSL<E, T>.() -> Unit
-    ) {
+        fun <T> implement(
+            prop: KProperty1<E, T?>,
+            block: UserImplementationDSL<E, T>.() -> Unit
+        ) {
 
+        }
     }
 }

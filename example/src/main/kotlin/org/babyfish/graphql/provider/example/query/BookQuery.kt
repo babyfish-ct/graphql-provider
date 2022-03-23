@@ -15,7 +15,7 @@ class BookQuery: Query() {
     fun findPagedBooks(
         name: String?
     ): Connection<Book> =
-        queryConnection {
+        runtime.queryConnection {
             name?.let {
                 db {
                     where(table.name ilike it)
@@ -31,7 +31,7 @@ class BookQuery: Query() {
         inclusiveAuthorIds: List<UUID>?,
         exclusiveAuthorIds: List<UUID>?,
     ): List<Book> =
-        queryList {
+        runtime.queryList {
             name?.let {
                 db {
                     where(table.name ilike it)

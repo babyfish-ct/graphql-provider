@@ -31,8 +31,8 @@ class AuthorMapper: EntityMapper<Author, UUID>() {
         }
     }
 
-    fun books(name: String?) {
-        filterList(Author::books) {
+    fun books(name: String?) =
+        runtime.filterList(Author::books) {
             name?.let {
                 db {
                     where {
@@ -44,5 +44,4 @@ class AuthorMapper: EntityMapper<Author, UUID>() {
                 }
             }
         }
-    }
 }

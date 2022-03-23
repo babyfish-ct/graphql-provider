@@ -34,8 +34,8 @@ class BookMapper: EntityMapper<Book, UUID>() {
         }
     }
 
-    fun authors(firstName: String?, lastName: String?) {
-        filterList(Book::authors) {
+    fun authors(firstName: String?, lastName: String?) =
+        runtime.filterList(Book::authors) {
             firstName?.let {
                 db {
                     where { table.firstName ilike it }
@@ -47,5 +47,4 @@ class BookMapper: EntityMapper<Book, UUID>() {
                 }
             }
         }
-    }
 }

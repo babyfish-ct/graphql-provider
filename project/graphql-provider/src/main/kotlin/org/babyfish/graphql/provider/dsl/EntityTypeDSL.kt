@@ -139,4 +139,10 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
             throw ModelException("Cannot map '${prop}' as mapped connection property")
         }
     }
+
+    fun <T> userImplementation(
+        prop: KProperty1<E, T>
+    ) {
+        //builder.transientProp(prop)
+    }
 }

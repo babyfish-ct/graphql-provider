@@ -12,17 +12,16 @@ class BookStoreQuery : Query() {
 
     suspend fun findBookStores(
         name: String?
-    ): Connection<BookStore> = queryConnection {
-
-        db {
-            name?.let {
-                where(table.name ilike it)
+    ): Connection<BookStore> =
+        runtime.queryConnection {
+            db {
+                name?.let {
+                    where(table.name ilike it)
+                }
+                orderBy(BookStore::name)
             }
-            orderBy(BookStore::name)
+            redis {
+                dependsOn(BookStore::name)
+            }
         }
-
-        redis {
-            dependsOn(BookStore::name)
-        }
-    }
 }
