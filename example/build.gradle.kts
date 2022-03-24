@@ -22,7 +22,7 @@ dependencies {
 	ksp("org.babyfish.kimmer:kimmer-ksp:0.2.12")
 	implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:4.9.21"))
 	implementation("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.9.21")
-	implementation("com.netflix.graphql.dgs:graphql-dgs-extended-scalars:4.9.21")
+	implementation("com.graphql-java:graphql-java-extended-scalars:17.0")
 	implementation("org.springframework.data:spring-data-r2dbc:1.4.2")
 	runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
 

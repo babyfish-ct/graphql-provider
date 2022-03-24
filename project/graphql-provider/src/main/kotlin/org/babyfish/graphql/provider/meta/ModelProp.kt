@@ -14,6 +14,6 @@ interface ModelProp: GraphQLProp, EntityProp {
     val filter: Filter?
 
     override val arguments: List<Argument>
-        get() = filter?.arguments ?: emptyList()
+        get() = userImplementation?.arguments ?: filter?.arguments ?: emptyList()
 }
 

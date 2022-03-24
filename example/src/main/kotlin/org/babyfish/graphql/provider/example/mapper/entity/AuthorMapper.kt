@@ -22,13 +22,7 @@ class AuthorMapper: EntityMapper<Author, UUID>() {
 
         mappedList(Author::books, Book::authors)
 
-        scalar(Author::fullName) {
-            db {
-                formula {
-                    concat(firstName, value(" "), lastName)
-                }
-            }
-        }
+        userImplementation(Author::fullName)
     }
 
     fun books(name: String?) =
@@ -43,5 +37,10 @@ class AuthorMapper: EntityMapper<Author, UUID>() {
                     }
                 }
             }
+        }
+
+    fun fullName(separator: String?) =
+        runtime.implementation(Author::fullName) {
+            "${it.firstName}${separator ?: " "}${it.lastName}"
         }
 }

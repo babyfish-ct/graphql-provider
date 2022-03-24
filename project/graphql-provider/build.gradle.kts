@@ -17,8 +17,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.0")
 
-    implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:4.9.17"))
-    implementation("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.3.1")
+    implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:4.9.21"))
+    implementation("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.9.21")
     implementation("com.graphql-java:graphql-java-extended-scalars:17.0")
 
     api("org.babyfish.kimmer:kimmer-sql:0.2.12")

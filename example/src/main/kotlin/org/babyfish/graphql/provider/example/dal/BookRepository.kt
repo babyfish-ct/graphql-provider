@@ -7,6 +7,7 @@ import org.babyfish.graphql.provider.runtime.R2dbcClient
 import org.babyfish.kimmer.sql.ast.avg
 import org.babyfish.kimmer.sql.ast.valueIn
 import org.springframework.stereotype.Repository
+import java.math.BigDecimal
 import java.util.*
 
 @Repository
@@ -15,7 +16,7 @@ class BookRepository(
 ) {
     suspend fun findAvgPriceGroupByStoreIds(
         storeIds: Collection<UUID>
-    ): Map<UUID, Int> =
+    ): Map<UUID, BigDecimal> =
         r2dbcClient.query(Book::class) {
             select {
                 where(table.store.id valueIn storeIds)
@@ -23,5 +24,7 @@ class BookRepository(
                 table.store.id then
                     table.price.avg().asNonNull()
             }
-        }.associateBy({it.first}) { it.second }
+        }.associateBy({it.first}) {
+            it.second
+        }
 }

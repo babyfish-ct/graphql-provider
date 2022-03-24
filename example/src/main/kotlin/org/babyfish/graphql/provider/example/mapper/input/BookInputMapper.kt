@@ -12,7 +12,7 @@ class BookInputMapper: InputMapper<Book, UUID> {
     override fun InputTypeDSL<Book, UUID>.config() {
 
         // Configure "keyProps" means id is optional
-        keyProps(Book::name, Book::edition)
+        keyProps(Book::name)
 
         /*
          * Only upsert scalars

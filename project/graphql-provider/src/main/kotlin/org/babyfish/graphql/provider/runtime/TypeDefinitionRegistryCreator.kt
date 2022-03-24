@@ -10,9 +10,6 @@ import org.babyfish.graphql.provider.meta.*
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.EntityMutationResult
-import java.math.BigDecimal
-import java.math.BigInteger
-import java.util.*
 import kotlin.reflect.KClass
 
 fun MetaProvider.createTypeDefinitionRegistry(): TypeDefinitionRegistry =
@@ -22,7 +19,8 @@ fun MetaProvider.createTypeDefinitionRegistry(): TypeDefinitionRegistry =
         modelTypes,
         rootImplicitInputTypeMap,
         allImplicitInputTypes,
-        connectionNodeTypes
+        connectionNodeTypes,
+        scalarKotlinTypes
     ).generate()
 
 private class TypeDefinitionRegistryGenerator(
@@ -31,7 +29,8 @@ private class TypeDefinitionRegistryGenerator(
     private val modelTypeMap: Map<KClass<out Entity<*>>, ModelType>,
     private val rootImplicitInputTypeMap: Map<KClass<out InputMapper<*, *>>, ImplicitInputType>,
     private val allImplicitInputTypes: List<ImplicitInputType>,
-    private val connectionNodeTypes: Set<ModelType>
+    private val connectionNodeTypes: Set<ModelType>,
+    private val scalarKotlinTypes: Set<KClass<*>>
 ) {
     init {
         if (queryType.props.isEmpty()) {
@@ -44,28 +43,14 @@ private class TypeDefinitionRegistryGenerator(
 
     fun generate(): TypeDefinitionRegistry =
         TypeDefinitionRegistry().apply {
-            addScalarTypes()
             add(generateQueryType())
             add(generateMutationType())
             addAll(generateMutationResultTypes())
             addAll(modelTypeMap.values.map { generateEntityType(it) })
             addAll(allImplicitInputTypes.map { generateInputType(it) })
             addAll(generateConnectionTypes())
+            addAll(generateScalarTypes())
         }
-
-    private fun TypeDefinitionRegistry.addScalarTypes() {
-        var hasUUID = false
-        for (modelType in modelTypeMap.values) {
-            for (prop in modelType.declaredProps.values) {
-                if (prop.returnType == UUID::class) {
-                    hasUUID = true
-                }
-            }
-        }
-        if (hasUUID) {
-            add(ScalarTypeDefinition.newScalarTypeDefinition().name("UUID").build())
-        }
-    }
 
     private fun generateQueryType(): ObjectTypeDefinition =
         ObjectTypeDefinition.newObjectTypeDefinition().apply {
@@ -136,7 +121,7 @@ private class TypeDefinitionRegistryGenerator(
                             prop.targetType?.graphql?.name
                                 ?: prop
                                     .takeIf { it.targetRawClass == EntityMutationResult::class }
-                                    ?.let { "_EntityMutationResult" }
+                                    ?.let { "EntityMutationResult" }
                                 ?: error("Intern bug Bad list element type")
                         ).asNullable(prop.isTargetNullable)
                     ).asNullable(prop.isNullable)
@@ -145,10 +130,10 @@ private class TypeDefinitionRegistryGenerator(
                         prop.targetType!!.graphql.name
                     ).asNullable(prop.isTargetNullable)
                 prop.returnType == EntityMutationResult::class ->
-                    TypeName("_EntityMutationResult")
+                    TypeName("EntityMutationResult")
                         .asNullable(prop.isNullable)
                 else ->
-                    scalarType(prop.returnType)
+                    scalarTypeName(prop.returnType)
                         .asNullable(prop.isNullable)
             }
             type(fieldType)
@@ -189,7 +174,7 @@ private class TypeDefinitionRegistryGenerator(
             val fieldType = when {
                 prop.isList && prop.targetScalarType !== null ->
                     ListType(
-                        scalarType(prop.targetScalarType!!)
+                        scalarTypeName(prop.targetScalarType!!)
                             .asNullable(false)
                     ).asNullable(prop.isNullable)
                 prop.isList && prop.targetImplicitType !== null ->
@@ -198,12 +183,12 @@ private class TypeDefinitionRegistryGenerator(
                             .asNullable(false)
                     ).asNullable(prop.isNullable)
                 prop.isReference && prop.targetScalarType !== null ->
-                    scalarType(prop.targetScalarType!!).asNullable(prop.isNullable)
+                    scalarTypeName(prop.targetScalarType!!).asNullable(prop.isNullable)
                 prop.isReference && prop.targetImplicitType !== null ->
                     TypeName(prop.targetImplicitType!!.name)
                         .asNullable(prop.isNullable)
                 else ->
-                    scalarType(prop.modelProp.returnType)
+                    scalarTypeName(prop.modelProp.returnType)
                         .asNullable(prop.isNullable)
             }
             type(fieldType)
@@ -252,7 +237,7 @@ private class TypeDefinitionRegistryGenerator(
             Immutable::class.java.isAssignableFrom(type.java) ->
                 TypeName(type.simpleName!!)
             else ->
-                scalarType(type)
+                scalarTypeName(type)
         }
 
     private fun generateMutationResultTypes(): List<SDLDefinition<*>> {
@@ -266,30 +251,30 @@ private class TypeDefinitionRegistryGenerator(
             FieldDefinition("totalAffectedRowCount", TypeName("Int").asNullable(false))
         val entityMutationResultFields = listOf(
             totalAffectedRowCountField,
-            FieldDefinition("type", TypeName("_MutationType").asNullable(false)),
+            FieldDefinition("type", TypeName("MutationType").asNullable(false)),
             FieldDefinition("affectedRowCount", TypeName("Int").asNullable(false)),
             FieldDefinition("row", TypeName("String").asNullable(false)),
             FieldDefinition(
                 "associations",
                 ListType(
-                    TypeName("_AssociationMutationResult").asNullable(false)
+                    TypeName("AssociationMutationResult").asNullable(false)
                 ).asNullable(false)
             )
         )
         return listOf(
             EnumTypeDefinition.newEnumTypeDefinition().apply {
-                name("_MutationType")
+                name("MutationType")
                 enumValueDefinition(EnumValueDefinition("NONE"))
                 enumValueDefinition(EnumValueDefinition("INSERT"))
                 enumValueDefinition(EnumValueDefinition("UPDATE"))
                 enumValueDefinition(EnumValueDefinition("DELETE"))
             }.build(),
             ObjectTypeDefinition.newObjectTypeDefinition().apply {
-                name("_EntityMutationResult")
+                name("EntityMutationResult")
                 fieldDefinitions(entityMutationResultFields)
             }.build(),
             ObjectTypeDefinition.newObjectTypeDefinition().apply {
-                name("_AssociationMutationResult")
+                name("AssociationMutationResult")
                 fieldDefinition(FieldDefinition("associationName", TypeName("String").asNullable(false)))
                 fieldDefinition(totalAffectedRowCountField)
                 fieldDefinition(FieldDefinition("middleTableAffectedRowCount", TypeName("Int").asNullable(false)))
@@ -299,7 +284,7 @@ private class TypeDefinitionRegistryGenerator(
                     FieldDefinition(
                         "targets",
                         ListType(
-                            TypeName("_AssociatedTargetMutationResult").asNullable(false)
+                            TypeName("AssociatedTargetMutationResult").asNullable(false)
                         ).asNullable(false)
                     )
                 )
@@ -307,13 +292,13 @@ private class TypeDefinitionRegistryGenerator(
                     FieldDefinition(
                         "detachedTargets",
                         ListType(
-                            TypeName("_AssociatedTargetMutationResult").asNullable(false)
+                            TypeName("AssociatedTargetMutationResult").asNullable(false)
                         ).asNullable(false)
                     )
                 )
             }.build(),
             ObjectTypeDefinition.newObjectTypeDefinition().apply {
-                name("_AssociatedTargetMutationResult")
+                name("AssociatedTargetMutationResult")
                 fieldDefinitions(entityMutationResultFields)
                 fieldDefinition(FieldDefinition("middleTableChanged", TypeName("Boolean").asNullable(false)))
             }.build()
@@ -356,21 +341,22 @@ private class TypeDefinitionRegistryGenerator(
         return definitions
     }
 
-    private fun scalarType(type: KClass<*>): TypeName =
-        when (type) {
-            String::class -> TypeName("String")
-            Boolean::class -> TypeName("Boolean")
-            Byte::class -> TypeName("Byte")
-            Short::class -> TypeName("Short")
-            Int::class -> TypeName("Int")
-            Long::class -> TypeName("Long")
-            Float::class -> TypeName("Float")
-            Double::class -> TypeName("Double")
-            BigInteger::class -> TypeName("BigInteger")
-            BigDecimal::class -> TypeName("Int")
-            UUID::class -> TypeName("UUID")
-            else -> error("Unsupported type ${type.qualifiedName}")
+    private fun generateScalarTypes(): List<SDLDefinition<*>> =
+        scalarKotlinTypes.map {
+            if (Enum::class.java.isAssignableFrom(it.java)) {
+                EnumTypeDefinition.newEnumTypeDefinition().apply {
+                    name(it.simpleName!!)
+                    for (constant in it.java.enumConstants) {
+                        enumValueDefinition(EnumValueDefinition((constant as Enum<*>).name))
+                    }
+                }.build()
+            } else {
+                ScalarTypeDefinition(it.simpleName!!)
+            }
         }
+
+    private fun scalarTypeName(type: KClass<*>): TypeName =
+        TypeName(type.simpleName!!)
 }
 
 private fun Type<*>.asNullable(nullable: Boolean): Type<*> =

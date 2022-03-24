@@ -1,6 +1,7 @@
 package org.babyfish.graphql.provider.runtime
 
 import org.babyfish.graphql.provider.*
+import org.babyfish.graphql.provider.meta.GraphQLProp
 import org.babyfish.graphql.provider.meta.ImplicitInputType
 import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.meta.ModelType
@@ -11,7 +12,9 @@ import org.babyfish.graphql.provider.meta.impl.MutationTypeImpl
 import org.babyfish.graphql.provider.meta.impl.QueryPropImpl
 import org.babyfish.graphql.provider.meta.impl.QueryTypeImpl
 import org.babyfish.graphql.provider.meta.impl.invokeByRegistryMode
+import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.sql.Entity
+import org.babyfish.kimmer.sql.EntityMutationResult
 import org.springframework.aop.support.AopUtils
 import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility
@@ -57,21 +60,25 @@ fun createMetaProvider(
         }
     }
     val connectionNodeTypes = mutableSetOf<ModelType>()
+    val scalarKotlinTypes = mutableSetOf<KClass<*>>()
     for (prop in queryType.props.values) {
         if (prop.isConnection) {
             connectionNodeTypes += prop.targetType!!
         }
+        collectScalarTypes(prop, scalarKotlinTypes)
     }
     for (prop in mutationType.props.values) {
         if (prop.isConnection) {
             connectionNodeTypes += prop.targetType!!
         }
+        collectScalarTypes(prop, scalarKotlinTypes)
     }
     for (modelType in modelTypeMap.values) {
         for (prop in modelType.declaredProps.values) {
             if (prop.isConnection) {
                 connectionNodeTypes += prop.targetType!!
             }
+            collectScalarTypes(prop, scalarKotlinTypes)
         }
     }
     return MetaProvider(
@@ -80,7 +87,25 @@ fun createMetaProvider(
         modelTypeMap,
         rootImplicitInputTypeMap,
         allImplicitInputTypes,
-        connectionNodeTypes
+        connectionNodeTypes,
+        scalarKotlinTypes
     )
 }
 
+private fun collectScalarTypes(prop: GraphQLProp, scalarKotlinTypes: MutableSet<KClass<*>>) {
+    if (prop.isReference || prop.isList || prop.isConnection) {
+        return
+    }
+    if (prop.targetRawClass == EntityMutationResult::class) {
+        return
+    }
+    scalarKotlinTypes += prop.returnType
+    for (argument in prop.arguments) {
+        if (argument.inputMapperType === null) {
+            val type = argument.elementType ?: argument.type
+            if (!Immutable::class.java.isAssignableFrom(type.java)) {
+                scalarKotlinTypes += type
+            }
+        }
+    }
+}
