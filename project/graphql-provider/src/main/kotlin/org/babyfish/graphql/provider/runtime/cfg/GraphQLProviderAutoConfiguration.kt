@@ -1,6 +1,5 @@
-package org.babyfish.graphql.provider.runtime.dgs
+package org.babyfish.graphql.provider.runtime.cfg
 
-import org.babyfish.graphql.provider.EntityMapper
 import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.Mutation
 import org.babyfish.graphql.provider.Query
@@ -9,18 +8,19 @@ import org.babyfish.graphql.provider.meta.ModelType
 import org.babyfish.graphql.provider.runtime.*
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.SqlClient
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import kotlin.reflect.KClass
 
 @Configuration
-@ComponentScan(basePackageClasses = [GraphQLProviderAutoConfiguration::class])
+@EnableConfigurationProperties(GraphQLProviderProperties::class)
 open class GraphQLProviderAutoConfiguration(
-    val queries: List<Query>,
-    val mutations: List<Mutation>,
-    val inputMappers: List<InputMapper<*, *>>
+    private val queries: List<Query>,
+    private val mutations: List<Mutation>,
+    private val inputMappers: List<InputMapper<*, *>>
 ) {
     @Suppress("UNCHECKED_CAST")
     @Bean
@@ -42,9 +42,10 @@ open class GraphQLProviderAutoConfiguration(
     open fun dataFetchers(
         r2dbcClient: R2dbcClient,
         argumentsConverter: ArgumentsConverter,
-        ctx: ApplicationContext
+        ctx: ApplicationContext,
+        cfg: GraphQLProviderProperties
     ): DataFetchers =
-        DataFetchers(r2dbcClient, argumentsConverter, ctx)
+        DataFetchers(r2dbcClient, argumentsConverter, ctx, cfg)
 
     @Bean
     open fun argumentsConverter(

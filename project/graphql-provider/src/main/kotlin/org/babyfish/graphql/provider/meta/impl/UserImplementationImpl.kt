@@ -16,14 +16,12 @@ internal class UserImplementationImpl(
 ) : UserImplementation {
 
     override fun execute(
-        env: DataFetchingEnvironment,
-        ctx: UserImplementationExecutionContext,
-        argumentsConverter: ArgumentsConverter
+        ctx: UserImplementationExecutionContext
     ): CompletableFuture<Any?> {
-        val args = argumentsConverter.convert(
+        val args = ctx.argumentsConverter.convert(
             arguments,
             fnOwner,
-            env
+            ctx.env
         )
         withUserImplementationExecutionContext(ctx) {
             fn.call(*args)

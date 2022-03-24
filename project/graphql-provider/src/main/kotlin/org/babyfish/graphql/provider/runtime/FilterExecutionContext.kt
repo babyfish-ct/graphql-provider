@@ -1,14 +1,18 @@
 package org.babyfish.graphql.provider.runtime
 
+import graphql.schema.DataFetchingEnvironment
+import org.babyfish.graphql.provider.meta.GraphQLProp
+import org.babyfish.graphql.provider.meta.QueryProp
 import org.babyfish.graphql.provider.meta.impl.NoReturnValue
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.ast.Filterable
 import java.lang.reflect.InvocationTargetException
-import kotlin.reflect.KProperty1
 
 class FilterExecutionContext(
+    val prop: GraphQLProp,
+    val env: DataFetchingEnvironment,
+    val argumentsConverter: ArgumentsConverter,
     val query: Filterable<out Entity<*>, *>,
-    val dependencies: MutableSet<KProperty1<out Entity<*>, *>>
 )
 
 internal fun withFilterExecutionContext(

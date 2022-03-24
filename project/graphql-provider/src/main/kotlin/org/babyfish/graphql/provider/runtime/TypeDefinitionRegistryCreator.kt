@@ -79,22 +79,22 @@ private class TypeDefinitionRegistryGenerator(
 
     private fun generateUnionType(modelType: ModelType): UnionTypeDefinition =
         UnionTypeDefinition.newUnionTypeDefinition().apply {
-            name(modelType.name)
-            memberTypes(modelType.derivedTypes.map { TypeName(it.name) })
+            name(modelType.graphql.name)
+            memberTypes(modelType.derivedTypes.map { TypeName(it.graphql.name) })
         }.build()
 
     private fun generateObjectType(modelType: ModelType): ObjectTypeDefinition =
         ObjectTypeDefinition.newObjectTypeDefinition().apply {
-            name(modelType.name)
-            modelType.superType?.let { implementz(TypeName(it.name)) }
+            name(modelType.graphql.name)
+            modelType.superType?.let { implementz(TypeName(it.graphql.name)) }
             // TODO: Bad API of kimmer-sql
             fieldDefinitions(modelType.declaredProps.values.map { generateField(it as GraphQLProp) })
         }.build()
 
     private fun generateInterfaceType(modelType: ModelType): InterfaceTypeDefinition =
         InterfaceTypeDefinition.newInterfaceTypeDefinition().apply {
-            name(modelType.name)
-            modelType.superType?.let { TypeName(it.name) }
+            name(modelType.graphql.name)
+            modelType.superType?.let { TypeName(it.graphql.name) }
             // TODO: Bad API of kimmer-sql
             definitions(modelType.declaredProps.values.map { generateField(it as GraphQLProp) })
         }.build()

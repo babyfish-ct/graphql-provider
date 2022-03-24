@@ -18,8 +18,5 @@ class AuthorQuery: Query() {
                 }
                 orderBy(table.name)
             }
-            redis {
-                dependsOn(Author::name)
-            }
         }
 }

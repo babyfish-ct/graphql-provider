@@ -19,6 +19,10 @@ class BookMapper: EntityMapper<Book, UUID>() {
             idGenerator(UUIDIdGenerator())
         }
 
+        graphql {
+
+        }
+
         reference(Book::store)
 
         list(Book::authors) {
@@ -29,8 +33,6 @@ class BookMapper: EntityMapper<Book, UUID>() {
                     targetJoinColumnName = "AUTHOR_ID"
                 }
             }
-            redis {  }
-            graphql { }
         }
     }
 

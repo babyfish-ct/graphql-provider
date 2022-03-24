@@ -3,7 +3,6 @@ package org.babyfish.graphql.provider.dsl.db
 import org.babyfish.graphql.provider.dsl.GraphQLProviderDSL
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.meta.ModelProp
-import org.babyfish.kimmer.sql.meta.config.Column
 import org.babyfish.kimmer.sql.meta.config.Storage
 import org.babyfish.kimmer.sql.spi.databaseIdentifier
 
@@ -29,7 +28,7 @@ class ReferenceDatabaseDSL internal constructor(
         }
     }
 
-    override fun create(): Storage? =
+    override fun storage(): Storage? =
         storage
 
 }

@@ -23,6 +23,6 @@ open class AssociationDatabaseDSL internal constructor(
         }
     }
 
-    internal open fun create(): Storage? =
+    internal open fun storage(): Storage? =
         storage
 }

@@ -27,17 +27,11 @@ class BookQuery: Query() {
                 db {
                     where(table.name ilike it)
                 }
-                redis {
-                    dependsOn(Book::name)
-                }
             }
 
             minPrice?.let {
                 db {
                     where(table.price ge it)
-                }
-                redis {
-                    dependsOn(Book::price)
                 }
             }
 
@@ -45,16 +39,10 @@ class BookQuery: Query() {
                 db {
                     where(table.price le it)
                 }
-                redis {
-                    dependsOn(Book::price)
-                }
             }
 
             db {
                 orderBy(table.name)
-            }
-            redis {
-                dependsOn(Book::name)
             }
         }
 }

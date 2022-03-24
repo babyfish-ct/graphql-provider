@@ -2,6 +2,7 @@ package org.babyfish.graphql.provider.meta.impl
 
 import org.babyfish.graphql.provider.meta.*
 import org.babyfish.kimmer.meta.ImmutableType
+import org.babyfish.kimmer.sql.meta.EntityType
 import org.babyfish.kimmer.sql.meta.spi.EntityTypeImpl
 import org.babyfish.kimmer.sql.meta.spi.MetaFactory
 
@@ -12,9 +13,18 @@ internal class ModelTypeImpl(
 
     private var _isMapped: Boolean = false
 
-    override val cache: Cache = Cache(CacheLevel.NO_CACHE)
+    private var _graphql: ModelGraphQL = ModelGraphQL(
+        immutableType.simpleName,
+        null,
+        null
+    )
 
-    override var graphql: ModelType.GraphQL = ModelType.GraphQL(immutableType.simpleName, null, null)
+    override val superType: ModelType?
+        get() = super.superType as ModelType?
+
+    @Suppress("UNCHECKED_CAST")
+    override val derivedTypes: List<ModelType>
+        get() = super.derivedTypes as List<ModelType>
 
     override val idProp: ModelProp
         get() = super.idProp as ModelProp
@@ -34,7 +44,17 @@ internal class ModelTypeImpl(
     override val backProps: Set<ModelProp>
         get() = super.backProps as Set<ModelProp>
 
-    var isMapped: Boolean
+    val isMapped: Boolean
         get() = _isMapped
-        set(value) { _isMapped = value }
+
+    override val graphql: ModelGraphQL
+        get() = _graphql
+
+    internal fun setMapped() {
+        _isMapped = true
+    }
+
+    internal fun setGraphQL(graphql: ModelGraphQL) {
+        _graphql = graphql
+    }
 }

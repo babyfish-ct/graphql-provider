@@ -12,31 +12,31 @@ internal class ModelPropImpl(
     kotlinProp: KProperty1<*, *>
 ): EntityPropImpl(declaringType, kotlinProp), ModelProp {
 
-    private var _filter: Filter? = null
-
     private var _userImplementation: UserImplementation? = null
 
-    override val cache: Cache
-        get() = Cache(CacheLevel.NO_CACHE)
+    private var _filter: Filter? = null
+
+    private var _hidden: Boolean = false
+
+    private var _batchSize: Int? = null
+
+    override val userImplementation: UserImplementation?
+        get() = _userImplementation
 
     override val filter: Filter?
         get() = _filter
 
-    override val userImplementation: UserImplementation?
-        get() = _userImplementation
+    override val hidden: Boolean
+        get() = hidden
+
+    override val batchSize: Int?
+        get() = _batchSize
 
     override val targetType: ModelType?
         get() = super.targetType as ModelType?
 
     override val targetRawClass: KClass<*>
         get() = super.targetType?.kotlinType ?: super.returnType
-
-    internal fun setFilter(filter: Filter) {
-        if (_filter !== null) {
-            error("Internal bug: filter of '$this' can only be set once")
-        }
-        _filter = filter
-    }
 
     internal fun setUserImplementation(userImplementation: UserImplementation) {
         if (!isTransient) {
@@ -48,5 +48,20 @@ internal class ModelPropImpl(
             )
         }
         _userImplementation = userImplementation
+    }
+
+    internal fun setFilter(filter: Filter) {
+        if (_filter !== null) {
+            error("Internal bug: filter of '$this' can only be set once")
+        }
+        _filter = filter
+    }
+
+    internal fun setHidden(hidden: Boolean) {
+        _hidden = hidden
+    }
+
+    internal fun setBatchSize(batchSize: Int?) {
+        _batchSize = batchSize
     }
 }

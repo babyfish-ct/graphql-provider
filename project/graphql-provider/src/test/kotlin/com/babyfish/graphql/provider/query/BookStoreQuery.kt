@@ -20,8 +20,5 @@ class BookStoreQuery : Query() {
                 }
                 orderBy(BookStore::name)
             }
-            redis {
-                dependsOn(BookStore::name)
-            }
         }
 }

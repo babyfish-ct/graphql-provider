@@ -55,7 +55,7 @@ internal fun createSqlClientByEntityMappers(
             (mapper as EntityMapper<Entity<*>, *>).apply {
                 val kotlinType = mapper.immutableType.kotlinType as KClass<out Entity<*>>
                 val modelType = entity(kotlinType as KClass<Entity<FakeID>>) as ModelTypeImpl
-                modelType.isMapped = true
+                modelType.setMapped()
                 (mapper as EntityMapper<Entity<String>, String>).apply {
                     EntityTypeDSL<Entity<String>, String>(modelType, this@createSqlClient).config()
                 }

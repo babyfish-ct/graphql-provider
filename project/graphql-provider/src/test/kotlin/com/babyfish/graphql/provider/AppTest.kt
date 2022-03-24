@@ -8,10 +8,9 @@ import com.babyfish.graphql.provider.mapper.input.BookInputMapper
 import com.babyfish.graphql.provider.mapper.input.BookShallowTreeInputMapper
 import com.babyfish.graphql.provider.mutation.BookMutation
 import com.babyfish.graphql.provider.query.BookQuery
-import org.babyfish.graphql.provider.Mutation
 import org.babyfish.graphql.provider.meta.MetaProvider
-import org.babyfish.graphql.provider.runtime.KimmerSQLAutoConfiguration
-import org.babyfish.graphql.provider.runtime.dgs.GraphQLProviderAutoConfiguration
+import org.babyfish.graphql.provider.runtime.cfg.KimmerSQLAutoConfiguration
+import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderAutoConfiguration
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest

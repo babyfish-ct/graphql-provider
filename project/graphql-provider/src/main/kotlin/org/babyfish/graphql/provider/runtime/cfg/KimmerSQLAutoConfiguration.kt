@@ -1,6 +1,8 @@
-package org.babyfish.graphql.provider.runtime
+package org.babyfish.graphql.provider.runtime.cfg
 
 import org.babyfish.graphql.provider.EntityMapper
+import org.babyfish.graphql.provider.runtime.R2dbcClient
+import org.babyfish.graphql.provider.runtime.createSqlClientByEntityMappers
 import org.babyfish.kimmer.sql.SqlClient
 import org.babyfish.kimmer.sql.runtime.Dialect
 import org.babyfish.kimmer.sql.runtime.JdbcExecutor
@@ -10,7 +12,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.r2dbc.core.DatabaseClient
 
 @Configuration
-abstract class KimmerSQLAutoConfiguration(
+open class KimmerSQLAutoConfiguration(
     private val mappers: List<EntityMapper<*, *>>
 ) {
 

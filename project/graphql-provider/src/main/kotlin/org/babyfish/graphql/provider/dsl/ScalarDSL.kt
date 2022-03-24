@@ -2,15 +2,15 @@ package org.babyfish.graphql.provider.dsl
 
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.dsl.db.ScalarDatabaseDSL
+import org.babyfish.graphql.provider.dsl.graphql.ScalarPropGraphQLDSL
+import org.babyfish.graphql.provider.meta.impl.ModelPropImpl
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.meta.config.Storage
-import kotlin.reflect.KProperty1
 
 @GraphQLProviderDSL
 class ScalarDSL<E: Entity<ID>, ID: Comparable<ID>, T> internal constructor(
-    private val prop: KProperty1<E, T?>
+    private val prop: ModelPropImpl
 ) {
-
     private var storage: Storage? = null
 
     fun db(block: ScalarDatabaseDSL<E, ID, T>.() -> Unit) {
@@ -19,9 +19,15 @@ class ScalarDSL<E: Entity<ID>, ID: Comparable<ID>, T> internal constructor(
         }
         storage = ScalarDatabaseDSL<E, ID, T>(prop).run {
             block()
-            create()
+            storage()
         }
     }
 
-    internal fun create(): Storage? = storage
+    fun graphql(block: ScalarPropGraphQLDSL.() -> Unit) {
+        val dsl = ScalarPropGraphQLDSL()
+        dsl.block()
+        prop.setHidden(dsl.hidden)
+    }
+
+    internal fun storage(): Storage? = storage
 }

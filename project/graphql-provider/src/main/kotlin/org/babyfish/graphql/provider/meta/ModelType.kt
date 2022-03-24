@@ -4,9 +4,11 @@ import org.babyfish.kimmer.sql.meta.EntityType
 
 interface ModelType : GraphQLType, EntityType {
 
-    val cache: Cache
+    val graphql: ModelGraphQL
 
-    val graphql: GraphQL
+    override val superType: ModelType?
+
+    override val derivedTypes: List<ModelType>
 
     override val idProp: ModelProp
 
@@ -17,11 +19,5 @@ interface ModelType : GraphQLType, EntityType {
     override val props: Map<String, ModelProp>
 
     override val backProps: Set<ModelProp>
-
-    data class GraphQL(
-        val name: String,
-        val defaultBatchSize: Int?,
-        val defaultCollectionBatchSize: Int?
-    )
 }
 

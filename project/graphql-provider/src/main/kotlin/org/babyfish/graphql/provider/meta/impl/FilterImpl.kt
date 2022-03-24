@@ -15,14 +15,12 @@ internal class FilterImpl(
 ): Filter {
 
     override fun execute(
-        env: DataFetchingEnvironment,
-        ctx: FilterExecutionContext,
-        argumentsConverter: ArgumentsConverter
+        ctx: FilterExecutionContext
     ) {
-        val args = argumentsConverter.convert(
+        val args = ctx.argumentsConverter.convert(
             arguments,
             fnOwner,
-            env
+            ctx.env
         )
         withFilterExecutionContext(ctx) {
             fn.call(*args)

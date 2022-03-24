@@ -3,17 +3,13 @@ package org.babyfish.graphql.provider.dsl
 import org.babyfish.graphql.provider.dsl.db.EntityTypeDatabaseDSL
 import org.babyfish.graphql.provider.dsl.graphql.EntityTypeGraphQLDSL
 import org.babyfish.kimmer.graphql.Connection
-import org.babyfish.kimmer.Immutable
 import org.babyfish.graphql.provider.meta.impl.ModelTypeImpl
 import org.babyfish.graphql.provider.ModelException
-import org.babyfish.graphql.provider.meta.ModelType
+import org.babyfish.graphql.provider.dsl.graphql.UserImplementationPropGraphQLDSL
 import org.babyfish.graphql.provider.meta.impl.ModelPropImpl
-import org.babyfish.graphql.provider.runtime.FakeID
-import org.babyfish.kimmer.jackson.immutableObjectMapper
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.meta.EntityMappingBuilder
 import org.babyfish.kimmer.sql.spi.databaseIdentifier
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 @GraphQLProviderDSL
@@ -35,24 +31,27 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     }
 
     fun graphql(block: EntityTypeGraphQLDSL.() -> Unit) {
-        val graphql = EntityTypeGraphQLDSL(modelType.kotlinType.simpleName!!).run {
+        val defaultName = modelType.kotlinType.simpleName!!
+        val graphql = EntityTypeGraphQLDSL().run {
             block()
-            create()
+            graphql(defaultName)
         }
-        modelType.graphql = graphql
+        modelType.setGraphQL(graphql)
     }
 
     fun <T> scalar(
         prop: KProperty1<E, T>,
-        block: ScalarDSL<E, ID, T>.() -> Unit
+        block: (ScalarDSL<E, ID, T>.() -> Unit)? = null
     ) {
         val modelProp = builder.prop(prop) as ModelPropImpl
         if (modelProp.targetType !== null) {
             throw ModelException("Cannot map '${prop}' as scalar property")
         }
-        ScalarDSL(prop).run {
-            block()
-            create()
+        ScalarDSL<E, ID, T>(modelProp).run {
+            if (block !== null) {
+                block()
+            }
+            storage()
         }?.let {
             builder.storage(prop, it)
         }
@@ -70,7 +69,7 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
             if (block !== null) {
                 block()
             }
-            create()
+            storage()
         }.let {
             builder.storage(prop, it)
         }
@@ -86,7 +85,7 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
         }
         CollectionDSL(modelProp).run {
             block()
-            create()
+            storage()
         }.let {
             builder.storage(prop, it)
         }
@@ -102,7 +101,7 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
         }
         CollectionDSL(modelProp).run {
             block()
-            create()
+            storage()
         }.let {
             builder.storage(prop, it)
         }
@@ -110,39 +109,53 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
 
     fun <T: Entity<*>> mappedReference(
         prop: KProperty1<E, T>,
-        mappedBy: KProperty1<T, *>
+        mappedBy: KProperty1<T, *>,
+        block: (MappedAssociationDSL.() -> Unit)? = null
     ) {
         val modelProp = builder.inverseProp(prop, mappedBy) as ModelPropImpl
         if (!modelProp.isReference) {
             throw ModelException("Cannot map '${prop}' as mapped reference property")
+        }
+        if (block !== null) {
+            MappedAssociationDSL(modelProp).block()
         }
     }
 
     fun <T: Entity<*>> mappedList(
         prop: KProperty1<E, List<T>>,
         mappedBy: KProperty1<T, *>,
-        block: (MappedCollectionDSL<T>.() -> Unit)? = null
+        block: (MappedAssociationDSL.() -> Unit)? = null
     ) {
         val modelProp = builder.inverseProp(prop, mappedBy) as ModelPropImpl
         if (!modelProp.isList) {
             throw ModelException("Cannot map '${prop}' as mapped list property")
+        }
+        if (block !== null) {
+            MappedAssociationDSL(modelProp).block()
         }
     }
 
     fun <T: Entity<*>> mappedConnection(
         prop: KProperty1<E, out Connection<T>>,
         mappedBy: KProperty1<T, *>,
-        block: (MappedCollectionDSL<T>.() -> Unit)? = null
+        block: (MappedAssociationDSL.() -> Unit)? = null
     ) {
         val modelProp = builder.inverseProp(prop, mappedBy) as ModelPropImpl
         if (!modelProp.isReference) {
             throw ModelException("Cannot map '${prop}' as mapped connection property")
         }
+        if (block !== null) {
+            MappedAssociationDSL(modelProp).block()
+        }
     }
 
     fun <T> userImplementation(
-        prop: KProperty1<E, T>
+        prop: KProperty1<E, T>,
+        block: (UserImplementationDSL.() -> Unit)? = null
     ) {
-        (builder.transientProp(prop) as ModelPropImpl)
+        val modelProp = builder.transientProp(prop) as ModelPropImpl
+        if (block !== null) {
+            UserImplementationDSL(modelProp).block()
+        }
     }
 }

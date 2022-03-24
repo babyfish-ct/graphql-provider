@@ -3,12 +3,10 @@ package org.babyfish.graphql.provider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactor.mono
 import org.babyfish.graphql.provider.dsl.*
-import org.babyfish.graphql.provider.meta.UserImplementation
-import org.babyfish.graphql.provider.meta.impl.NoReturnValue
-import  org.babyfish.graphql.provider.runtime.filterExecutionContext
-import org.babyfish.graphql.provider.runtime.loader.BatchLoaderByParentId
+import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
+import org.babyfish.graphql.provider.runtime.filterExecutionContext
 import org.babyfish.graphql.provider.runtime.loader.UserImplementationLoader
-import  org.babyfish.graphql.provider.runtime.registerEntityFieldFilter
+import org.babyfish.graphql.provider.runtime.registerEntityFieldFilter
 import org.babyfish.graphql.provider.runtime.registerEntityFieldImplementation
 import org.babyfish.graphql.provider.runtime.userImplementationExecutionContext
 import org.babyfish.kimmer.graphql.Connection
@@ -20,9 +18,7 @@ import org.dataloader.DataLoaderOptions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.core.GenericTypeResolver
-import reactor.core.publisher.Mono
 import java.util.concurrent.CompletableFuture
-import kotlin.math.max
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -34,6 +30,9 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
 
     @Autowired
     private lateinit var applicationContext: ApplicationContext
+
+    @Autowired
+    private lateinit var cfg: GraphQLProviderProperties
 
     init {
         val arguments =
@@ -121,7 +120,7 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
                     ) {
                         DataLoaderFactory.newMappedDataLoader(
                             UserImplementationLoader(block as suspend (Set<Any>) -> Map<Any, Any?>),
-                            DataLoaderOptions().setMaxBatchSize(64)
+                            DataLoaderOptions().setMaxBatchSize(cfg.batchSize(ctx.prop))
                         )
                     }
                 ctx.result = dataLoader.load(row.id)

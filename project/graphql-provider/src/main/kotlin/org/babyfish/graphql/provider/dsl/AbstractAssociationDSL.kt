@@ -1,17 +1,16 @@
 package org.babyfish.graphql.provider.dsl
 
 import org.babyfish.graphql.provider.dsl.graphql.EntityPropGraphQLDSL
-import org.babyfish.graphql.provider.meta.ModelProp
+import org.babyfish.graphql.provider.meta.impl.ModelPropImpl
 
 @GraphQLProviderDSL
 abstract class AbstractAssociationDSL internal constructor(
-    protected val prop: ModelProp
+    internal val prop: ModelPropImpl
 ) {
-    fun redis(block: EntityPropGraphQLDSL.() -> Unit) {
-
-    }
-
-    fun graphql(block: GraphQLProviderDSL.() -> Unit) {
-
+    fun graphql(block: EntityPropGraphQLDSL.() -> Unit) {
+        val dsl = EntityPropGraphQLDSL()
+        dsl.block()
+        prop.setHidden(dsl.hidden)
+        prop.setBatchSize(dsl.batchSize)
     }
 }

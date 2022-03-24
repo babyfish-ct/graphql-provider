@@ -1,12 +1,13 @@
 package org.babyfish.graphql.provider.runtime
 
 import graphql.schema.DataFetchingEnvironment
-import org.babyfish.graphql.provider.meta.impl.NoReturnValue
-import java.lang.reflect.InvocationTargetException
+import org.babyfish.graphql.provider.meta.ModelProp
 import java.util.concurrent.CompletableFuture
 
 class UserImplementationExecutionContext(
-    val env: DataFetchingEnvironment
+    val prop: ModelProp,
+    val env: DataFetchingEnvironment,
+    val argumentsConverter: ArgumentsConverter
 ) {
     internal var result: CompletableFuture<Any?>? = null
 }
@@ -28,7 +29,7 @@ internal fun <R> withUserImplementationExecutionContext(
     }
 }
 
-internal val userImplementationExecutionContext
+internal val userImplementationExecutionContext: UserImplementationExecutionContext
     get() = userImplementationExecutionContextLocal.get() ?: error(
         "No FilterExecutionContext. wrapper functions of " +
             "EntityMapper.Runtime.implementation and EntityMapper.Runtime.batchImplementation " +

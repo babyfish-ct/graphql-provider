@@ -65,22 +65,18 @@ internal class ManyToManyBatchLoader(
                     ?.let {
                         Triple(it.tableName, it.targetJoinColumnName, it.joinColumnName)
                     } ?: error("Internal bug, middle table is expected")
-        val result =
-            r2dbcClient.databaseClient.inConnection { con ->
-                val list = keys.indices.joinToString { "$${it + 1}" }
-                val sql = "select $thisColumn, $targetColumn from $tableName " +
-                    "where $thisColumn in ($list)"
-                val statement = con.createStatement(sql)
-                for ((index, key) in keys.withIndex()) {
-                    statement.bind(index, key)
-                }
-                Mono.from(statement.execute())
-            }.awaitSingle()
-        return result
-            .map { row, _ ->
-                row.get(0) to row.get(1)
+        val dialect = r2dbcClient.sqlClient.dialect
+        val sql = "select $thisColumn, $targetColumn from $tableName " +
+            "where $thisColumn in (${
+                keys.indices.joinToString { dialect.r2dbcParameter(it + 1) }
+            })"
+        return r2dbcClient.execute {
+            // TODO: kimmer-sql API bad design: List -> Collection
+            r2dbcClient.sqlClient.r2dbcExecutor.execute(it, sql, keys.toList()) {
+                map { row, _ ->
+                    row.get(0) to row.get(1)
+                }.asFlow().toList()
             }
-            .asFlow()
-            .toList()
+        }
     }
 }

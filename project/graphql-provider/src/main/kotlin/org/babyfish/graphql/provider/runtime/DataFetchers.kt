@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactor.mono
 import org.babyfish.graphql.provider.meta.*
 import org.babyfish.graphql.provider.meta.impl.MutationPropImpl
+import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
 import org.babyfish.graphql.provider.runtime.loader.BatchLoaderByParentId
 import org.babyfish.graphql.provider.runtime.loader.ManyToManyBatchLoader
 import org.babyfish.graphql.provider.runtime.loader.NonManyToManyBatchLoader
@@ -32,7 +33,8 @@ import kotlin.reflect.jvm.javaMethod
 open class DataFetchers(
     private val r2dbcClient: R2dbcClient,
     private val argumentsConverter: ArgumentsConverter,
-    private val applicationContext: ApplicationContext
+    private val applicationContext: ApplicationContext,
+    private val cfg: GraphQLProviderProperties
 ) {
 
     @Suppress("UNCHECKED_CAST")
@@ -45,9 +47,7 @@ open class DataFetchers(
                     val query =
                         r2dbcClient.sqlClient.createQuery(prop.targetType!!.kotlinType as KClass<Entity<FakeID>>) {
                             prop.filter.execute(
-                                env,
-                                FilterExecutionContext(this, mutableSetOf()),
-                                argumentsConverter
+                                FilterExecutionContext(prop, env, argumentsConverter, this)
                             )
                             select(table)
                         }
@@ -66,7 +66,9 @@ open class DataFetchers(
 
     private fun fetchUserImplementation(prop: ModelProp, env: DataFetchingEnvironment): CompletableFuture<Any?>? {
         val userImplementation = prop.userImplementation ?: return null
-        return userImplementation.execute(env, UserImplementationExecutionContext(env), argumentsConverter)
+        return userImplementation.execute(
+            UserImplementationExecutionContext(prop, env, argumentsConverter)
+        )
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -124,9 +126,7 @@ open class DataFetchers(
                     else -> error("Internal bug: DataFetchers can only accept QueryProp and ModelProp")
                 }
                 filter?.execute(
-                    env,
-                    FilterExecutionContext(this, mutableSetOf()),
-                    argumentsConverter
+                    FilterExecutionContext(prop, env, argumentsConverter, this)
                 )
                 select(table)
             }
@@ -168,9 +168,9 @@ open class DataFetchers(
         return dataLoaderRegistry.computeIfAbsent(dataLoaderKey) {
             DataLoaderFactory.newMappedDataLoader(
                 BatchLoaderByParentId(r2dbcClient, prop) {
-                    applyFilter(prop.filter, it)
+                    applyFilter(prop, it)
                 },
-                DataLoaderOptions().setMaxBatchSize(64)
+                DataLoaderOptions().setMaxBatchSize(cfg.batchSize(prop))
             )
         }
     }
@@ -182,21 +182,26 @@ open class DataFetchers(
                 when {
                     prop.isReference || prop.opposite?.isReference == true ->
                         NonManyToManyBatchLoader(r2dbcClient, prop) {
-                            applyFilter(prop.filter, it)
+                            applyFilter(prop, it)
                         }
                     else ->
                         ManyToManyBatchLoader(r2dbcClient, prop) {
-                            applyFilter(prop.filter, it)
+                            applyFilter(prop, it)
                         }
                 },
-                DataLoaderOptions().setMaxBatchSize(64)
+                DataLoaderOptions().setMaxBatchSize(cfg.batchSize(prop))
             )
         }
     }
 
-    private fun DataFetchingEnvironment.applyFilter(filter: Filter?, query: MutableRootQuery<Entity<FakeID>, FakeID>) {
+    private fun DataFetchingEnvironment.applyFilter(prop: GraphQLProp, query: MutableRootQuery<Entity<FakeID>, FakeID>) {
+        val filter = when (prop) {
+            is QueryProp -> prop.filter
+            is ModelProp -> prop.filter
+            else -> null
+        }
         filter?.let {
-            it.execute(this, FilterExecutionContext(query, mutableSetOf()), argumentsConverter)
+            it.execute(FilterExecutionContext(prop, this, argumentsConverter, query))
         }
     }
 

@@ -24,15 +24,7 @@ class BookStoreMapper: org.babyfish.graphql.provider.EntityMapper<BookStore, UUI
                 db {
                     where(table.name ilike it)
                 }
-                redis {
-                    dependsOn(Book::name)
-                }
             }
         }
-
-//    fun avgPrice() =
-//        runtime.implement(BookStore::avgPrice) {
-//
-//        }
 }
 

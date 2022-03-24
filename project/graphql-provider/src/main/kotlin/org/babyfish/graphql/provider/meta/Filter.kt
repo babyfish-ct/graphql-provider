@@ -9,8 +9,6 @@ interface Filter {
     val arguments: List<Argument>
 
     fun execute(
-        env: DataFetchingEnvironment,
-        ctx: FilterExecutionContext,
-        argumentsConverter: ArgumentsConverter
+        ctx: FilterExecutionContext
     )
 }

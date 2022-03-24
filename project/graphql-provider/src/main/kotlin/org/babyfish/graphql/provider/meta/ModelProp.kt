@@ -7,11 +7,13 @@ interface ModelProp: GraphQLProp, EntityProp {
     override val name: String
         get() = super.name
 
-    val cache: Cache
-
     val userImplementation: UserImplementation?
 
     val filter: Filter?
+
+    val hidden: Boolean
+
+    val batchSize: Int?
 
     override val arguments: List<Argument>
         get() = userImplementation?.arguments ?: filter?.arguments ?: emptyList()

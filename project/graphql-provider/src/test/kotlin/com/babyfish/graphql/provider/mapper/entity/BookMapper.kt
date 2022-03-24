@@ -51,9 +51,6 @@ class BookMapper: org.babyfish.graphql.provider.EntityMapper<Book, UUID>() {
                 db {
                     where(table.name ilike it)
                 }
-                redis {
-                    dependsOn(Author::name)
-                }
             }
         }
 }

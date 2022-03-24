@@ -13,8 +13,4 @@ class FilterDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     fun db(block: Filterable<E, ID>.() -> Unit) {
         (filterExecutionContext.query as Filterable<E, ID>).block()
     }
-
-    fun redis(block: FilterRedisDSL.() -> Unit) {
-        FilterRedisDSL(filterExecutionContext.dependencies).block()
-    }
 }
