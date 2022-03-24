@@ -1,7 +1,8 @@
 package org.babyfish.graphql.provider.runtime
 
 import graphql.schema.DataFetchingEnvironment
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.reactor.mono
 import org.babyfish.graphql.provider.meta.*
 import org.babyfish.graphql.provider.meta.impl.MutationPropImpl
 import org.babyfish.graphql.provider.runtime.loader.BatchLoaderByParentId
@@ -22,6 +23,7 @@ import org.dataloader.DataLoader
 import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderOptions
 import org.springframework.context.ApplicationContext
+import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.callSuspend
@@ -34,59 +36,75 @@ open class DataFetchers(
 ) {
 
     @Suppress("UNCHECKED_CAST")
-    suspend fun fetch(prop: QueryProp, env: DataFetchingEnvironment): Any? =
-        if (prop.isConnection) {
-            fetchConnection(prop, env)
-        } else {
-            r2dbcClient.execute {
-                val query =
-                    r2dbcClient.sqlClient.createQuery(prop.targetType!!.kotlinType as KClass<Entity<FakeID>>) {
-                        prop.filter.execute(
-                            env,
-                            FilterExecutionContext(this, mutableSetOf()),
-                            argumentsConverter
-                        )
-                        select(table)
+    fun fetch(prop: QueryProp, env: DataFetchingEnvironment): CompletableFuture<Any?> =
+        mono(Dispatchers.Unconfined) {
+            if (prop.isConnection) {
+                fetchConnectionAsync(prop, env)
+            } else {
+                r2dbcClient.execute {
+                    val query =
+                        r2dbcClient.sqlClient.createQuery(prop.targetType!!.kotlinType as KClass<Entity<FakeID>>) {
+                            prop.filter.execute(
+                                env,
+                                FilterExecutionContext(this, mutableSetOf()),
+                                argumentsConverter
+                            )
+                            select(table)
+                        }
+                    if (prop.isList) {
+                        query.execute(it)
+                    } else {
+                        query.execute(it).firstOrNull()
                     }
-                if (prop.isList) {
-                    query.execute(it)
-                } else {
-                    query.execute(it).firstOrNull()
                 }
             }
-        }
+        }.toFuture()
 
-    suspend fun fetch(prop: ModelProp, env: DataFetchingEnvironment): Any? {
+    fun fetch(prop: ModelProp, env: DataFetchingEnvironment): CompletableFuture<Any?> =
+        fetchUserImplementation(prop, env) ?:
+            fetchSystemImplementation(prop, env)
+
+    private fun fetchUserImplementation(prop: ModelProp, env: DataFetchingEnvironment): CompletableFuture<Any?>? {
+        val userImplementation = prop.userImplementation ?: return null
+        return userImplementation.execute(env, UserImplementationExecutionContext(env), argumentsConverter)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun fetchSystemImplementation(prop: ModelProp, env: DataFetchingEnvironment): CompletableFuture<Any?> {
         if (prop.isConnection) {
-            return fetchConnection(prop, env)
+            return mono(Dispatchers.Unconfined) {
+                fetchConnectionAsync(prop, env)
+            }.toFuture() as CompletableFuture<Any?>
         }
         val entity = env.getSource<Entity<*>>()
         if (prop.isReference && prop.storage is Column && Immutable.isLoaded(entity, prop.immutableProp)) {
             val parent = Immutable.get(entity, prop.immutableProp) as Entity<*>?
             if (parent === null) {
-                return null
+                return CompletableFuture.completedFuture(null)
             }
             val parentId = Immutable.get(parent, prop.targetType!!.idProp.immutableProp)
             if (env.arguments.isEmpty()) {
                 val fields = env.selectionSet.fields
                 if (fields.size == 1 && fields[0].name == "id") {
-                    return produce(prop.targetType!!.kotlinType) {
-                        Draft.set(this, prop.targetType!!.idProp.immutableProp, parentId)
-                    }
+                    return CompletableFuture.completedFuture(
+                            produce(prop.targetType!!.kotlinType) {
+                            Draft.set(this, prop.targetType!!.idProp.immutableProp, parentId)
+                        }
+                    )
                 }
             }
-            return env.loaderByParentId(prop).load(parentId).await()
+            return env.loaderByParentId(prop).load(parentId)
         } else {
-            val list = env.loaderById(prop).load(entity.id).await()
+            val future = env.loaderById(prop).load(entity.id)
             if (prop.isReference) {
-                return if (list.isNullOrEmpty()) null else list[0]
+                return future.thenApply { it.firstOrNull() }
             }
-            return list ?: emptyList<Any>()
+            return future.thenApply { it ?: emptyList<Any>() }
         }
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun fetchConnection(
+    private suspend fun fetchConnectionAsync(
         prop: GraphQLProp,
         env: DataFetchingEnvironment
     ): Connection<*> =
@@ -182,7 +200,7 @@ open class DataFetchers(
         }
     }
 
-    suspend fun fetch(prop: MutationProp, env: DataFetchingEnvironment): Any? {
+    fun fetch(prop: MutationProp, env: DataFetchingEnvironment): CompletableFuture<Any?> {
         val function = (prop as MutationPropImpl).function
         val javaMethod = function.javaMethod ?: error("Internal bug: No java method for '$function'")
         val owner = applicationContext.getBean(javaMethod.declaringClass)
@@ -191,6 +209,8 @@ open class DataFetchers(
             owner,
             env
         )
-        return function.callSuspend(*args)
+        return mono(Dispatchers.Unconfined) {
+            function.callSuspend(*args)
+        }.toFuture()
     }
 }

@@ -38,6 +38,6 @@ class BookMutation(
     @Transactional
     suspend fun saveBookDeepTree(
         input: ImplicitInput<Book, BookDeepTreeInputMapper>
-    ): EntityMutationResult =
-        r2dbcClient.save(input.entity, input.saveOptionsBlock)
+    ): Book =
+        r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
 }

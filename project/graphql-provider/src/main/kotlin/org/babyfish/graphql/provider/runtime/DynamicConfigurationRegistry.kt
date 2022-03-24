@@ -1,16 +1,13 @@
 package org.babyfish.graphql.provider.runtime
 
-import graphql.schema.DataFetchingEnvironment
-import org.babyfish.graphql.provider.meta.Cache
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.Query
-import org.babyfish.graphql.provider.meta.Argument
-import org.babyfish.graphql.provider.meta.CacheLevel
-import org.babyfish.graphql.provider.meta.Filter
+import org.babyfish.graphql.provider.meta.*
+import org.babyfish.graphql.provider.meta.impl.FilterImpl
 import org.babyfish.graphql.provider.meta.impl.NoReturnValue
+import org.babyfish.graphql.provider.meta.impl.UserImplementationImpl
 import org.babyfish.kimmer.sql.Entity
 import java.lang.reflect.InvocationTargetException
-import java.util.*
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.javaGetter
@@ -18,6 +15,8 @@ import kotlin.reflect.jvm.javaGetter
 internal class DynamicConfigurationRegistry {
 
     private val filterMap = mutableMapOf<String, FilterImpl>()
+
+    private val userImplementationMap = mutableMapOf<String, UserImplementationImpl>()
 
     private val cacheMap = mutableMapOf<String, Cache>()
 
@@ -54,6 +53,23 @@ internal class DynamicConfigurationRegistry {
         )
     }
 
+    fun addImplementation(
+        prop: KProperty1<out Entity<*>, *>,
+        mapper: org.babyfish.graphql.provider.EntityMapper<out Entity<*>, *>,
+        fn: KFunction<*>,
+        fnArguments: List<Argument>
+    ) {
+        val path = prop.path
+        userImplementationMap[path]?.let {
+            throw ModelException("Conflict entity mapper function: '${it.fn}' and ${registryFun}")
+        }
+        userImplementationMap[path] = UserImplementationImpl(
+            mapper,
+            fn,
+            fnArguments
+        )
+    }
+
     fun addQueryFieldCache(
         fn: KFunction<*>,
         cache: Cache
@@ -68,6 +84,9 @@ internal class DynamicConfigurationRegistry {
 
     fun filter(prop: KProperty1<*, *>): Filter? =
         filterMap[prop.path]
+
+    fun userImplementation(prop: KProperty1<*, *>): UserImplementation? =
+        userImplementationMap[prop.path]
 
     fun cache(fn: KFunction<*>): Cache =
         cacheMap["Query.${fn.name}"] ?: DEFAULT_QUERY_FIELD_CACHE
@@ -103,40 +122,6 @@ internal fun dynamicConfigurationRegistryFunScope(fn: KFunction<*>, block: (List
     }
 }
 
-private class FilterImpl(
-    val fnOwner: Any,
-    val fn: KFunction<*>,
-    override val arguments: List<Argument>
-): Filter {
-
-    override fun execute(
-        env: DataFetchingEnvironment,
-        ctx: FilterExecutionContext,
-        argumentsConverter: ArgumentsConverter
-    ) {
-        val args = argumentsConverter.convert(
-            arguments,
-            fnOwner,
-            env
-        )
-        val oldContext = filterExecutionContextLocal.get()
-        filterExecutionContextLocal.set(ctx)
-        try {
-            fn.call(*args)
-        } catch (ex: InvocationTargetException) {
-            if (ex.targetException !is NoReturnValue) {
-                throw ex.targetException
-            }
-        } finally {
-            if (oldContext !== null) {
-                filterExecutionContextLocal.set(oldContext)
-            } else {
-                filterExecutionContextLocal.remove()
-            }
-        }
-    }
-}
-
 internal fun registerQueryField(
     query: Query
 ): Boolean {
@@ -149,7 +134,16 @@ internal fun registerQueryField(
     return true
 }
 
-internal fun registerEntityField(
+internal fun registerQueryFieldCache(cache: Cache) {
+    val reg = registry
+    val fn = registryFun
+    if (reg === null || fn === null) {
+        error("Internal bug: Cannot call 'registerQueryFieldRedis'")
+    }
+    reg.addQueryFieldCache(fn, cache)
+}
+
+internal fun registerEntityFieldFilter(
     prop: KProperty1<out Entity<*>, *>,
     mapper: org.babyfish.graphql.provider.EntityMapper<out Entity<*>, *>
 ): Boolean {
@@ -162,24 +156,23 @@ internal fun registerEntityField(
     return true
 }
 
-internal fun registerQueryFieldCache(cache: Cache) {
+internal fun registerEntityFieldImplementation(
+    prop: KProperty1<out Entity<*>, *>,
+    mapper: org.babyfish.graphql.provider.EntityMapper<out Entity<*>, *>
+): Boolean {
     val reg = registry
     val fn = registryFun
     if (reg === null || fn === null) {
-        error("Internal bug: Cannot call 'registerQueryFieldRedis'")
+        return false
     }
-    reg.addQueryFieldCache(fn, cache)
-}
-
-internal val filterExecutionContext
-    get() = filterExecutionContextLocal.get() ?: error(
-        "No FilterExecutionContext. wrapper functions of " +
-            "Query.queryReference, Query.queryList, Query.queryConnection, " +
-            "EntityMapper.filterList, EntityMapper.filterConnection, and EntityMapper.userImplementation " +
-            "cannot be invoked directly because they can only be invoked by the framework internally"
+    reg.addImplementation(
+        prop,
+        mapper,
+        fn,
+        registryFunArguments ?: error("Internal bug")
     )
-
-private val filterExecutionContextLocal = ThreadLocal<FilterExecutionContext>()
+    return true
+}
 
 private val KProperty1<*, *>.path: String
     get() {

@@ -11,7 +11,7 @@ abstract class Query {
 
     protected val runtime: Runtime = Runtime()
 
-    protected inner class Runtime internal constructor() {
+    inner class Runtime internal constructor() {
 
         fun <N : Entity<NID>, NID : Comparable<NID>> queryConnection(
             filterBlock: FilterDSL<N, NID>.() -> Unit

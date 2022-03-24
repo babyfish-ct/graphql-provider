@@ -143,6 +143,6 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     fun <T> userImplementation(
         prop: KProperty1<E, T>
     ) {
-        //builder.transientProp(prop)
+        (builder.transientProp(prop) as ModelPropImpl)
     }
 }

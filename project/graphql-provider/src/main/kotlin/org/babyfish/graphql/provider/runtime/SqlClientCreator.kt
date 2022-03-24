@@ -40,7 +40,7 @@ internal fun createSqlClientByEntityMappers(
         dynamicConfigurationRegistryScope(dynamicConfigurationRegistry) {
             for (mapper in mappers) {
                 for (function in mapper::class.declaredFunctions) {
-                    if (function.name != "config" && function.parameters.size > 1) {
+                    if (function.name != "config") {
                         if (function.visibility == KVisibility.PUBLIC) {
                             if (function.isSuspend) {
                                 throw ModelException("Filter function '$function' cannot be suspend")
@@ -64,7 +64,11 @@ internal fun createSqlClientByEntityMappers(
     }.apply {
         for (entityType in this.entityTypeMap.values) {
             for (prop in entityType.declaredProps.values) {
-                if (prop.isConnection || prop.isList) {
+                if (prop.isTransient) {
+                    dynamicConfigurationRegistry.userImplementation(prop.kotlinProp)?.let {
+                        (prop as ModelPropImpl).setUserImplementation(it)
+                    }
+                } else if (prop.isConnection || prop.isList) {
                     dynamicConfigurationRegistry.filter(prop.kotlinProp)?.let {
                         (prop as ModelPropImpl).setFilter(it)
                     }

@@ -3,10 +3,7 @@ package org.babyfish.graphql.provider.runtime
 import graphql.schema.DataFetcher
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.reactor.mono
 import org.babyfish.graphql.provider.meta.MetaProvider
-import org.babyfish.graphql.provider.meta.ModelProp
 
 fun GraphQLCodeRegistry.Builder.registryDynamicCodeRegistry(
     dataFetchers: DataFetchers,
@@ -16,29 +13,23 @@ fun GraphQLCodeRegistry.Builder.registryDynamicCodeRegistry(
     for (prop in metaProvider.queryType.props.values) {
         val coordinates = FieldCoordinates.coordinates("Query", prop.name)
         val dataFetcher = DataFetcher {
-            mono(Dispatchers.Unconfined) {
-                dataFetchers.fetch(prop, it)
-            }.toFuture()
+            dataFetchers.fetch(prop, it)
         }
         dataFetcher(coordinates, dataFetcher)
     }
     for (prop in metaProvider.mutationType.props.values) {
         val coordinates = FieldCoordinates.coordinates("Mutation", prop.name)
         val dataFetcher = DataFetcher {
-            mono(Dispatchers.Unconfined) {
-                dataFetchers.fetch(prop, it)
-            }.toFuture()
+            dataFetchers.fetch(prop, it)
         }
         dataFetcher(coordinates, dataFetcher)
     }
     for (modelType in metaProvider.modelTypes.values) {
         for (prop in modelType.declaredProps.values) {
-            if (prop.isReference || prop.isList || prop.isConnection) {
+            if (prop.userImplementation !== null || prop.isReference || prop.isList || prop.isConnection) {
                 val coordinates = FieldCoordinates.coordinates(modelType.name, prop.name)
                 val dataFetcher = DataFetcher {
-                    mono(Dispatchers.Unconfined) {
-                        dataFetchers.fetch(prop as ModelProp, it)
-                    }.toFuture()
+                    dataFetchers.fetch(prop, it)
                 }
                 dataFetcher(coordinates, dataFetcher)
             }
