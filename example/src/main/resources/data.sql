@@ -40,7 +40,8 @@ alter table book
 create table author(
     id uuid not null,
     first_name varchar(25) not null,
-    last_name varchar(25) not null
+    last_name varchar(25) not null,
+    gender char(1) not null
 );
 alter table author
     add constraint pk_author
@@ -50,6 +51,9 @@ alter table author
     add constraint uq_author
         unique(first_name, last_name)
 ;
+alter table author
+    add constraint ck_author_gender
+        check(gender = 'M' or gender = 'F');
 
 create table book_author_mapping(
     book_id uuid not null,
@@ -84,12 +88,12 @@ insert into book(id, name, price, store_id) values
     ('a62f7aa3-9490-4612-98b5-98aae0e77120', 'GraphQL in Action', 80, '2fa3955e-3e83-49b9-902e-0465c109c779')
 ;
 
-insert into author(id, first_name, last_name) values
-    ('fd6bb6cf-336d-416c-8005-1ae11a6694b5', 'Eve', 'Procello'),
-    ('1e93da94-af84-44f4-82d1-d8a9fd52ea94', 'Alex', 'Banks'),
-    ('c14665c8-c689-4ac7-b8cc-6f065b8d835d', 'Dan', 'Vanderkam'),
-    ('718795ad-77c1-4fcf-994a-fec6a5a11f0f', 'Boris', 'Cherny'),
-    ('eb4963fd-5223-43e8-b06b-81e6172ee7ae', 'Samer', 'Buna')
+insert into author(id, first_name, last_name, gender) values
+    ('fd6bb6cf-336d-416c-8005-1ae11a6694b5', 'Eve', 'Procello', 'M'),
+    ('1e93da94-af84-44f4-82d1-d8a9fd52ea94', 'Alex', 'Banks', 'M'),
+    ('c14665c8-c689-4ac7-b8cc-6f065b8d835d', 'Dan', 'Vanderkam', 'M'),
+    ('718795ad-77c1-4fcf-994a-fec6a5a11f0f', 'Boris', 'Cherny', 'M'),
+    ('eb4963fd-5223-43e8-b06b-81e6172ee7ae', 'Samer', 'Buna', 'M')
 ;
 
 insert into book_author_mapping(book_id, author_id) values

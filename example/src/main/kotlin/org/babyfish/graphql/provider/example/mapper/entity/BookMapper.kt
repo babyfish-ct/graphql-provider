@@ -19,10 +19,6 @@ class BookMapper: EntityMapper<Book, UUID>() {
             idGenerator(UUIDIdGenerator())
         }
 
-        graphql {
-
-        }
-
         reference(Book::store)
 
         list(Book::authors) {

@@ -3,6 +3,9 @@ package org.babyfish.graphql.provider.example
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.Result
+import org.babyfish.graphql.provider.example.model.Gender
+import org.babyfish.kimmer.sql.meta.ScalarProvider
+import org.babyfish.kimmer.sql.meta.enumProviderByString
 import org.babyfish.kimmer.sql.runtime.DefaultR2dbcExecutor
 import org.babyfish.kimmer.sql.runtime.R2dbcExecutor
 import org.slf4j.LoggerFactory
@@ -15,6 +18,13 @@ import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator
 
 @SpringBootApplication
 class ExampleApplication {
+
+	@Bean
+	fun genderProvider() =
+		enumProviderByString(Gender::class) {
+			map(Gender.MALE, "M")
+			map(Gender.FEMALE, "F")
+		}
 
 	@Bean
 	fun connectionFactoryInitializer(

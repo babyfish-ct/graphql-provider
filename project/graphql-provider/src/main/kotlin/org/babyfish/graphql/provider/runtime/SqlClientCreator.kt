@@ -10,6 +10,7 @@ import org.babyfish.kimmer.meta.ImmutableType
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.SqlClient
 import org.babyfish.kimmer.sql.meta.EntityType
+import org.babyfish.kimmer.sql.meta.ScalarProvider
 import org.babyfish.kimmer.sql.meta.config.IdGenerator
 import org.babyfish.kimmer.sql.meta.spi.EntityPropImpl
 import org.babyfish.kimmer.sql.meta.spi.MetaFactory
@@ -23,6 +24,7 @@ import kotlin.reflect.full.declaredFunctions
 @Suppress("UNCHECKED_CAST")
 internal fun createSqlClientByEntityMappers(
     mappers: List<EntityMapper<out Entity<*>, *>>,
+    scalarProviders: List<ScalarProvider<*, *>>,
     jdbcExecutor: JdbcExecutor?,
     r2dbcExecutor: R2dbcExecutor?,
     dialect: Dialect?
@@ -36,6 +38,10 @@ internal fun createSqlClientByEntityMappers(
         dialect = dialect,
         metaFactory = MetaFactoryImpl()
     ) {
+
+        for (scalarProvider in scalarProviders) {
+            scalarProvider(scalarProvider)
+        }
 
         dynamicConfigurationRegistryScope(dynamicConfigurationRegistry) {
             for (mapper in mappers) {
@@ -61,6 +67,7 @@ internal fun createSqlClientByEntityMappers(
                 }
             }
         }
+
     }.apply {
         for (entityType in this.entityTypeMap.values) {
             for (prop in entityType.declaredProps.values) {
