@@ -14,10 +14,10 @@ data class GraphQLProviderProperties(
     fun batchSize(prop: ModelProp): Int =
         prop.batchSize
             ?: if (prop.isConnection || prop.isList) {
-                (prop.declaringType as ModelType).graphql.defaultCollectionBatchSize
+                prop.declaringType.graphql.defaultCollectionBatchSize
                     ?: defaultCollectionBatchSize
             } else {
-                (prop.declaringType as ModelType).graphql.defaultBatchSize
+                prop.declaringType.graphql.defaultBatchSize
                     ?: defaultBatchSize
             }
 }

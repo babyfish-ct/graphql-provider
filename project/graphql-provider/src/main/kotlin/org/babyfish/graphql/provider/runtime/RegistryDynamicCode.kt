@@ -26,7 +26,7 @@ fun GraphQLCodeRegistry.Builder.registryDynamicCodeRegistry(
     }
     for (modelType in metaProvider.modelTypes.values) {
         for (prop in modelType.declaredProps.values) {
-            if (prop.userImplementation !== null || prop.isReference || prop.isList || prop.isConnection) {
+            if (prop.userImplementation !== null || prop.isAssociation) {
                 val coordinates = FieldCoordinates.coordinates(modelType.name, prop.name)
                 val dataFetcher = DataFetcher {
                     dataFetchers.fetch(prop, it)

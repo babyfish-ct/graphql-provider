@@ -72,7 +72,7 @@ internal class ManyToManyBatchLoader(
             })"
         return r2dbcClient.execute {
             // TODO: kimmer-sql API bad design: List -> Collection
-            r2dbcClient.sqlClient.r2dbcExecutor.execute(it, sql, keys.toList()) {
+            r2dbcClient.sqlClient.r2dbcExecutor.execute(it, sql, keys) {
                 map { row, _ ->
                     row.get(0) to row.get(1)
                 }.asFlow().toList()

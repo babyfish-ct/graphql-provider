@@ -32,6 +32,12 @@ internal class ModelPropImpl(
     override val batchSize: Int?
         get() = _batchSize
 
+    override val name: String
+        get() = super.name
+
+    override val declaringType: ModelType
+        get() = super.declaringType as ModelType
+
     override val targetType: ModelType?
         get() = super.targetType as ModelType?
 

@@ -87,7 +87,7 @@ open class ArgumentsConverter(
                 )
             }
             else ->
-                value
+                convertScalar(value, type)!!
         }
 
     @Suppress("UNCHECKED_CAST")
@@ -148,9 +148,18 @@ open class ArgumentsConverter(
                             }
                         }
                     else ->
-                        value
+                        convertScalar(value, prop.modelProp.returnType)
                 }
                 Draft.set(this, prop.modelProp.immutableProp, finalValue)
             }
         }
+
+    private fun convertScalar(value: Any?, type: KClass<*>): Any? {
+        if (value is String && type.java.isEnum) {
+            return type.java.enumConstants.firstOrNull {
+                (it as Enum<*>).name == value
+            } ?: throw IllegalArgumentException("Cannot convert '${value}' to enum '${type.qualifiedName}'")
+        }
+        return value
+    }
 }

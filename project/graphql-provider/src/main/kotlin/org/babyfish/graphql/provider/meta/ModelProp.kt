@@ -5,7 +5,8 @@ import org.babyfish.kimmer.sql.meta.EntityProp
 interface ModelProp: GraphQLProp, EntityProp {
 
     override val name: String
-        get() = super.name
+
+    override val declaringType: ModelType
 
     val userImplementation: UserImplementation?
 

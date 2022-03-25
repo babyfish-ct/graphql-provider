@@ -72,9 +72,13 @@ internal fun createSqlClientByEntityMappers(
         for (entityType in this.entityTypeMap.values) {
             for (prop in entityType.declaredProps.values) {
                 if (prop.isTransient) {
-                    dynamicConfigurationRegistry.userImplementation(prop.kotlinProp)?.let {
-                        (prop as ModelPropImpl).setUserImplementation(it)
-                    }
+                    val userImplementation =
+                        dynamicConfigurationRegistry.userImplementation(prop.kotlinProp)
+                            ?: throw ModelException(
+                                "'${prop.kotlinProp}' is mapped as user implementation property, " +
+                                    "but no implementation function is found"
+                            )
+                    (prop as ModelPropImpl).setUserImplementation(userImplementation)
                 } else if (prop.isConnection || prop.isList) {
                     dynamicConfigurationRegistry.filter(prop.kotlinProp)?.let {
                         (prop as ModelPropImpl).setFilter(it)

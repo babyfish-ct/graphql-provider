@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.runtime.dgs
+package org.babyfish.graphql.provider.starter.dgs
 
 import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderAutoConfiguration
 import org.babyfish.graphql.provider.runtime.cfg.KimmerSQLAutoConfiguration

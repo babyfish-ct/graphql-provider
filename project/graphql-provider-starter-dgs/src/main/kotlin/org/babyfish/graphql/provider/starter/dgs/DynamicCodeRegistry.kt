@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.runtime.dgs
+package org.babyfish.graphql.provider.starter.dgs
 
 import com.netflix.graphql.dgs.DgsCodeRegistry
 import com.netflix.graphql.dgs.DgsComponent
@@ -9,14 +9,14 @@ import org.babyfish.graphql.provider.runtime.DataFetchers
 import org.babyfish.graphql.provider.runtime.registryDynamicCodeRegistry
 
 @DgsComponent
-internal class DynamicCodeRegistry(
+internal open class DynamicCodeRegistry(
     private val dataFetchers: DataFetchers,
     private val metaProvider: MetaProvider,
 ) {
     @DgsCodeRegistry
     open fun registry(
         builder: GraphQLCodeRegistry.Builder,
-        typeDefinitionRegistry: TypeDefinitionRegistry
+        @Suppress("UNUSED") typeDefinitionRegistry: TypeDefinitionRegistry
     ): GraphQLCodeRegistry.Builder =
         builder.apply {
             registryDynamicCodeRegistry(dataFetchers, metaProvider)

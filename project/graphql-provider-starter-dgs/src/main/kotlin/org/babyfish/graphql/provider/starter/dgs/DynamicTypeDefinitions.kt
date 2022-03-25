@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.runtime.dgs
+package org.babyfish.graphql.provider.starter.dgs
 
 import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsTypeDefinitionRegistry

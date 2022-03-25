@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.runtime.dgs
+package org.babyfish.graphql.provider.starter.dgs
 
 import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsRuntimeWiring
@@ -17,7 +17,6 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.OffsetTime
 import java.util.*
-
 
 @DgsComponent
 open class ScalarRegistration(

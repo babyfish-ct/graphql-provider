@@ -92,7 +92,7 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     }
 
     fun <T: Entity<*>> connection(
-        prop: KProperty1<E, out Connection<T>>,
+        prop: KProperty1<E, Connection<T>>,
         block: CollectionDSL.() -> Unit
     ) {
         val modelProp = builder.prop(prop) as ModelPropImpl
@@ -136,7 +136,7 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     }
 
     fun <T: Entity<*>> mappedConnection(
-        prop: KProperty1<E, out Connection<T>>,
+        prop: KProperty1<E, Connection<T>>,
         mappedBy: KProperty1<T, *>,
         block: (MappedAssociationDSL.() -> Unit)? = null
     ) {

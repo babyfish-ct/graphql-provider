@@ -43,7 +43,7 @@ class ExampleApplication {
 			override suspend fun <R> execute(
 				con: Connection,
 				sql: String,
-				variables: List<Any>,
+				variables: Collection<Any>,
 				block: suspend Result.() -> R
 			): R {
 				LOGGER.info("SQL: $sql")

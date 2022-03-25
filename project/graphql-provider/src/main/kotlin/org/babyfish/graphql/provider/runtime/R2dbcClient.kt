@@ -90,8 +90,7 @@ class R2dbcClient(
 
     suspend fun <E: Entity<ID>, ID: Comparable<ID>> delete(
         entityType: KClass<E>,
-        id: ID,
-        block: (SaveOptionsDSL<E>.() -> Unit)? = null
+        id: ID
     ): EntityMutationResult {
         val command = sqlClient.entities.deleteCommand(entityType, id)
         return databaseClient.inConnection {
@@ -103,8 +102,7 @@ class R2dbcClient(
 
     suspend fun <E: Entity<ID>, ID: Comparable<ID>> delete(
         entityType: KClass<E>,
-        ids: List<ID>,
-        block: (SaveOptionsDSL<E>.() -> Unit)? = null
+        ids: List<ID>
     ): List<EntityMutationResult> {
         val command = sqlClient.entities.deleteCommand(entityType, ids)
         return databaseClient.inConnection {

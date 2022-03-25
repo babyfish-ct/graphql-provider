@@ -29,6 +29,7 @@ class ScalarDatabaseDSL<E: Entity<ID>, ID: Comparable<ID>, T> internal construct
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun formula(block: NonNullTable<E, ID>.() -> Expression<T>) {
         if (storage !== null) {
             throw ModelException(
@@ -36,7 +37,6 @@ class ScalarDatabaseDSL<E: Entity<ID>, ID: Comparable<ID>, T> internal construct
                     "because its storage has already been configured"
             )
         }
-        // TODO: Formula's T cannot be Any
         storage = Formula.of(block as (NonNullTable<E, ID>.() -> Expression<Any>))
     }
 
