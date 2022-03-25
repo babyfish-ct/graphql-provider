@@ -8,6 +8,7 @@ import org.babyfish.kimmer.sql.meta.ScalarProvider
 import org.babyfish.kimmer.sql.meta.enumProviderByString
 import org.babyfish.kimmer.sql.runtime.DefaultR2dbcExecutor
 import org.babyfish.kimmer.sql.runtime.R2dbcExecutor
+import org.babyfish.kimmer.sql.runtime.dialect.H2Dialect
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -18,6 +19,9 @@ import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator
 
 @SpringBootApplication
 class ExampleApplication {
+
+	@Bean
+	fun dialect() = H2Dialect()
 
 	@Bean
 	fun genderProvider() =
