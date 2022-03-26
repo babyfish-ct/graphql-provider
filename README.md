@@ -11,7 +11,8 @@ This framework allows you to build GraphQL services at the fastest speed, you ju
 5. [Add arguments to association](./doc/association-arguments.md)
 6. [Pagination query](./doc/pagination.md)
 7. [User-implemented properties](./doc/user-implementation.md)
-8. [Mutation](.doc//mutation.md)
+8. [Map inputs](./doc/input-mapper.md)
+9. [Execute Mutation](.doc/mutation.md)
 -----------
 
 ## Other projects
