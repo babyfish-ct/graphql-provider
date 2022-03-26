@@ -201,15 +201,15 @@ Create a package named *com.example.demo.query*, create *BookQuery.kt* under it
 ```kt
 package com.example.demo.query
     
-    import org.babyfish.graphql.provider.Query
-    import com.example.demo.model.Book
+import org.babyfish.graphql.provider.Query
+import com.example.demo.model.Book
    
-    @Service // α
-    class BookQuery: Query() { // β
-    
-        fun findAllBooks(): List<Book> =
-            runtime.queryList {} // γ
-    }
+@Service // α
+class BookQuery: Query() { // β
+
+    fun findAllBooks(): List<Book> =
+        runtime.queryList {} // γ
+}
 ```
     
 - α: *Query* must be managed by spring.
