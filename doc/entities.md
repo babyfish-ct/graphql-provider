@@ -31,3 +31,59 @@ dependencies {
 1. The first dependency is graphql-provider
 2. The second dependency is a gradle tool required by [kimmer](https://github.com/babyfish-ct/kimmer), it is used to generate some source code files
 3. The third dependency is R2DBC driver of H2 database
+
+## 4. Define entity types by kotlin
+
+Create a new package *com.example.demo.model*, add 4 files under it: *BookStore.kt*, *Book.kt*, *Author.kt*, *Gender.kt*
+
+1. BookStore.kt
+    ```kt
+    package com.example.demo.model
+
+    import org.babyfish.kimmer.sql.Entity
+    import java.util.*
+
+    interface BookStore: Entity<UUID> {
+        val name: String
+        val website: String?
+        val books: List<Book>
+    }
+    ```
+2. Book.kt
+    ```kt
+    package com.example.demo.model
+    
+    import org.babyfish.kimmer.sql.Entity
+    import java.math.BigDecimal
+    import java.util.*
+
+    interface Book: Entity<UUID> {
+        val name: String
+        val store: BookStore?
+        val price: BigDecimal
+        val authors: List<Author>
+    }
+    ```
+3. Author.kt
+    ```kt
+    package com.example.demo.model
+    
+    import org.babyfish.kimmer.sql.Entity
+    import java.util.*
+
+    interface Author: Entity<UUID> {
+        val firstName: String
+        val lastName: String
+        val gender: Gender
+        val books: List<Book>
+    }
+    ```
+4. Gender.kt
+    ```kt
+    package com.example.demo.model
+    
+    enum class Gender {
+        MALE,
+        FEMALE
+    }
+    ```
