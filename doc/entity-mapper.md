@@ -159,7 +159,8 @@ class BookStoreMapper: EntityMapper<BookStore, UUID>() {
     > The above code 
     > ```kt
     > mappedList(BookStore::books, Book::store)
-    > ``` is actually equivalent to JPA's 
+    > ```
+    > is actually equivalent to JPA's 
     > ```java
     > @OneToMany(mappedBy = "store")
     > private List<Book> books;
