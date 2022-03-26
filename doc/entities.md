@@ -114,3 +114,16 @@ In order to use the strongly typed SQL DSL to maximize the development experienc
     - α: Do not generate the source code required by [kimmer](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-core/README.md), which is not required for this example
     - β: Generate the source code required by [kimmer-sql](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/README.md), which is required for this example
     - γ: Prohibit the use of collection joins in top-level queries. This switch allows developers to develop better programming habits, click [here](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/contains.md) for more information
+
+3. Add the generated code to the gradle build path *(important but easy to forget)*
+    ```kt
+    kotlin {
+        sourceSets.main {
+            kotlin.srcDir("build/generated/ksp/main/kotlin")
+        }
+    }
+    ```
+    
+Now, you can run the program. The code required for the strongly typed SQL DSL will be automatically generated.
+
+> If you run the app now, you will get an exception because the current project does not have any substantive code and does not provide GraphQL queries. However, that's okay, the exception doesn't prevent code generation.
