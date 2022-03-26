@@ -79,6 +79,18 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 
 - δ: *Book.authors* is a many-to-many list.
     For many-to-many associations, using an middle table is the only option
+    
+>   In fact, some configuration is omitted from the code above. E.g
+>   
+>   1. The table name of the entity in the database
+>   2. Object type name in GraphQL schema
+>   3. Scalar Fields
+>   
+>   If none of these are omitted, it should look like this
+>   ```kt
+>   class MyEntityMapper: EntityMapper<MyEntity, Long> {
+>   }
+>   ```
 
 ---------------
 [< Previous: Create project & Define entities](./entities.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Configure batch size >](./batch-size.md)
