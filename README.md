@@ -1,5 +1,4 @@
-# A rapid development framework for GraphQL server by kotlin
-## (Developing..., will come soon, please wait until this statement is disappeared)
+# Quickly build GraphQL services with kotlin based on R2DBC
 
 ## Key value:
 1. Mapping "RDBMS+Redis" to "GraphQL"
