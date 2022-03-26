@@ -19,7 +19,7 @@ Visit https://start.spring.io/, create a Spring boot project, select **Gradle pr
 
 ## 3. Add dependencies
 
-Modify the "build.gradle.kts", add the following three dependencies under *dependencies {} *
+Modify the "build.gradle.kts", add the following three dependencies under *dependencies {}*
 
 ```kt
 dependencies {
