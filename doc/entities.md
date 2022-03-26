@@ -124,6 +124,6 @@ In order to use the strongly typed SQL DSL to maximize the development experienc
     }
     ```
     
-Now, you can run the program. The code required for the strongly typed SQL DSL will be automatically generated.
+Now, you can run the app, the code required for the strongly typed SQL DSL will be automatically generated.
 
 > If you run the app now, you will get an exception because the current project does not have any substantive code and does not provide GraphQL queries. However, that's okay, the exception doesn't prevent code generation.
