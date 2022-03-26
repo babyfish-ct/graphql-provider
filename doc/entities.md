@@ -17,7 +17,7 @@ Visit https://start.spring.io/, create a Spring boot project, select **Gradle pr
 4. There is a many-to-many association from *Book* to *Author*: *Book.authors*
 5. There is a many-to-many association from *Author* to *Book*: *Author.books*
 
-## Add denpendencies
+## 3. Add denpendencies
 
 Modify the "build.gradle.kts", add the following three dependencies under *dependencies {} *
 
