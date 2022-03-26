@@ -67,6 +67,15 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
             }
         }
         ```
+        When all of the following conditions are met
+        1. Many-to-one association is base on foreign key, not base on middle table
+        2. The column name of the foreign key matches the kotlin property name. for example: kotlin property name is "word1Word2" and foreign key column name is "WORD1_WORD2_ID".
+        3. No delete action.
+        All the above configuration can be omitted, as you can see in this example
+        ```kt
+        reference(Book::store)
+        ```
+        
         
 
 - δ: *Book.authors* is a many-to-many list.
