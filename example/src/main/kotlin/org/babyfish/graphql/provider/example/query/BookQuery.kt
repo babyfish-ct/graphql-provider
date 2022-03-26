@@ -9,7 +9,7 @@ import org.babyfish.kimmer.sql.ast.valueNotIn
 import org.springframework.stereotype.Component
 import java.util.*
 
-@Component
+//@Component
 class BookQuery: Query() {
 
     fun findPagedBooks(
