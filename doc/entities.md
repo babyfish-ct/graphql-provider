@@ -3,4 +3,5 @@
 ## 1. Create project
 
 Visit https://start.spring.io/, create a Spring boot project, select **Gradle project** and **Kotlin**
+
 ![image](./spring-starter.jpg)
