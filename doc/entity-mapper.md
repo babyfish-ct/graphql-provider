@@ -11,10 +11,9 @@ BookMapper is the core in this example, so let's start with it.
 ```kt
 package com.example.demo.mapper.entity
 
-import org.babyfish.graphql.provider.example.model.Book
+import com.example.demo.model.Book
 import org.babyfish.graphql.provider.EntityMapper
 import org.babyfish.graphql.provider.dsl.EntityTypeDSL
-import org.babyfish.kimmer.sql.meta.config.UUIDIdGenerator
 import org.springframework.stereotype.Component
 import java.util.*
 
@@ -131,9 +130,11 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 ## 2. BookStoreMapper
 
 ```kt
+package com.example.demo.mapper.entity
+
 import org.babyfish.graphql.provider.EntityMapper
 import org.babyfish.graphql.provider.dsl.EntityTypeDSL
-import org.babyfish.graphql.provider.example.model.BookStore
+import com.example.demo.model.BookStore
 import org.springframework.stereotype.Component
 import java.util.*
 
@@ -166,6 +167,31 @@ class BookStoreMapper: EntityMapper<BookStore, UUID>() {
     > private List<Book> books;
     > ```
     > The difference is that when there is a typo, the kotlin DSL will cause a compilation error, while JPA will trigger a runtime exception.
+    
+## 3. AuthorMapper
 
+```kt
+package com.example.demo.mapper.entity
+
+import org.babyfish.graphql.provider.EntityMapper
+import org.babyfish.graphql.provider.dsl.EntityTypeDSL
+import com.example.demo.model.Author
+import org.springframework.stereotype.Component
+import java.util.*
+    
+@Component // α
+class AuthorMapper: EntityMapper<Author, UUID>() {
+
+    override fun EntityTypeDSL<Author, UUID>.config() { // β
+        mappedList(Author::books, Book::authors) // γ
+    }
+}
+```
+- α: *EntityMapper* must be managed by spring.
+
+- β: *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
+
+- γ: *Author.books* is the mirror image of *Book.authors*
+    
 ---------------
 [< Previous: Create project & Define entities](./entities.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Configure batch size >](./batch-size.md)
