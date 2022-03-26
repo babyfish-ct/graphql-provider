@@ -127,3 +127,24 @@ In order to use the strongly typed SQL DSL to maximize the development experienc
 Now, you can run the app, the code required for the strongly typed SQL DSL will be automatically generated.
 
 > If you run the app now, you will get an exception because the current project does not have any substantive code and does not provide GraphQL queries. However, that's okay, the exception doesn't prevent code generation.
+
+## 6. Automatically initialize the H2 database when the app starts
+
+Create a file *data.sql* under *src/main/resouces*. Due to the large amount of sql code, the sql code is not listed here and you can copy the sql code from [example/src/main/resources](https://github.com/babyfish-ct/graphql-provider/blob/main/example/src/main/resources/data.sql).
+
+Change class *com.example.demo.DempApplciation*, add a spring bean
+
+```kt
+@Bean
+fun connectionFactoryInitializer(
+    connectionFactory: ConnectionFactory
+): ConnectionFactoryInitializer =
+    ConnectionFactoryInitializer().apply {
+        setConnectionFactory(connectionFactory)
+        setDatabasePopulator(ResourceDatabasePopulator(ClassPathResource("data.sql")))
+        afterPropertiesSet()
+    }
+```
+
+
+
