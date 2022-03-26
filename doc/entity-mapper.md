@@ -167,8 +167,8 @@ class BookStoreMapper: EntityMapper<BookStore, UUID>() {
     > private List<Book> books;
     > ```
     > The difference is that when there is a typo, the kotlin DSL will cause a compilation error, while JPA will trigger a runtime exception.
-    
-## 3. AuthorMapper
+
+## 3.AuthorMapper
 
 ```kt
 package com.example.demo.mapper.entity
@@ -192,6 +192,34 @@ class AuthorMapper: EntityMapper<Author, UUID>() {
 - β: *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
 
 - γ: *Author.books* is the mirror image of *Book.authors*
+    
+## 4. Add query
+    
+After the mapping is complete, we can add the query.
+    
+Create a package named *com.example.demo.query*, create *BookQuery.kt* under it
+```kt
+package com.example.demo.query
+    
+    import org.babyfish.graphql.provider.Query
+    import com.example.demo.model.Book
+   
+    @Service // α
+    class BookQuery: Query() { // β
+    
+        fun findAllBooks(): List<Book> =
+            runtime.queryList {} // γ
+    }
+```
+    
+- α: *Query* must be managed by spring.
+
+- β: *Query* must inherit *org.babyfish.graphql.provider.Query*.
+    
+- γ: This is a query function
+    1. Adding arguments to the query function is a topic to be discussed in the following chapters, so here we use a query without arguments to query all books
+    2. *runtime* is a protected class attribute in the superclass *org.babyfish.graphql.provider.Query*
+    3. The current query has no arguemnts, so *runtime.queryList* does not have any code
     
 ---------------
 [< Previous: Create project & Define entities](./entities.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Configure batch size >](./batch-size.md)
