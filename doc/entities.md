@@ -21,7 +21,7 @@ Visit https://start.spring.io/, create a Spring boot project, select **Gradle pr
 
 Modify the "build.gradle.kts", add the following three dependencies under *dependencies {}*
 
-```kt
+```
 dependencies {
     implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.5")
     ksp("org.babyfish.kimmer:kimmer-ksp:0.3.1")
@@ -93,7 +93,7 @@ Create a new package *com.example.demo.model*, add 4 files under it: *BookStore.
 In order to use the strongly typed SQL DSL to maximize the development experience, some source code needs to be generated based on the entity interfaces. Please modify "build.gradle.kts".
 
 1. Add google ksp into *plugins*
-    ```kt
+    ```
     plugins {
         
         ... other plugins ...
