@@ -87,3 +87,17 @@ Create a new package *com.example.demo.model*, add 4 files under it: *BookStore.
         FEMALE
     }
     ```
+    
+## 5. Generate source code required by strongly typed SQL DSL.
+
+In order to use the strongly typed SQL DSL to maximize the development experience, some source code needs to be generated based on the entity interfaces. Please modify "build.gradle.kts".
+
+1. Add google ksp into *plugins*
+    ```kt
+    plugins {
+        
+        ... other plugins ...
+        
+        id("com.google.devtools.ksp") version "1.6.10-1.0.2"
+    }
+    ```
