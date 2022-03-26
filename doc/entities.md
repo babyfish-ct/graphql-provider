@@ -11,10 +11,23 @@ Visit https://start.spring.io/, create a Spring boot project, select **Gradle pr
 
 ![image](./uml.png)
 
-1. There are three entities: *BookStore*, *Book* and *Author*.
-2. There is a many-to-one association from *Book* to *BookStore*: *Book.store*. 
-3. There is a one-to-many association from *BookStore* to *Book*: *BookStore.books*.
-4. There is a many-to-many association from *Book* to *Author*: *Book.authors*.
-5. There is a many-to-many association from *Author* to *Book*: *Author.books*.
+1. There are three entities: *BookStore*, *Book* and *Author*
+2. There is a many-to-one association from *Book* to *BookStore*: *Book.store*
+3. There is a one-to-many association from *BookStore* to *Book*: *BookStore.books*
+4. There is a many-to-many association from *Book* to *Author*: *Book.authors*
+5. There is a many-to-many association from *Author* to *Book*: *Author.books*
 
 ## Add denpendencies
+
+Modify the "build.gradle.kts", add the following three dependencies under *dependencies {} *
+
+```kt
+dependencies {
+	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.5")
+	ksp("org.babyfish.kimmer:kimmer-ksp:0.3.1")
+	runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
+}
+```
+1. The first dependency is graphql-provider
+2. The second dependency is a gradle tool required by [kimmer](https://github.com/babyfish-ct/kimmer), it is used to generate some source code files
+3. The third dependency is R2DBC driver of H2 database
