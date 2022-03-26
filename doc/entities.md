@@ -130,7 +130,7 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
 
 ## 6. Automatically initialize the H2 database when the app starts
 
-Create a file *data.sql* under *src/main/resouces*. Due to the large amount of sql code, the sql code is not listed here and you can copy the sql code from [example/src/main/resources](https://github.com/babyfish-ct/graphql-provider/blob/main/example/src/main/resources/data.sql).
+Create a file *data.sql* under *src/main/resouces*. Due to the large amount of sql code, the sql code is not listed here and you can copy the sql code from [example/src/main/resources/data.sql](https://github.com/babyfish-ct/graphql-provider/blob/main/example/src/main/resources/data.sql).
 
 Change class *com.example.demo.DempApplciation*, add a spring bean
 
