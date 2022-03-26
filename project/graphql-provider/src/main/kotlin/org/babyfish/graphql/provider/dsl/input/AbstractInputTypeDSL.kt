@@ -46,7 +46,7 @@ abstract class AbstractInputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal 
         }
     }
 
-    fun nonNullScalars() {
+    fun allNonNullScalars() {
         for (prop in modelType.props.values) {
             if (prop.storage is Column && !prop.isReference && !prop.isNullable) {
                 propRefMap[prop] = PropRef(prop)
@@ -65,12 +65,12 @@ abstract class AbstractInputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal 
         )
     }
 
-    operator fun plus(prop: KProperty1<E, *>) {
-        scalar(prop, null)
+    operator fun KProperty1<E, *>.unaryPlus() {
+        scalar(this, null)
     }
 
-    operator fun minus(prop: KProperty1<E, *>) {
-        val modelProp = modelProp(prop, PropType.MUTABLE_SCALAR)
+    operator fun KProperty1<E, *>.unaryMinus() {
+        val modelProp = modelProp(this, PropType.MUTABLE_SCALAR)
         propRefMap -= modelProp
     }
 

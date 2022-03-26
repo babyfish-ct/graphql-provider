@@ -44,7 +44,9 @@ private class TypeDefinitionRegistryGenerator(
     fun generate(): TypeDefinitionRegistry =
         TypeDefinitionRegistry().apply {
             add(generateQueryType())
-            add(generateMutationType())
+            if (mutationType.props.isNotEmpty()) {
+                add(generateMutationType())
+            }
             addAll(generateMutationResultTypes())
             addAll(modelTypeMap.values.map { generateEntityType(it) })
             addAll(allImplicitInputTypes.map { generateInputType(it) })

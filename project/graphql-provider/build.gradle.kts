@@ -15,7 +15,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
 
-    api("org.babyfish.kimmer:kimmer-sql:0.3.0")
+    api("org.babyfish.kimmer:kimmer-sql:0.3.1")
     api("org.springframework.data:spring-data-r2dbc:1.4.2")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
@@ -27,7 +27,7 @@ dependencies {
     implementation("com.graphql-java:graphql-java-extended-scalars:17.0")
     implementation("com.graphql-java:graphql-java:17.3")
 
-    kspTest("org.babyfish.kimmer:kimmer-ksp:0.3.0")
+    kspTest("org.babyfish.kimmer:kimmer-ksp:0.3.1")
     testImplementation(kotlin("test"))
     testImplementation("org.springframework.boot:spring-boot-starter:2.6.4")
     testImplementation("org.springframework.boot:spring-boot-starter-test:2.6.4")
@@ -51,6 +51,9 @@ java {
     withSourcesJar()
     withJavadocJar()
 }
+
+java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.targetCompatibility = JavaVersion.VERSION_1_8
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {

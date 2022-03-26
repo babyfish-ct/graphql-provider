@@ -11,7 +11,7 @@ class AssociatedInputTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constru
         insertable = true
     }
 
-    fun createDetachedObjects() {
-        updatable = true
+    fun deleteDetachedObjects() {
+        deleteable = true
     }
 }
