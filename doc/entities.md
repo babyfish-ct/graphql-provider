@@ -146,5 +146,5 @@ fun connectionFactoryInitializer(
     }
 ```
 
-
+[Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Map entities>](./entity-mapper.md)
 
