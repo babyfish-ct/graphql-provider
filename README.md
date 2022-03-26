@@ -6,7 +6,7 @@ This framework allows you to build GraphQL services at the fastest speed, you ju
 
 1. [Create project & Define entities](./doc/entities.md)
 2. [Map entities](./doc/entity-mapper.md)
-3. [Run & BatchDataLoader](./doc/run.md)
+3. [Configure batch size](./doc/batch-size.md)
 4. [Add arguments to query](./doc/query-arguments.md)
 5. [Add arguments to association](./doc/association-arguments.md)
 6. [Pagination query](./doc/pagination.md)
