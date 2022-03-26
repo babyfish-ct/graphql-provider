@@ -76,10 +76,9 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
         ```kt
         reference(Book::store)
         ```
-        
-        
 
 - δ: *Book.authors* is a many-to-many list.
+    For many-to-many associations, using an middle table is the only option
 
 ---------------
 [< Previous: Create project & Define entities](./entities.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Configure batch size >](./batch-size.md)
