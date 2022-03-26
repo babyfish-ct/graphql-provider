@@ -80,15 +80,48 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 - δ: *Book.authors* is a many-to-many list.
     For many-to-many associations, using an middle table is the only option
     
->   In fact, some configuration is omitted from the code above. E.g
+>   In fact, more configuration is omitted from the code above. E.g
 >   
->   1. The table name of the entity in the database
+>   1. Table name in the database
 >   2. Object type name in GraphQL schema
 >   3. Scalar Fields
 >   
 >   If none of these are omitted, it should look like this
 >   ```kt
 >   class MyEntityMapper: EntityMapper<MyEntity, Long> {
+>       db {
+>           tableName = "MY_ENTITY_TABLE" // Table name in database
+>       }
+>       graphql {
+>           name = "MyEntityObject" // Object type name in GraphQL schema
+>       }
+>       scalar(MyEntity::id) {
+>           db {
+>               column {
+>                   name = "MY_ENTITY_ID"
+>               }
+>           }
+>       }
+>       scalar(MyEntity::name) {
+>           db {
+>               column {
+>                   name = "MY_ENTITY_NAME"
+>                   // "length" can only be used for string type, otherwise a compilation error will occur
+>                   length = 50 
+>               }
+>           }
+>       }
+>       scalar(MyEntity::capaticy) {
+>           db {
+>               column {
+>                   name = "MY_ENTITY_NAME"
+>
+>                   // "precision" and "sclae" can only be used for string type, otherwise a compilation error will occur
+>                   precision = 10 
+>                   scale = 2
+>               }
+>           }
+>       }
 >   }
 >   ```
 
