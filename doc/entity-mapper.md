@@ -106,6 +106,7 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 >           db {
 >               column {
 >                   name = "MY_ENTITY_NAME"
+>                   
 >                   // "length" can only be used for string type, otherwise a compilation error will occur
 >                   length = 50 
 >               }
@@ -116,7 +117,8 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 >               column {
 >                   name = "MY_ENTITY_NAME"
 >
->                   // "precision" and "sclae" can only be used for string type, otherwise a compilation error will occur
+>                   // "precision" and "sclae" can only be used for string type, 
+>                   // otherwise a compilation error will occur
 >                   precision = 10 
 >                   scale = 2
 >               }
