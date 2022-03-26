@@ -1,4 +1,4 @@
 allprojects {
     group = "org.babyfish.graphql.provider"
-    version = "0.0.4"
+    version = "0.0.5"
 }

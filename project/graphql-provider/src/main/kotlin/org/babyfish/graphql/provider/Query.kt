@@ -31,7 +31,7 @@ abstract class Query {
             query(filterBlock)
         }
 
-        fun <E : Entity<ID>, ID : Comparable<ID>> query(
+        private fun <E : Entity<ID>, ID : Comparable<ID>> query(
             filterBlock: FilterDSL<E, ID>.() -> Unit
         ): Nothing {
             if (registerQueryField(this@Query)) {
