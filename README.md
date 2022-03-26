@@ -1,6 +1,7 @@
 # Quickly build GraphQL services with kotlin based on R2DBC
 
-## [Documentation](./doc/README.md)
+## Documentation
+[Click here](./doc/README.md) to know more
 -----------
 
 ## Other projects
