@@ -9,4 +9,4 @@ Visit https://start.spring.io/, create a Spring boot project, select **Gradle pr
 
 ## 2. UML diagram of entity objects
 
-![image](./uml.jpg)
+![image](./uml.png)
