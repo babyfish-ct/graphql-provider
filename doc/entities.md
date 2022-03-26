@@ -5,3 +5,8 @@
 Visit https://start.spring.io/, create a Spring boot project, select **Gradle project** and **Kotlin**
 
 ![image](./spring-starter.jpg)
+
+
+## 2. UML diagram of entity objects
+
+![image](./uml.jpg)
