@@ -43,6 +43,31 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 - β: *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
 
 - γ: *Book.store* is a many-to-one reference.
+    There are two ways to map many-to-one associations. foreign key or middle table
+    - Base on foreign key
+        ```kt
+        reference(Book::store) {
+            db {
+                foreginKey {
+                    columnName = "STORE_ID",
+                    onDelete = OnDeleteAction.CASCADE
+                }
+            }
+        }
+        ```
+    - Base on midde table
+        ```kt
+        reference(Book::store) {
+            db {
+                middleTable {
+                    columnName = "BOOK_STORE_MAPPING",
+                    joinColumnName = "BOOK_ID", // for many-to-one(not many-to-many), this column must be unique
+                    targetJoinColumName = "STORE_ID"
+                }
+            }
+        }
+        ```
+        
 
 - δ: *Book.authors* is a many-to-many list.
 
