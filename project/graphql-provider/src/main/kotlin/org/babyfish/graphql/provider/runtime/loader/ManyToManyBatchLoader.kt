@@ -10,6 +10,8 @@ import org.babyfish.graphql.provider.meta.ModelProp
 import org.babyfish.graphql.provider.runtime.ArgumentsConverter
 import org.babyfish.graphql.provider.runtime.FakeID
 import org.babyfish.graphql.provider.runtime.R2dbcClient
+import org.babyfish.kimmer.Draft
+import org.babyfish.kimmer.produce
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.ast.query.MutableRootQuery
 import org.babyfish.kimmer.sql.ast.valueIn
@@ -22,6 +24,7 @@ import kotlin.reflect.KClass
 internal class ManyToManyBatchLoader(
     private val r2dbcClient: R2dbcClient,
     private val prop: ModelProp,
+    private val idOnly: Boolean,
     private val filterApplier: (MutableRootQuery<Entity<FakeID>, FakeID>) -> Unit
 ) : MappedBatchLoader<Any, List<Any>> {
 
@@ -39,6 +42,16 @@ internal class ManyToManyBatchLoader(
         val pairs = loadIdPairs(keys)
         val idMap = pairs.groupBy({it.first!!}) {
             it.second!!
+        }
+        if (idOnly && prop.filter === null) {
+            val targetType = prop.targetType!!
+            return idMap.mapValues { entry ->
+                entry.value.map {
+                    produce(targetType.kotlinType) {
+                        Draft.set(this, targetType.idProp.immutableProp, it)
+                    }
+                }
+            }
         }
         val allTargetIds = pairs.map { it.second }.distinct()
         val rows =

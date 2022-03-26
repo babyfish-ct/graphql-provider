@@ -16,7 +16,7 @@ repositories {
 }
 
 dependencies {
-	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.2")
+	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.3")
 	ksp("org.babyfish.kimmer:kimmer-ksp:0.3.0")
 	runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
 }

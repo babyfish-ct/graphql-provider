@@ -79,6 +79,9 @@ open class DataFetchers(
             }.toFuture() as CompletableFuture<Any?>
         }
         val entity = env.getSource<Entity<*>>()
+        val idOnly = env.selectionSet.fields.let {
+            it.size == 1 && it[0].name == "id"
+        }
         if (prop.isReference && prop.storage is Column && Immutable.isLoaded(entity, prop.immutableProp)) {
             val parent = Immutable.get(entity, prop.immutableProp) as Entity<*>?
             if (parent === null) {
@@ -86,8 +89,7 @@ open class DataFetchers(
             }
             val parentId = Immutable.get(parent, prop.targetType!!.idProp.immutableProp)
             if (env.arguments.isEmpty()) {
-                val fields = env.selectionSet.fields
-                if (fields.size == 1 && fields[0].name == "id") {
+                if (idOnly) {
                     return CompletableFuture.completedFuture(
                             produce(prop.targetType!!.kotlinType) {
                             Draft.set(this, prop.targetType!!.idProp.immutableProp, parentId)
@@ -97,7 +99,7 @@ open class DataFetchers(
             }
             return env.loaderByParentId(prop).load(parentId)
         } else {
-            val future = env.loaderById(prop).load(entity.id)
+            val future = env.loaderById(prop, idOnly).load(entity.id)
             if (prop.isReference) {
                 return future.thenApply { it.firstOrNull() }
             }
@@ -175,7 +177,7 @@ open class DataFetchers(
         }
     }
 
-    private fun DataFetchingEnvironment.loaderById(prop: ModelProp): DataLoader<Any, List<Any>> {
+    private fun DataFetchingEnvironment.loaderById(prop: ModelProp, idOnly: Boolean): DataLoader<Any, List<Any>> {
         val dataLoaderKey = "graphql-provider:loader-by-id:${prop}"
         return dataLoaderRegistry.computeIfAbsent(dataLoaderKey) {
             DataLoaderFactory.newMappedDataLoader(
@@ -185,7 +187,7 @@ open class DataFetchers(
                             applyFilter(prop, it)
                         }
                     else ->
-                        ManyToManyBatchLoader(r2dbcClient, prop) {
+                        ManyToManyBatchLoader(r2dbcClient, prop, idOnly) {
                             applyFilter(prop, it)
                         }
                 },
