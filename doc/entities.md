@@ -101,3 +101,16 @@ In order to use the strongly typed SQL DSL to maximize the development experienc
         id("com.google.devtools.ksp") version "1.6.10-1.0.2"
     }
     ```
+    Click the refresh button on the gradle panel to let intellij download the plugin
+    
+2. Configure arguments of google ksp
+    ```
+    ksp {
+        arg("kimmer.draft", "false") // α
+        arg("kimmer.table", "true") // β
+        arg("kimmer.table.collection-join-only-for-sub-query", "true") // γ
+    }
+    ```
+    - **α**: Do not generate the source code required by [kimmer](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-core/README.md), which is not required for this example
+    - **β**: Generate the source code required by [kimmer-sql](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/README.md), which is required for this example
+    - **γ**: Prohibit the use of collection joins in top-level queries. This switch allows developers to develop better programming habits, click [here](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/contains.md) for more information
