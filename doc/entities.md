@@ -23,9 +23,9 @@ Modify the "build.gradle.kts", add the following three dependencies under *depen
 
 ```kt
 dependencies {
-	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.5")
-	ksp("org.babyfish.kimmer:kimmer-ksp:0.3.1")
-	runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
+    implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.5")
+    ksp("org.babyfish.kimmer:kimmer-ksp:0.3.1")
+    runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
 }
 ```
 1. The first dependency is graphql-provider
