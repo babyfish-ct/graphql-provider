@@ -218,7 +218,7 @@ class BookQuery: Query() { // β
     
 - γ: This is a query function
     1. Adding arguments to the query function is a topic to be discussed in the following chapters, so here we use a query without arguments to query all books
-    2. *runtime* is a protected class attribute in the superclass *org.babyfish.graphql.provider.Query*
+    2. *runtime* is a protected property declared in the superclass *org.babyfish.graphql.provider.Query*
     3. The current query has no arguemnts, so *runtime.queryList* does not have any code
     
 ---------------
