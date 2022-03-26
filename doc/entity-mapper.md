@@ -4,7 +4,7 @@ Next, some classes need to be created to configure the mapping between the entit
 
 First create a package named *com.example.demo.mapper.entity*， create three files under it: *BookStoreMapper.kt*, *BookMapper.kt* and *AuthorMapper.kt*.
 
-## BookMapper
+## 1. BookMapper
 
 BookMapper is the core in this example, so let's start with it.
 
@@ -91,6 +91,7 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 >   class MyEntityMapper: EntityMapper<MyEntity, Long> {
 >       db {
 >           tableName = "MY_ENTITY_TABLE" // Table name in database
+>           idGenerator(SequenceIdGenerator("MY_ENTITY_SEQ_ID")) // Sequence to allocate id
 >       }
 >       graphql {
 >           name = "MyEntityObject" // Object type name in GraphQL schema
@@ -105,7 +106,7 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 >       scalar(MyEntity::name) {
 >           db {
 >               column {
->                   name = "MY_ENTITY_NAME"
+>                   name = "NAME"
 >                   
 >                   // "length" can only be used for string type, otherwise a compilation error will occur
 >                   length = 50 
@@ -115,7 +116,7 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 >       scalar(MyEntity::capaticy) {
 >           db {
 >               column {
->                   name = "MY_ENTITY_NAME"
+>                   name = "CAPACITY"
 >
 >                   // "precision" and "sclae" can only be used for string type, 
 >                   // otherwise a compilation error will occur
@@ -126,6 +127,44 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 >       }
 >   }
 >   ```
+
+## 2. BookStoreMapper
+
+```kt
+import org.babyfish.graphql.provider.EntityMapper
+import org.babyfish.graphql.provider.dsl.EntityTypeDSL
+import org.babyfish.graphql.provider.example.model.BookStore
+import org.springframework.stereotype.Component
+import java.util.*
+
+@Component // α
+class BookStoreMapper: EntityMapper<BookStore, UUID>() {
+
+    override fun EntityTypeDSL<BookStore, UUID>.config() { // β
+        mappedList(BookStore::books, Book::store) // γ
+    }
+}
+```
+
+- α: *EntityMapper* must be managed by spring.
+
+- β: *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
+
+- γ: *BookStore.books* is the mirror image of *Book.store*
+    In practical work, we often encounter bidirectional associations. We should map one end first, and then configure the other end as a mirror.
+    
+    Note: For a one-to-many association, configuring it as a mirror is the only option.
+    
+    > Comparison with JPA annotation
+    > The above code 
+    > ```kt
+    > mappedList(BookStore::books, Book::store)
+    > ``` is actually equivalent to JPA's 
+    > ```java
+    > @OneToMany(mappedBy = "store")
+    > private List<Book> books;
+    > ```
+    > The difference is that when there is a typo, the kotlin DSL will cause a compilation error, while JPA will trigger a runtime exception.
 
 ---------------
 [< Previous: Create project & Define entities](./entities.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Configure batch size >](./batch-size.md)
