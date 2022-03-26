@@ -9,15 +9,15 @@ plugins {
 }
 
 group = "org.babyfish.graphql.provider"
-version = "0.0.2"
+version = "0.0.4"
 
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.3")
-	ksp("org.babyfish.kimmer:kimmer-ksp:0.3.0")
+	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.4")
+	ksp("org.babyfish.kimmer:kimmer-ksp:0.3.1")
 	runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
 }
 
@@ -31,6 +31,8 @@ kotlin {
 		kotlin.srcDir("build/generated/ksp/main/kotlin")
 	}
 }
+
+java.sourceCompatibility = JavaVersion.VERSION_11
 
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
