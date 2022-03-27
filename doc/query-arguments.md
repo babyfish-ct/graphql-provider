@@ -66,7 +66,7 @@ class BookQuery: Query() {
 
 - γ 
 
-    *table.store* means inner join, that's dynamic join of kimmer-sql, please click [here](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/table-joins.md) to see more.
+    *table.store* means inner join, that's dynamic join of kimmer-sql, please click [here](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/table-joins.md) to see more information about dynamic join.
     
 - δ
 
@@ -91,4 +91,9 @@ class BookQuery: Query() {
 
     It is worth noting that the *table* of the subquery overrides the *table* of the parent query. Therefore, the table here is the *AUTHOR* table of the subquery, not the *BOOK* table of the parent query.
     
+- ζ
+
+    - *table.books* represents table join through many-to-many associations. Doing this in a subquery has no side effects (ksp config *"kimmer.table.collection-join-only-for-sub-query"* is only for the top level query)
+    
+    - In fact, this is half join of kimmer-sql, please click [here](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/table-joins.md) to see more information about half join.
     
