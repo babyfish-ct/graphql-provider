@@ -24,25 +24,25 @@ class BookQuery: Query() {
         runtime.queryList {
             name?.let {
                 db {
-                    where(table.name ilike it) // β
+                    where(table.name ilike it)
                 }
             }
             storeName?.let { 
                 db {
-                    where(table.store.name ilike it) // γ
+                    where(table.store.name ilike it) // β
                 }
             }
             if (authorFirstName !== null || authorLastName !== null) { 
                 db { 
                     where { 
-                        table.id valueIn subQuery(Author::class) { // δ
+                        table.id valueIn subQuery(Author::class) { // γ
                             authorFirstName?.let { 
                                 where(table.firstName ilike it)
                             }
                             authorLastName?.let {
                                 where(table.lastName ilike it)
                             }
-                            select(table.books.id) // ε
+                            select(table.books.id) // δ
                         }
                     }
                 }
