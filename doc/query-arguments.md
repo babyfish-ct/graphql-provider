@@ -97,3 +97,6 @@ class BookQuery: Query() {
     
     - In fact, this is half join of kimmer-sql, please click [here](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/table-joins.md) to see more information about half join.
     
+------------
+
+[< Previous: Configure batch size](batch-size.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Add arguments to association >](association-arguments.md)
