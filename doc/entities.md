@@ -128,23 +128,76 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
 
 > If you run the app now, you will get an exception because the current project does not have any substantive code and does not provide GraphQL queries. However, that's okay, the exception doesn't prevent code generation.
 
-## 6. Automatically initialize the H2 database when the app starts
+## 6. Global configuration
 
-Create a file *data.sql* under *src/main/resouces*. Due to the large amount of sql code, the sql code is not listed here and you can copy the sql code from [example/src/main/resources/data.sql](https://github.com/babyfish-ct/graphql-provider/blob/main/example/src/main/resources/data.sql).
+1. Automatically initialize the H2 database when the app starts
 
-Change class *com.example.demo.DempApplciation*, add a spring bean
+    Create a file *data.sql* under *src/main/resouces*. Due to the large amount of sql code, the sql code is not listed here and you can copy the sql code from [example/src/main/resources/data.sql](https://github.com/babyfish-ct/graphql-provider/blob/main/example/src/main/resources/data.sql).
 
-```kt
-@Bean
-fun connectionFactoryInitializer(
-    connectionFactory: ConnectionFactory
-): ConnectionFactoryInitializer =
-    ConnectionFactoryInitializer().apply {
-        setConnectionFactory(connectionFactory)
-        setDatabasePopulator(ResourceDatabasePopulator(ClassPathResource("data.sql")))
-        afterPropertiesSet()
-    }
-```
+    Change class *com.example.demo.DempApplciation*, add a spring bean
+
+    ```kt
+    @Bean
+    fun connectionFactoryInitializer(
+        connectionFactory: ConnectionFactory
+    ): ConnectionFactoryInitializer =
+        ConnectionFactoryInitializer().apply {
+            setConnectionFactory(connectionFactory)
+            setDatabasePopulator(ResourceDatabasePopulator(ClassPathResource("data.sql")))
+            afterPropertiesSet()
+        }
+    ```
+    
+2. Let [kimmer-sql](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/README.md) use dialect of H2 database
+
+    Change class *com.example.demo.DempApplciation*, add a spring bean
+
+    ```kt
+    @Bean
+	fun dialect() = 
+        org.babyfish.kimmer.sql.runtime.dialect.H2Dialect()
+    ```
+    
+3. Tell [kimmer-sql](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/README.md) how to map the enum *com.example.demo.model.Gender*
+
+    Change class *com.example.demo.DempApplciation*, add a spring bean
+    
+    ```kt
+    @Bean
+	fun genderProvider() =
+		enumProviderByString(Gender::class) {
+			map(Gender.MALE, "M")
+			map(Gender.FEMALE, "F")
+		}
+    ```
+    
+    > kimmer-sql provides two ways to map enum
+    > 1. enumProviderByString
+    >   This means to map the enum to a string
+    >   - By default the name of the enum is used
+    >       ```kt
+    >       enumProviderByString(Gender::class) // MALE, FEMALE
+    >       ```
+    >   - You can override the default behavior with custom strings
+    >       ```kt
+    >       enumProviderByString(Gender::class) { // M, F
+	>.          map(Gender.MALE, "M")
+	>           map(Gender.FEMALE, "F")
+	>       }
+    >       ```
+    > 2. enumProviderByInt
+    >   This means to map the enum to a intrger
+    >   - By default the ordinal of the enum is used
+    >       ```kt
+    >       enumProviderByInt(Gender::class) // 0, 1
+    >       ```
+    >   - You can override the default behavior with custom strings
+    >       ```kt
+    >       enumProviderByInt(Gender::class) { // 100, 200
+	>.          map(Gender.MALE, 100)
+	>           map(Gender.FEMALE, 200)
+	>       }
+    >       ```
 
 --------------
 
