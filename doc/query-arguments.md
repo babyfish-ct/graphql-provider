@@ -54,4 +54,5 @@ class BookQuery: Query() {
 }
 ```
 
-- α: We used to add the ksp plugin to build.gralde.kts to automatically generate the source code required for strongly typed SQL based on user-defined entity types. Now, we import these auto-generated codes.
+- α: We used to add the *ksp* plugin to *build.gralde.kts* to automatically generate source code required for strongly typed SQL based on user-defined entity types. Now, we import the auto-generated code.
+    In the above code, we have used some expressions: *table.name*, *table.store.name*, *table.firstName*, *table.lastName*, *table.books.id*. In fact, they are all extension properties defined in the automatically generated code.
