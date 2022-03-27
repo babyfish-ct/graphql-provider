@@ -165,10 +165,10 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
     ```kt
     @Bean
 	fun genderProvider() =
-		enumProviderByString(Gender::class) {
-			map(Gender.MALE, "M")
-			map(Gender.FEMALE, "F")
-		}
+	    enumProviderByString(Gender::class) {
+		map(Gender.MALE, "M")
+		map(Gender.FEMALE, "F")
+	    }
     ```
     
     > kimmer-sql provides two ways to map enum
@@ -200,7 +200,6 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
     >           map(Gender.FEMALE, 200)
     >       }
     >       ```
-
 
 --------------
 
