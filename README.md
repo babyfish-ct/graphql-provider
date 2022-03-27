@@ -1,8 +1,6 @@
 # Quickly build GraphQL services with kotlin based on R2DBC
 
-## User guide
-
-This framework allows you to build GraphQL services at the fastest speed, you just need to follow this guide to develop step by step
+## User guide & Documentation
 
 1. [Create project & Define entities](./doc/entities.md)
 2. [Map entities](./doc/entity-mapper.md)
