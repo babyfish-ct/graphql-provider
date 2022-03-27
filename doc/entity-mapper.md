@@ -207,7 +207,7 @@ import com.example.demo.model.Book
 @Service // α
 class BookQuery: Query() { // β
 
-    fun findAllBooks(): List<Book> =
+    fun findBooks(): List<Book> =
         runtime.queryList {} // γ
 }
 ```
@@ -220,6 +220,10 @@ class BookQuery: Query() { // β
     1. Adding arguments to the query function is a topic to be discussed in the following chapters, so here we use a query without arguments to query all books
     2. *runtime* is a protected property declared in the superclass *org.babyfish.graphql.provider.Query*
     3. The current query has no arguemnts, so *runtime.queryList* does not have any code
+    
+## 5. Run
+   
+Now, you can run it, start app and access http://localhost:8080/graphiql/
     
 ---------------
 [< Previous: Create project & Define entities](./entities.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Configure batch size >](./batch-size.md)
