@@ -201,6 +201,7 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
     >       }
     >       ```
 
+
 --------------
 
 [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Map entities>](./entity-mapper.md)
