@@ -173,6 +173,7 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
     
     > kimmer-sql provides two ways to map enum
     > 1. enumProviderByString
+    > 
     >   This means to map the enum to a string
     >   - By default the name of the enum is used
     >       ```kt
@@ -181,11 +182,12 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
     >   - You can override the default behavior with custom strings
     >       ```kt
     >       enumProviderByString(Gender::class) { // M, F
-	>.          map(Gender.MALE, "M")
-	>           map(Gender.FEMALE, "F")
-	>       }
+    >           map(Gender.MALE, "M")
+    >           map(Gender.FEMALE, "F")
+    >       }
     >       ```
     > 2. enumProviderByInt
+    > 
     >   This means to map the enum to a intrger
     >   - By default the ordinal of the enum is used
     >       ```kt
@@ -194,9 +196,9 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
     >   - You can override the default behavior with custom strings
     >       ```kt
     >       enumProviderByInt(Gender::class) { // 100, 200
-	>.          map(Gender.MALE, 100)
-	>           map(Gender.FEMALE, 200)
-	>       }
+    >           map(Gender.MALE, 100)
+    >           map(Gender.FEMALE, 200)
+    >       }
     >       ```
 
 --------------
