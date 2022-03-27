@@ -175,7 +175,7 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
     > 1. enumProviderByString
     > 
     >	 This means to map the enum to a string
-    >   - By default the name of the enum is used
+    >   - By default the *name* of the enum is used
     >       ```kt
     >       enumProviderByString(Gender::class) // MALE, FEMALE
     >       ```
@@ -188,12 +188,12 @@ Now, you can run the app, the code required for the strongly typed SQL DSL will 
     >       ```
     > 2. enumProviderByInt
     > 
-    >	 This means to map the enum to a intrger
-    >   - By default the ordinal of the enum is used
+    >	 This means to map the enum to a integer
+    >   - By default the *ordinal* of the enum is used
     >       ```kt
     >       enumProviderByInt(Gender::class) // 0, 1
     >       ```
-    >   - You can override the default behavior with custom strings
+    >   - You can override the default behavior with custom integers
     >       ```kt
     >       enumProviderByInt(Gender::class) { // 100, 200
     >           map(Gender.MALE, 100)
