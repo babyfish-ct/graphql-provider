@@ -5,63 +5,39 @@ import org.babyfish.graphql.provider.example.model.*
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.sql.ast.ilike
 import org.babyfish.kimmer.sql.ast.valueIn
-import org.babyfish.kimmer.sql.ast.valueNotIn
-import org.springframework.stereotype.Component
-import java.util.*
+import org.springframework.stereotype.Service
 
-//@Component
+@Service
 class BookQuery: Query() {
 
-    fun findPagedBooks(
-        name: String?
+    fun findBooks(
+        name: String?,
+        storeName: String?,
+        authorFirstName: String?,
+        authorLastName: String?
     ): Connection<Book> =
         runtime.queryConnection {
             name?.let {
                 db {
                     where(table.name ilike it)
-                    orderBy(table.name)
-                }
-            }
-        }
 
-    fun findBooks(
-        name: String?,
-        inclusiveStoreIds: List<UUID>?,
-        exclusiveStoreIds: List<UUID>?,
-        inclusiveAuthorIds: List<UUID>?,
-        exclusiveAuthorIds: List<UUID>?,
-    ): List<Book> =
-        runtime.queryList {
-            name?.let {
-                db {
-                    where(table.name ilike it)
                 }
             }
-            inclusiveStoreIds?.let {
+            storeName?.let {
                 db {
-                    where(table.store.id valueIn it)
+                    where(table.store.name ilike it)
                 }
             }
-            exclusiveStoreIds?.let {
-                db {
-                    where(table.store.id valueNotIn it)
-                }
-            }
-            inclusiveAuthorIds?.let {
+            if (authorFirstName !== null || authorLastName !== null) {
                 db {
                     where {
                         table.id valueIn subQuery(Author::class) {
-                            where(table.id valueIn it)
-                            select(table.books.id)
-                        }
-                    }
-                }
-            }
-            exclusiveAuthorIds?.let {
-                db {
-                    where {
-                        table.id valueNotIn subQuery(Author::class) {
-                            where(table.id valueIn it)
+                            authorFirstName?.let {
+                                where(table.firstName ilike it)
+                            }
+                            authorLastName?.let {
+                                where(table.lastName ilike it)
+                            }
                             select(table.books.id)
                         }
                     }

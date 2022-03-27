@@ -13,6 +13,8 @@ import java.util.*
 @Component
 class BookMapper: EntityMapper<Book, UUID>() {
 
+    // Static mapping configuration--------------------------------
+
     override fun EntityTypeDSL<Book, UUID>.config() {
 
         db {
@@ -31,6 +33,8 @@ class BookMapper: EntityMapper<Book, UUID>() {
             }
         }
     }
+
+    // Dynamic code configuration--------------------------------
 
     fun authors(firstName: String?, lastName: String?) =
         runtime.filterList(Book::authors) {

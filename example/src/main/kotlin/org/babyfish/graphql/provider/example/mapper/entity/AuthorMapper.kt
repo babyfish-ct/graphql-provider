@@ -14,6 +14,8 @@ import java.util.*
 @Component
 class AuthorMapper: EntityMapper<Author, UUID>() {
 
+    // Static mapping configuration--------------------------------
+
     override fun EntityTypeDSL<Author, UUID>.config() {
 
         db {
@@ -25,19 +27,7 @@ class AuthorMapper: EntityMapper<Author, UUID>() {
         userImplementation(Author::fullName)
     }
 
-    fun books(name: String?) =
-        runtime.filterList(Author::books) {
-            name?.let {
-                db {
-                    where {
-                        table.id valueIn subQuery(Book::class) {
-                            where(table.name ilike it)
-                            select(table.authors.id)
-                        }
-                    }
-                }
-            }
-        }
+    // Dynamic code configuration--------------------------------
 
     fun fullName(separator: String?) =
         runtime.implementation(Author::fullName) {

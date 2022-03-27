@@ -12,6 +12,8 @@ import java.util.*
 @Component
 class BookStoreMapper: EntityMapper<BookStore, UUID>() {
 
+    // Static mapping configuration--------------------------------
+
     override fun EntityTypeDSL<BookStore, UUID>.config() {
 
         db {
@@ -22,6 +24,8 @@ class BookStoreMapper: EntityMapper<BookStore, UUID>() {
 
         userImplementation(BookStore::avgPrice)
     }
+
+    // Dynamic code configuration--------------------------------
 
     fun avgPrice() =
         runtime.batchImplementation(BookStore::avgPrice) {
