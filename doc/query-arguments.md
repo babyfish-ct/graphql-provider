@@ -93,7 +93,7 @@ class BookQuery: Query() {
     
 - ζ
 
-    - *table.books* represents table join through many-to-many associations. Doing this in a subquery has no side effects (ksp config *"kimmer.table.collection-join-only-for-sub-query"* is only for the top level query)
+    - *table.books* represents table join through many-to-many associations. Doing this in a subquery has no side effects (ksp argument *"kimmer.table.collection-join-only-for-sub-query"* only disallow this in top-level queries)
     
     - In fact, this is half join of kimmer-sql, please click [here](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/table-joins.md) to see more information about half join.
     
