@@ -71,6 +71,10 @@ This code shows that whether *BookInput*, *BookShallowInput* or *BookDeepTreeInp
 
 This is what the [previous article](./input-mapper.md) said, graphql-provider does not require developers to face two similar but different objects *(Entity and Input)*, and does not require developers to write unconstructive code and convert input to entity.
 
+Entity objects such as *Book*, *BookStore* and *Author* are kimmer objects, kimmer objects support dynamics *(see https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-core/dynamic.md to know more)*. Whether it is a partial object, a complete object, a shallow object tree, or a deep object tree, it can be expressed as an entity object (*Book* here). This is why all three Input objects can be automatically mapped to *Book* objects.
+
+Whether an entity object is a partial object, a complete object, a shallow object tree, or a deep object tree, the *R2dbcClient.save()* function allows developers to save it in one sentence, this is why the implementation of mutation is so simple.
+
 ## 2. Decide the return type of mutation
 
 ## 3. Add transaction
