@@ -67,7 +67,7 @@ class BookMutation(
     
     - *org.babyfish.graphql.provider.ImplicitInputs.entities* can map input objects to entity objects.
 
-This code shows that whether BookInput, BookShallowInput or BookDeepTreeInput in GraphQL Schema can be automatically mapped to entity objects by graphql-provider.
+This code shows that whether *BookInput*, *BookShallowInput* or *BookDeepTreeInput* in GraphQL Schema can be automatically mapped to *Book* by graphql-provider.
 
 This is what the [previous article](./input-mapper.md) said, graphql-provider does not require developers to face two similar but different objects *(Entity and Input)*, and does not require developers to write unconstructive code and convert input to entity.
 
