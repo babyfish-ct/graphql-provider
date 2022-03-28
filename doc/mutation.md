@@ -77,4 +77,136 @@ Whether an entity object is a partial object, a complete object, a shallow objec
 
 ## 2. Decide the return type of mutation
 
+For simple demonstration, the above code makes mutation return an integer. This is an overly simplistic extreme, now let's look at the other extreme and see what *R2dbcClient.save()* actually returns
+
+Let's modify the *saveBookDeepTree* function, let it return the original result returned by the underlying kimmer-sql.
+
+```kt
+suspend fun saveBookDeepTree(
+        input: ImplicitInput<Book, BookDeepTreeInputMapper>
+    ): org.babyfish.kimmer.sql.EntityMutationResult =
+        r2dbcClient.save(input.entity, input.saveOptionsBlock)
+```
+
+Start the app, access http://localhost:8080/graphiql, execute
+
+```
+mutation {
+  saveBookDeepTree(input: {
+    name: "NewBook",
+    price: 80,
+    store: {
+      name: "New Store"
+    }
+    authors: [
+      { 
+        firstName: "NewFirstName1",
+        lastName: "NewLastName1",
+        gender: MALE,
+      },
+      { 
+        firstName: "NewFirstName2",
+        lastName: "NewLastName2",
+        gender: FEMALE
+      }
+    ]
+  }) {
+    totalAffectedRowCount
+    type
+    affectedRowCount
+    row
+    associations {
+      associationName
+      totalAffectedRowCount
+      middleTableInsertedRowCount
+      middleTableDeletedRowCount
+      targets {
+        totalAffectedRowCount
+        type
+        affectedRowCount
+        row
+        middleTableChanged
+      }
+      detachedTargets {
+        totalAffectedRowCount
+      }
+    }
+  }
+}
+```
+You will get a return message like this
+```
+{
+  "data": {
+    "saveBookDeepTree": {
+      "totalAffectedRowCount": 6, // α
+      "type": "INSERT", // β
+      "affectedRowCount": 1, // β
+      "row": "{\"authors\":[{\"firstName\":\"NewFirstName1\",\"gender\":\"MALE\",\"lastName\":\"NewLastName1\",\"id\":\"79939500-3f1f-4171-94ab-90e9c8cf0709\"},{\"firstName\":\"NewFirstName2\",\"gender\":\"FEMALE\",\"lastName\":\"NewLastName2\",\"id\":\"143cb40b-7afe-410c-9b12-247b90579dd1\"}],\"name\":\"NewBook\",\"price\":80,\"store\":{\"name\":\"New Store\",\"website\":null,\"id\":\"0326d933-7978-4d65-a21a-efc274b69c11\"},\"id\":\"5a794a1d-73aa-4b79-8ffb-3eeca5393eca\"}", // γ
+      "associations": [ 
+        {
+          "associationName": "store", // δ
+          "totalAffectedRowCount": 1,
+          "middleTableInsertedRowCount": 0,
+          "middleTableDeletedRowCount": 0,
+          "targets": [ // ε
+            {
+              "totalAffectedRowCount": 1, 
+              "type": "INSERT", // ζ
+              "affectedRowCount": 1, // ζ
+              "row": "{\"name\":\"New Store\",\"website\":null,\"id\":\"0326d933-7978-4d65-a21a-efc274b69c11\"}", // η
+              "middleTableChanged": false
+            }
+          ],
+          "detachedTargets": [] // θ
+        },
+        {
+          "associationName": "authors", // ι
+          "totalAffectedRowCount": 4, // κ
+          "middleTableInsertedRowCount": 2, // λ
+          "middleTableDeletedRowCount": 0,
+          "targets": [ // μ
+            {
+              "totalAffectedRowCount": 2,
+              "type": "INSERT",  // ν
+              "affectedRowCount": 1, ν
+              "row": "{\"firstName\":\"NewFirstName1\",\"gender\":\"MALE\",\"lastName\":\"NewLastName1\",\"id\":\"79939500-3f1f-4171-94ab-90e9c8cf0709\"}", // ξ
+              "middleTableChanged": true // ο
+            },
+            {
+              "totalAffectedRowCount": 2,
+              "type": "INSERT", // π
+              "affectedRowCount": 1, // π
+              "row": "{\"firstName\":\"NewFirstName2\",\"gender\":\"FEMALE\",\"lastName\":\"NewLastName2\",\"id\":\"143cb40b-7afe-410c-9b12-247b90579dd1\"}", // ρ
+              "middleTableChanged": true // σ
+            }
+          ],
+          "detachedTargets": [] // τ
+        }
+      ]
+    }
+  }
+}
+```
+
+α: Total affect row count is 6, 1 *(BOOK)* + 1 *(BOOK_STORE)* + 2 *(AUTHOR)* + 2 *(BOOK_AUTHOR_MAPPING)*
+β: Root object is inserted, affected row count is 1
+γ: The root object after mutation, note that all object ids are automatically assigned
+δ: The mutation result about the association *Book.store*
+ε: One object is retained by the association *Book.store* *(inserted, updated or not changed)*
+ζ: The associated *BookStore* is inserted, affected row count is 1
+η: The associated object of *Book.store* after mutation, note that its id is automatically assigned
+θ: No associated object of *Book.store* is detached after mutation
+ι: The mutation result about the association *Book.authors*
+κ: The association *Book.authors* affect 4 rows: 2 *(AUTHOR)* + 2 *(BOOK_AUTHOR_MAPPING)*
+λ: The data of middle table *BOOK_AUTHOR_MAPPING* of many-to-many association is modified, affected row count is 2
+μ: Two objects are retained by the association *Book.authors* *(inserted, updated or not changed)*
+ν: The first associated object of *Book.authors* is inserted, affected count is 1
+ξ: The first associated object of *Book.authors* after mutation, note that its id is automatically assigned
+ο: In order to save the first associated object of *Book.authors*, the middle table has been changed
+π: The second associated object of *Book.authors* is inserted, affected count is 1
+ρ: The second associated object of *Book.authors* after mutation, note that its id is automatically assigned
+σ: In order to save the second associated object of *Book.authors*, the middle table has been changed
+τ: No associated object of *Book.author* is detached after mutation
+
 ## 3. Add transaction
