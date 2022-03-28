@@ -189,24 +189,24 @@ You will get a return message like this
 }
 ```
 
-α: Total affect row count is 6, 1 *(BOOK)* + 1 *(BOOK_STORE)* + 2 *(AUTHOR)* + 2 *(BOOK_AUTHOR_MAPPING)*
-β: Root object is inserted, affected row count is 1
-γ: The root object after mutation, note that all object ids are automatically assigned
-δ: The mutation result about the association *Book.store*
-ε: One object is retained by the association *Book.store* *(inserted, updated or not changed)*
-ζ: The associated *BookStore* is inserted, affected row count is 1
-η: The associated object of *Book.store* after mutation, note that its id is automatically assigned
-θ: No associated object of *Book.store* is detached after mutation
-ι: The mutation result about the association *Book.authors*
-κ: The association *Book.authors* affect 4 rows: 2 *(AUTHOR)* + 2 *(BOOK_AUTHOR_MAPPING)*
-λ: The data of middle table *BOOK_AUTHOR_MAPPING* of many-to-many association is modified, affected row count is 2
-μ: Two objects are retained by the association *Book.authors* *(inserted, updated or not changed)*
-ν: The first associated object of *Book.authors* is inserted, affected count is 1
-ξ: The first associated object of *Book.authors* after mutation, note that its id is automatically assigned
-ο: In order to save the first associated object of *Book.authors*, the middle table has been changed
-π: The second associated object of *Book.authors* is inserted, affected count is 1
-ρ: The second associated object of *Book.authors* after mutation, note that its id is automatically assigned
-σ: In order to save the second associated object of *Book.authors*, the middle table has been changed
-τ: No associated object of *Book.author* is detached after mutation
+- α: Total affect row count is 6, 1 *(BOOK)* + 1 *(BOOK_STORE)* + 2 *(AUTHOR)* + 2 *(BOOK_AUTHOR_MAPPING)*
+- β: Root object is inserted, affected row count is 1
+- γ: The root object after mutation, note that all object ids are automatically assigned
+- δ: The mutation result about the association *Book.store*
+- ε: One object is retained by the association *Book.store* *(inserted, updated or not changed)*
+- ζ: The associated *BookStore* is inserted, affected row count is 1
+- η: The associated object of *Book.store* after mutation, note that its id is automatically assigned
+- θ: No associated object of *Book.store* is detached after mutation
+- ι: The mutation result about the association *Book.authors*
+- κ: The association *Book.authors* affect 4 rows: 2 *(AUTHOR)* + 2 *(BOOK_AUTHOR_MAPPING)*
+- λ: The data of middle table *BOOK_AUTHOR_MAPPING* of many-to-many association is modified, affected row count is 2
+- μ: Two objects are retained by the association *Book.authors* *(inserted, updated or not changed)*
+- ν: The first associated object of *Book.authors* is inserted, affected count is 1
+- ξ: The first associated object of *Book.authors* after mutation, note that its id is automatically assigned
+- ο: In order to save the first associated object of *Book.authors*, the middle table has been changed
+- π: The second associated object of *Book.authors* is inserted, affected count is 1
+- ρ: The second associated object of *Book.authors* after mutation, note that its id is automatically assigned
+- σ: In order to save the second associated object of *Book.authors*, the middle table has been changed
+- τ: No associated object of *Book.author* is detached after mutation
 
 ## 3. Add transaction
