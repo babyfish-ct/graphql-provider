@@ -20,7 +20,6 @@ class BookQuery: Query() {
             name?.let {
                 db {
                     where(table.name ilike it)
-
                 }
             }
             storeName?.let {
