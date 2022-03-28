@@ -225,6 +225,7 @@ package com.example.demo.query
     
 import org.babyfish.graphql.provider.Query
 import com.example.demo.model.Book
+import org.springframework.stereotype.Service
    
 @Service // α
 class BookQuery: Query() { // β
