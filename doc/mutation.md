@@ -63,7 +63,7 @@ class BookMutation(
 
 - δ: 
 
-    - *org.babyfish.graphql.provider.ImplicitInputs* means an list, each element is an input object whose type is created by input mapper
+    - *org.babyfish.graphql.provider.ImplicitInputs* means a list, each element is an input object whose type is created by input mapper
     
     - *org.babyfish.graphql.provider.ImplicitInputs.entities* can map input objects to entity objects.
 
