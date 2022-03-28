@@ -24,7 +24,7 @@ class BookMapper: EntityMapper<Book, UUID>() {
 }
 ```
 
-For *EntityMapper*'s *reference*, *list*, *connection*, *mappedReference*, *mappedList* and *mappedConnection* configurations, allows users to configure *batchSize* in a code block named *graphql*.
+For *EntityMapper*'s *reference*, *list*, *connection*, *mappedReference*, *mappedList*, *mappedConnection* and *userImplementation* configurations, allows users to configure *batchSize* in a code block named *graphql*.
 
 ## 2. Entity level configuration
 
