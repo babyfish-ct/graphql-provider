@@ -173,7 +173,7 @@ input BookShallowTreeInput {
 }
 ```
 
-### 2.2 BookDeepTreeInputMapper
+### 2.3 BookDeepTreeInputMapper
 
 Add a class under the package: *com.example.demo.mapper.input*
 
@@ -264,6 +264,47 @@ input BookShallowTreeInput_authors {
     gender: Gender!
 }
 ```
+
+## 2.4 Set id generators for EntityMapper
+
+In the above mappings, `keyProps(...)` is used for all three entity types, so it is necessary to specify ids generator for the entity types so that graphql-provider can automatically generate *id* when the user does not specify it.
+
+Change BookStoreMapper
+```
+class BookStoreMapper: EntityMapper<BookStore, UUID> {
+    db {
+        idGenerator(UUIDIdGenerator())
+    }
+    ... other configuration ...
+}
+```
+
+Change BookMapper
+```kt
+class BookMapper: EntityMapper<Book, UUID> {
+    db {
+        idGenerator(UUIDIdGenerator())
+    }
+    ... other configuration ...
+}
+```
+
+Change BookMapper
+```kt
+class AuthorMapper: EntityMapper<Author, UUID> {
+    db {
+        idGenerator(UUIDIdGenerator())
+    }
+    ... other configuration ...
+}
+```
+
+graphql-provider provides these IdGenerators
+
+- SequenceIdGenerator: Use database sequence, this option is suitable for single database systems. 
+- IdentityGenerator: Some database support auto increment primary key, this option is suitable for single database systems.
+- UUIDIdGenerator: When the primary key is UUID, call `java.util.UUID.randomUUID()` to get id, This option is suitable for multi-database systems, but the performance is low
+- UserIdGenerator&lt;ID&gt;: The user programmatically decides how to generate the id, usually it should return the snowflake id. This option is suitable for multi-database systems.
 
 -----------------
 
