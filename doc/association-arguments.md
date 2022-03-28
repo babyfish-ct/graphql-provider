@@ -2,9 +2,9 @@
 
 GraphQL has a nice feature that not only queries can have arguments, but associations between entities can also have arguments.
 
-Graphql-provider allows you to add arguments to collection properties, i.e. properties mapped by *list*, *connection*, *mappedList* and *mappedConnection*.
+Graphql-provider allows you to add arguments to collection fields, i.e. fields mapped by *list*, *connection*, *mappedList* and *mappedConnection*.
 
-Here, we demonstrate how to add parameters to the association *Book.authors*.
+Here, we demonstrate how to add arguments to the association *Book.authors*.
 
 ```kt
 package org.babyfish.graphql.provider.example.mapper.entity
