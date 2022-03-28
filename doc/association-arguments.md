@@ -7,13 +7,13 @@ Graphql-provider allows you to add arguments to collection fields, i.e. fields m
 Here, we demonstrate how to add arguments to the association *Book.authors*.
 
 ```kt
-package org.babyfish.graphql.provider.example.mapper.entity
+package com.example.demo.mapper.entity
 
-import org.babyfish.graphql.provider.example.model.Book
+import com.example.demo.model.Book
 import org.babyfish.graphql.provider.EntityMapper
 import org.babyfish.graphql.provider.dsl.EntityTypeDSL
-import org.babyfish.graphql.provider.example.model.firstName
-import org.babyfish.graphql.provider.example.model.lastName
+import com.example.demo.model.firstName
+import com.example.demo.model.lastName
 import org.babyfish.kimmer.sql.ast.ilike
 import org.springframework.stereotype.Component
 import java.util.*
