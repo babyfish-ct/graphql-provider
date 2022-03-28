@@ -304,3 +304,43 @@ The client can easily access the id assigned to each object after the mutation i
 
 
 ## 3. Add transaction
+
+The internal implementation of *R2dbcClient.save* will execute multiple SQLs, in order to ensure that the entire mutation is fully complete or completely undone, please use @*org.springframework.transaction.annotation.Transactional*
+
+The final code is
+
+```kt
+@Service
+class BookMutation(
+    private val r2dbcClient: R2dbcClient
+) : Mutation {
+
+    @Transactional
+    suspend fun saveBook(
+        input: ImplicitInput<Book, BookInputMapper>
+    ): Book =
+        r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
+
+    @Transactional
+    suspend fun saveBooks(
+        inputs: ImplicitInputs<Book, BookInputMapper>
+    ): List<Book> =
+        r2dbcClient.save(inputs.entities, inputs.saveOptionsBlock).entities()
+
+    @Transactional
+    suspend fun saveBookShallowTree(
+        input: ImplicitInput<Book, BookShallowTreeInputMapper>
+    ): Book =
+        r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
+
+    @Transactional
+    suspend fun saveBookDeepTree(
+        input: ImplicitInput<Book, BookDeepTreeInputMapper>
+    ): Book =
+        r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
+}
+```
+
+---------------
+
+[< Previous: Map inputs](input-mapper.md) | [Home](https://github.com/babyfish-ct/graphql-provider)
