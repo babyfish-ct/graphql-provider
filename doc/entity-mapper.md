@@ -191,6 +191,7 @@ package com.example.demo.mapper.entity
 import org.babyfish.graphql.provider.EntityMapper
 import org.babyfish.graphql.provider.dsl.EntityTypeDSL
 import com.example.demo.model.Author
+import com.example.demo.model.Book
 import org.springframework.stereotype.Component
 import java.util.*
     
