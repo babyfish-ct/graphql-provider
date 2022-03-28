@@ -24,7 +24,7 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 
         reference(Book::store) // γ
 
-        list(Book::authors) { δ
+        list(Book::authors) { // δ
             db {
                 middleTable {
                     tableName = "BOOK_AUTHOR_MAPPING"
