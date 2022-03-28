@@ -254,5 +254,82 @@ class BookQuery: Query() { // β
    
 Now, you can run it, start app and access http://localhost:8080/graphiql/
     
+Execute
+```
+query {
+  findBooks {
+    name
+    store {
+      name
+    }
+    authors {
+      firstName
+      lastName
+    }
+  }
+}
+```
+The response is
+```
+{
+  "data": {
+    "findBooks": [
+      {
+        "name": "Learning GraphQL",
+        "store": {
+          "name": "O'REILLY"
+        },
+        "authors": [
+          {
+            "firstName": "Eve",
+            "lastName": "Procello"
+          },
+          {
+            "firstName": "Alex",
+            "lastName": "Banks"
+          }
+        ]
+      },
+      {
+        "name": "Effective TypeScript",
+        "store": {
+          "name": "O'REILLY"
+        },
+        "authors": [
+          {
+            "firstName": "Dan",
+            "lastName": "Vanderkam"
+          }
+        ]
+      },
+      {
+        "name": "Programming TypeScript",
+        "store": {
+          "name": "O'REILLY"
+        },
+        "authors": [
+          {
+            "firstName": "Boris",
+            "lastName": "Cherny"
+          }
+        ]
+      },
+      {
+        "name": "GraphQL in Action",
+        "store": {
+          "name": "MANNING"
+        },
+        "authors": [
+          {
+            "firstName": "Samer",
+            "lastName": "Buna"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+    
 ---------------
 [< Previous: Create project & Define entities](./entities.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Configure batch size >](./batch-size.md)
