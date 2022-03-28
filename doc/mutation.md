@@ -17,7 +17,6 @@ import org.babyfish.graphql.provider.example.mapper.input.BookInputMapper
 import org.babyfish.graphql.provider.example.mapper.input.BookShallowTreeInputMapper
 import org.babyfish.graphql.provider.example.model.Book
 import org.babyfish.graphql.provider.runtime.R2dbcClient
-import org.babyfish.kimmer.sql.entities
 import org.springframework.stereotype.Service
 
 @Service // α
