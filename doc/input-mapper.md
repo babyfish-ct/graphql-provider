@@ -103,3 +103,138 @@ class BookInputMapper: InputMapper<Book, UUID> { // β
     - `+Book::name`: Map the `name` field of *Book* to *BookInput*
     - `-Book::name`: Do not map the *name* field of *Book*, should be used after `allScalars()` or `allNonNullScalars()`
     - `scalar(Book::name, "bookName")`: Map the `name` field of *Book* to *BookInput* and specify the field name in the input type
+   
+When the App starts, the following input type is automatically defined in the GraphQL schema
+```
+input BookInput {
+    id: UUID
+    name: String!
+    price: BigDecimal!
+}
+```
+
+### 2.2 BookShallowTreeInputMapper
+
+Add a class under the package: *com.example.demo.mapper.input*
+
+```kt
+package com.example.demo.mapper.input
+
+import org.babyfish.graphql.provider.InputMapper
+import org.babyfish.graphql.provider.dsl.input.InputTypeDSL
+import com.example.demo.model.Book
+import org.springframework.stereotype.Component
+import java.util.*
+
+@Component
+class BookShallowTreeInputMapper: InputMapper<Book, UUID> {
+
+    override fun InputTypeDSL<Book, UUID>.config() {
+
+        // Configure "keyProps" means id is optional
+        keyProps(Book::name)
+
+        /*
+         * Upsert scalars and associations(exclude associated objects)
+         */
+
+        allScalars()
+
+        referenceId(Book::store) // α
+        listIds(Book::authors) // β
+    }
+}
+```
+
+- α
+
+    - Add a field `storeId` into input type, its type is the type of the associated object's id field, which in this case is UUID.
+    
+    - If the name of the input field is not specified, the result of adding "Id" to the name of the entity field is used as the name of the input field. Threfore, `referenceId(Book::store)` is equivalent to `referenceId(Book::store, "storeId")`.
+    
+    - The nullability of the field in the input type is the same as the nullability of the field in the entity type.
+    
+- β
+
+    - Add a field `authorIds` into input type, its type is the type of the associated object's id field, which in this case is UUID.
+    
+    - If the name of the input field is not specified
+        - If the name of the entity field ends with "s" but does not end with "es", remove the "s" from the entity field name and add "Ids" as the name of the input field. Threfore, `listIds(Book::authors)` is equivalent to `listIds(Book::authors, "authorIds")`.
+        - Otherwise, Throwing an exception requires the developer to explicitly specify the name of the input field.
+        
+When the App starts, the following input type is automatically defined in the GraphQL schema
+```
+input BookShallowTreeInput {
+    id: UUID
+    name: String!
+    price: BigDecimal!
+    storeId: UUID
+    authorIds: [UUID!]!
+}
+```
+
+### 2.2 BookDeepTreeInputMapper
+
+Add a class under the package: *com.example.demo.mapper.input*
+
+```kt
+package com.example.demo.mapper.input
+
+import org.babyfish.graphql.provider.InputMapper
+import org.babyfish.graphql.provider.dsl.input.InputTypeDSL
+import com.example.demo.model.Author
+import com.example.demo.model.Book
+import com.example.demo.model.BookStore
+import org.springframework.stereotype.Component
+import java.util.*
+
+@Component
+class BookDeepTreeInputMapper: InputMapper<Book, UUID> {
+
+    override fun InputTypeDSL<Book, UUID>.config() {
+
+        keyProps(Book::name)
+
+        allScalars()
+
+        reference(Book::store) { // α
+            keyProps(BookStore::name)
+            allScalars()
+            createAttachedObjects() // β
+        }
+
+        list(Book::authors) { // γ
+            keyProps(Author::firstName, Author::lastName)
+            allScalars()
+            createAttachedObjects() // δ
+        }
+    }
+}
+```
+
+- α
+
+    Map *Book.store* to input type
+    
+    - If the name of the input field is not specified, use the name of entity field. Therefore, `reference(Book::store)` is equivalent to `reference(Book::store, "store")`.
+
+    - Automatically create a new input type named "BookDeepTreeInput_store" and use the code inside the lambda expression to map this new input type. If you don't like the name of the new input type "BookDeepTreeInput_store", you can manually create another *InputMapper* (eg: *BookStoreInputMapper*) and change the code here to `reference(Book::store, BookStoreInputMapper::class)`
+
+
+- β
+
+    If the associated object does not exist in the database, execute insert automatically
+    
+    > For one-to-many associations, in addition to `createAttachedObjects()`, you can also use `deleteDetachedObjects()`. 
+    > 
+    > This means that if any old associated objects are discarded, they must be automatically deleted. 
+    > 
+    > `deleteDetachedObjects()` cannot be used here, because the current association is not one-to-many association.
+
+- γ
+
+    Map *Book.authors* to input type
+    
+    - If the name of the input field is not specified, use the name of entity field. Therefore, `list(Book::authors)` is equivalent to `list(Book::authors, "authors")`.
+
+    - Automatically create a new input type named "BookDeepTreeInput_authors" and use the code inside the lambda expression to map this new input type. If you don't like the name of the new input type "BookDeepTreeInput_authors", you can manually create another *InputMapper* (eg: *AuthorInputMapper*) and change the code here to `list(Book::authors, AuthorInputMapper::class)`
