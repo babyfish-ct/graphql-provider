@@ -264,3 +264,7 @@ input BookShallowTreeInput_authors {
     gender: Gender!
 }
 ```
+
+-----------------
+
+[< Previous: Pagination query](./pagination.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Execute mutation>](./mutation.md)
