@@ -70,7 +70,7 @@ This is a complex user implementation field that requires not only access to the
 
         *it* is an implicit parameter provided by the lambda expression of the runtime.implement function, representing the current Author object
     
-## 1. BookStore.avgPrice
+## 2. BookStore.avgPrice
 
 1. Add new kotlin property in entity interface
 
@@ -85,7 +85,67 @@ This is a complex user implementation field that requires not only access to the
 
 2. Add your repository
 
+    Create new package *com.example.demo.dal*, add *BookRepository* under it
     
+    ```kt
+    package com.example.demo.dal
+    
+    import com.example.demo.model.Book
+    import com.example.demo.model.price
+    import com.example.demo.model.store
+    import org.babyfish.graphql.provider.runtime.R2dbcClient
+    import org.babyfish.kimmer.sql.ast.avg
+    import org.babyfish.kimmer.sql.ast.valueIn
+    import org.springframework.stereotype.Repository
+    import java.math.BigDecimal
+    import java.util.*
+
+    @Repository // α
+    class BookRepository(
+        private val r2dbcClient: R2dbcClient // β
+    ) {
+        suspend fun findAvgPriceGroupByStoreIds(
+            storeIds: Collection<UUID> // γ
+        ): Map<UUID, BigDecimal> = // δ
+            r2dbcClient.query(Book::class) {
+                select {
+                    where(table.store.id valueIn storeIds)
+                    groupBy(table.store.id)
+                    table.store.id then
+                        table.price.avg().asNonNull()
+                }
+            }.associateBy({it.first}) { // ε
+                it.second
+            }
+    }
+    ```
+    
+    - α
+    
+        The current object needs to be managed by spring
+        
+    - β
+
+        Inject *org.babyfish.graphql.provider.runtime.R2dbcClient*
+        
+        *org.babyfish.graphql.provider.runtime.R2dbcClient* is a wrapper for [*SqlClient*](https://github.com/babyfish-ct/kimmer/blob/main/project/kimmer-sql/src/main/kotlin/org/babyfish/kimmer/sql/SqlClient.kt) of kimmer-sql. It combines kimmer-sql with spring data r2dbc, allowing kimmer-sql to enjoy the connection management and transaction management of spring data r2dbc.
+        
+    - γ
+
+        This query function accepts many *BookStore* ids
+        
+    - δ
+
+        For each bookstore id specified by the caller, return the average price of all books in the bookstore.
+        
+    - ε
+        
+        The query result of strongly typed SQL contains two columns
+
+        - First column: group key, bookstore id
+        - The second column: the average price of all books in the current group
+
+        The *associateBy* function here uses the first column of the query result as the key and the second column of the query result as the value, and returns a Map
 
 3. Change BookStoreMapper
 
