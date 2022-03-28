@@ -37,11 +37,17 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 }
 ```
 
-- α: *EntityMapper* must be managed by spring.
+- α: 
 
-- β: *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
+    *EntityMapper* must be managed by spring.
 
-- γ: *Book.store* is a many-to-one reference.
+- β: 
+
+    *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
+
+- γ: 
+
+    *Book.store* is a many-to-one reference.
     There are two ways to map many-to-one associations. foreign key or middle table
     - Base on foreign key
         ```kt
@@ -76,7 +82,9 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
         reference(Book::store)
         ```
 
-- δ: *Book.authors* is a many-to-many list.
+- δ: 
+
+    *Book.authors* is a many-to-many list.
     For many-to-many associations, using an middle table is the only option
     
 >   In fact, more configuration is omitted from the code above. E.g
@@ -147,11 +155,17 @@ class BookStoreMapper: EntityMapper<BookStore, UUID>() {
 }
 ```
 
-- α: *EntityMapper* must be managed by spring.
+- α:
+ 
+    *EntityMapper* must be managed by spring.
 
-- β: *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
+- β:
+ 
+    *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
 
-- γ: *BookStore.books* is the mirror image of *Book.store*
+- γ: 
+ 
+    *BookStore.books* is the mirror image of *Book.store*
     In practical work, we often encounter bidirectional associations. We should map one end first, and then configure the other end as a mirror.
     
     Note: For a one-to-many association, configuring it as a mirror is the only option.
@@ -187,11 +201,17 @@ class AuthorMapper: EntityMapper<Author, UUID>() {
     }
 }
 ```
-- α: *EntityMapper* must be managed by spring.
+- α: 
 
-- β: *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
+    *EntityMapper* must be managed by spring.
 
-- γ: *Author.books* is the mirror image of *Book.authors*
+- β: 
+    
+    *EntityMapper* must inherit *org.babyfish.graphql.provider.EntityMapper*, the first generic parameter must be specified as the entity interface, and the second generic parameter must specified as the id type of the entity.
+
+- γ: 
+    
+    *Author.books* is the mirror image of *Book.authors*
     
 ## 4. Add query
     
@@ -212,11 +232,17 @@ class BookQuery: Query() { // β
 }
 ```
     
-- α: *Query* must be managed by spring.
-
-- β: *Query* must inherit *org.babyfish.graphql.provider.Query*.
+- α: 
     
-- γ: This is a query function
+    *Query* must be managed by spring.
+
+- β: 
+    
+    *Query* must inherit *org.babyfish.graphql.provider.Query*.
+    
+- γ: 
+    
+    This is a query function
     1. Adding arguments to the query function is a topic to be discussed in the following chapters, so here we use a query without arguments to query all books
     2. *runtime* is a protected property declared in the superclass *org.babyfish.graphql.provider.Query*
     3. The current query has no arguemnts, so *runtime.queryList* does not have any code
