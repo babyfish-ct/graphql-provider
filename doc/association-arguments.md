@@ -60,7 +60,7 @@ class BookMapper: EntityMapper<Book, UUID>() {
 
 - γ
 
-    *table* represents the generic parameter of the association property type. Here, the generic parameter of type *List&lt;Author&gt;* is *Author*, so *table* represents *AUTHOR*.
+    *table* represents the generic parameter of the association property type. Here, the generic parameter of type *List&lt;Author&gt;* is *Author*, so *table* represents *AUTHOR*
     
 ------------
     
