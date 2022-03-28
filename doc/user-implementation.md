@@ -279,6 +279,56 @@ The response is
         
         The length of this collection is controlled by the *batchSize* configuration of the *BookStore.avgPrice*, We have already discussed the *bachSize* configuration in [Configure batch size](./batch-size.md), so I won't repeat it here.
         
+Start app, access http://localhost:8080/graphiql and execute
+```
+query {
+  findBooks {
+    name
+    store {
+      name
+      avgPrice
+    }
+  }
+}
+```
+The response is
+```
+{
+  "data": {
+    "findBooks": [
+      {
+        "name": "Effective TypeScript",
+        "store": {
+          "name": "O'REILLY",
+          "avgPrice": 56.833333333333336
+        }
+      },
+      {
+        "name": "GraphQL in Action",
+        "store": {
+          "name": "MANNING",
+          "avgPrice": 80
+        }
+      },
+      {
+        "name": "Learning GraphQL",
+        "store": {
+          "name": "O'REILLY",
+          "avgPrice": 56.833333333333336
+        }
+      },
+      {
+        "name": "Programming TypeScript",
+        "store": {
+          "name": "O'REILLY",
+          "avgPrice": 56.833333333333336
+        }
+      }
+    ]
+  }
+}
+```
+        
 -----------------
 
 [< Previous: Add arguments to association](./association-arguments.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Pagination query >](./pagination.md)
