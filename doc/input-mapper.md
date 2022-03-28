@@ -84,3 +84,22 @@ class BookInputMapper: InputMapper<Book, UUID> { // β
     - If the class name of the mapper ends with "Mapper", then the result of removing "Mapper" at the end of the class name plus "Input" is the name of the input type. *(BookMapper ➤ BookInput)*
     
     - Otherwise, the entity type is extracted according to the generic parameter of InputMappper, and the class name plus "Input" is the name of the input type. *(BadName : InputMapper<Book, UUID> ➤ BookInput)*
+    
+- δ
+
+    By default, the *id* of *BookInput* cannot be null, graphql-provider will determine whether the mutation operation should perform insert or update based on the *id* field.
+    
+    However, `keyProps(Book::name)` changes that, which makes the *BookInput*'s *id* nullable. If the user does not specify the *id* for the *BookInput* object, graphql-provider will determine whether the mutation operation should perform insert or update based on the *name* field. (Of course, if the user specifies the *id*, *id* is still used to judge)
+    
+    > By default, the mutation of graphql-provider will perform an upsert (insert or update) operation. However, you can explicitly define by `insertOnly()` or `updateOnly()`
+    
+- ε
+
+    `allScalars()` maps all the scalar fields of *Book* to *BookInput*
+    
+    In addition to `allScalars()`, you can perform many other mappings on scalar fields
+    
+    - `allNonNullScalar()`: Map all the non-null scalar fields of *Book* to *BookInput*
+    - `+Book::name`: Map all the `name` field of *Book* to *BookInput*
+    - `-Book::name`: Do not map the *name* field of *Book*, should be used after `allScalars()` or `allNonNullScalars()`
+    - scalar(Book::name, "bookName"): Map all the `name` field of *Book* to *BookInput* and specify the field name in the input type
