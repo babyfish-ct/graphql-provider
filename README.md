@@ -1,6 +1,13 @@
 # Quickly build GraphQL services with kotlin based on R2DBC
 
+## Run the example
+Use intellij the open the [example](https://github.com/babyfish-ct/graphql-provider/tree/main/example), after waiting for gradle to finish all tasks, start the program and visit http://localhost:8080/graphiql.
+
 ## User guide & Documentation
+
+These links are not only user guides, but also documentation.
+
+Although the [example](https://github.com/babyfish-ct/graphql-provider/tree/main/example) allows you to quickly experience the working effect and quickly learn how to use the framework, these links still discuss some details that are not shown in the example.
 
 1. [Create project & Define entities](./doc/entities.md)
 2. [Map entities](./doc/entity-mapper.md)
