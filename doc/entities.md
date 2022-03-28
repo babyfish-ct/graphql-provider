@@ -19,18 +19,32 @@ Visit https://start.spring.io/, create a Spring boot project, select **Gradle pr
 
 ## 3. Add dependencies
 
-Modify the "build.gradle.kts", add the following three dependencies under *dependencies {}*
+Modify the "build.gradle.kts", 
 
-```
-dependencies {
-    implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.5")
-    ksp("org.babyfish.kimmer:kimmer-ksp:0.3.1")
-    runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
-}
-```
-1. The first dependency is graphql-provider
-2. The second dependency is a gradle tool required by [kimmer](https://github.com/babyfish-ct/kimmer), it is used to generate some source code files
-3. The third dependency is R2DBC driver of H2 database
+1. Add google ksp into *plugins {}*
+    ```
+    plugins {
+        
+        ... other plugins ...
+        
+        id("com.google.devtools.ksp") version "1.6.10-1.0.2"
+    }
+    ```
+    
+2. Add the following three dependencies under *dependencies {}*
+
+	```
+	dependencies {
+	    implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.5")
+	    ksp("org.babyfish.kimmer:kimmer-ksp:0.3.1")
+	    runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
+	}
+	```
+	1. The first dependency is graphql-provider
+	2. The second dependency is a gradle tool required by [kimmer](https://github.com/babyfish-ct/kimmer), it is used to generate some source code files
+	3. The third dependency is R2DBC driver of H2 database
+
+Click the refresh button of gradle panel to let intellij down the plugin and dependencies.
 
 ## 4. Define entity types by kotlin
 
@@ -91,19 +105,8 @@ Create a new package *com.example.demo.model*, add 4 files under it: *BookStore.
 ## 5. Generate source code required by strongly typed SQL DSL.
 
 In order to use the strongly typed SQL DSL to maximize the development experience, some source code needs to be generated based on the entity interfaces. Please modify "build.gradle.kts".
-
-1. Add google ksp into *plugins {}*
-    ```
-    plugins {
-        
-        ... other plugins ...
-        
-        id("com.google.devtools.ksp") version "1.6.10-1.0.2"
-    }
-    ```
-    Click the refresh button on the gradle panel to let intellij download the plugin
     
-2. Configure arguments of google ksp
+1. Configure arguments of google ksp
     ```
     ksp {
         arg("kimmer.draft", "false") // α
@@ -115,7 +118,7 @@ In order to use the strongly typed SQL DSL to maximize the development experienc
     - β: Generate the source code required by [kimmer-sql](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/README.md), which is required for this example
     - γ: Prohibit the use of collection joins in top-level queries. This switch allows developers to develop better programming habits, click [here](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/contains.md) for more information
 
-3. Add the generated code to the gradle build path *(important but easy to forget)*
+2. Add the generated code to the gradle build path *(important but easy to forget)*
     ```kt
     kotlin {
         sourceSets.main {
