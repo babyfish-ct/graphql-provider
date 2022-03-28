@@ -68,7 +68,7 @@ This is a complex user implementation field that requires not only access to the
 
     - δ
 
-        - *it* is an implicit parameter provided by the lambda expression of the runtime.implement function, representing the current Author object
+        *it* is an implicit parameter provided by the lambda expression of the runtime.implement function, representing the current Author object
     
 ## 1. BookStore.avgPrice
 
