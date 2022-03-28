@@ -68,7 +68,7 @@ This is a complex user implementation field that requires not only access to the
 
     - δ
 
-        *it* is an implicit parameter provided by the lambda expression of the runtime.implement function, representing the current Author object
+        *it* is an implicit variable provided by the lambda expression of the *runtime.implement function*, representing the current *Author* object
     
 ## 2. BookStore.avgPrice
 
@@ -190,7 +190,7 @@ This is a complex user implementation field that requires not only access to the
 
     - δ
     
-        *spring* is a protected function provided by the superclass *org.babyfish.graphql.provider.EntityMapper*
+        *spring()* is a protected function provided by the superclass *org.babyfish.graphql.provider.EntityMapper*
     
         In Spring dependencies, the dependency chain is as follows:
        
@@ -201,3 +201,9 @@ This is a complex user implementation field that requires not only access to the
         The solution provided by Spring for this scenario is @*org.springframework.beans.factory.annotation.Lookup*.
         
         To simplify this problem, *org.babyfish.graphql.provider.EntityMapper* provides the *spring()* function, which can help us get external dependencies that cannot be injected directly.
+        
+    - ε
+    
+        *it* is an implicit variable provided by the lambda expression of the *runtime.batchImplementation* function, it represents the collection formed by the ids of all *BookStores* in a DataLoader batch processing.
+        
+        The length of this collection is controlled by the *batchSize* configuration of the *BookStore.avgPrice*, We have already discussed the *bachSize* configuration in [Configure batch size](./batch-size.md), so I won't repeat it here.
