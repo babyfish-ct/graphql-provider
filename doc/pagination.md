@@ -58,4 +58,4 @@ There are three points to note
     
 ------------
     
-[< Previous: User implementation fields](./user-implementation.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Map inputs>](./input-mapper.md)
+[< Previous: User implementation fields](./user-implementation.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Map inputs >](./input-mapper.md)
