@@ -21,3 +21,10 @@ class BookInputMapper: InputMapper<Book, UUID> {
         allScalars()
     }
 }
+/*
+ * input BookInput {
+ *     id: UUID
+ *     name: String!
+ *     price: BigDecimal!
+ * }
+ */

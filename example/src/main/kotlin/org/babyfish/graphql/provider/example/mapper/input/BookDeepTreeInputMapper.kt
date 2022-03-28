@@ -35,3 +35,23 @@ class BookDeepTreeInputMapper: InputMapper<Book, UUID> {
         }
     }
 }
+/*
+ * input BookShallowTreeInput {
+ *     id: UUID
+ *     name: String!
+ *     price: BigDecimal!
+ *     store: BookShallowTreeInput_store
+ *     authors: [BookShallowTreeInput_authors!]!
+ * }
+ * input BookShallowTreeInput_store {
+ *     id: UUID
+ *     name: String!
+ *     website: String
+ * }
+ * input BookShallowTreeInput_authors {
+ *     id: UUID
+ *     firstName: String!
+ *     lastName: String!
+ *     gender: Gender!
+ * }
+ */

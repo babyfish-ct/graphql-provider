@@ -21,6 +21,16 @@ class BookShallowTreeInputMapper: InputMapper<Book, UUID> {
         allScalars()
 
         referenceId(Book::store)
+
         listIds(Book::authors)
     }
 }
+/*
+ * input BookShallowTreeInput {
+ *     id: UUID
+ *     name: String!
+ *     price: BigDecimal!
+ *     storeId: UUID
+ *     authorIds: [UUID!]!
+ * }
+ */
