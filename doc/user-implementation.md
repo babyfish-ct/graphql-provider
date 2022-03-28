@@ -59,14 +59,14 @@ This is a complex user implementation field that requires not only access to the
 
         - This function has no return type
 
-    γ
+    - γ
 
         - *runtime* is a protected property provided by the superclass *org.babyfish.graphql.provider.EntityMapper*
 
         - *Auhor::fullName* represents the field for which you want to implement by your code
 
 
-    δ
+    - δ
 
         - *it* is an implicit parameter provided by the lambda expression of the runtime.implement function, representing the current Author object
     
