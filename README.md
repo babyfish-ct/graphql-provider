@@ -7,6 +7,8 @@ Its development speed is very fast, and the usage method is very simple.
 ## Run the example
 Use intellij the open the [example](https://github.com/babyfish-ct/graphql-provider/tree/main/example), after waiting for gradle to finish all tasks, start the program and visit http://localhost:8080/graphiql.
 
+> The query "findBooks" is pagination query, so you must specify the argument "first" or "last". Otherwise, exeption will be thrown
+
 ## User guide & Documentation
 
 These links are not only user guides, but also documentation.
