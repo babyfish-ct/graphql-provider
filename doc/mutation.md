@@ -134,7 +134,7 @@ mutation {
   }
 }
 ```
-You will get a return message like this
+You will get a response message like this
 ```
 {
   "data": {
@@ -208,5 +208,99 @@ You will get a return message like this
 - ρ: The second associated object of *Book.authors* after mutation, note that its id is automatically assigned
 - σ: In order to save the second associated object of *Book.authors*, the middle table has been changed
 - τ: No associated object of *Book.author* is detached after mutation
+
+Although the information returned by the underlying kimmer-sql is very rich, it is unnecessary to return all this information to the client in the actual project.
+
+In a real project, you should make the complexity of returning information somewhere between these two extremes. Typically, this should be the saved entity object. You should modify the code to look like this
+
+```kt
+@Service
+class BookMutation(
+    private val r2dbcClient: R2dbcClient
+) : Mutation {
+
+    @Transactional
+    suspend fun saveBook(
+        input: ImplicitInput<Book, BookInputMapper>
+    ): Book =
+        r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
+
+    @Transactional
+    suspend fun saveBooks(
+        inputs: ImplicitInputs<Book, BookInputMapper>
+    ): List<Book> =
+        r2dbcClient.save(inputs.entities, inputs.saveOptionsBlock).entities()
+
+    @Transactional
+    suspend fun saveBookShallowTree(
+        input: ImplicitInput<Book, BookShallowTreeInputMapper>
+    ): Book =
+        r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
+
+    @Transactional
+    suspend fun saveBookDeepTree(
+        input: ImplicitInput<Book, BookDeepTreeInputMapper>
+    ): Book =
+        r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
+}
+```
+
+Start the app, access http://localhost:8080/graphiql, execute
+```
+mutation {
+  saveBookDeepTree(input: {
+    name: "NewBook",
+    price: 80,
+    store: {
+      name: "New Store"
+    }
+    authors: [
+      { 
+        firstName: "NewFirstName1",
+        lastName: "NewLastName1",
+        gender: MALE,
+      },
+      { 
+        firstName: "NewFirstName2",
+        lastName: "NewLastName2",
+        gender: FEMALE
+      }
+    ]
+  }) {
+    id
+    store {
+      id
+    }
+    authors {
+      id
+    }
+  }
+}
+```
+You will get a response message like this
+```
+{
+  "data": {
+    "saveBookDeepTree": {
+      "id": "7cd13e03-3bea-457a-81af-ece67f21b8e9",
+      "store": {
+        "id": "49028b2b-e08d-4e81-bd8c-af826e77392f"
+      },
+      "authors": [
+        {
+          "id": "d314dad5-d4ee-48cf-afba-e54e6e9c180e"
+        },
+        {
+          "id": "da1d8c34-e4ab-4a53-8ff4-1b4028de0f26"
+        }
+      ]
+    }
+  }
+}
+```
+The client can easily access the id assigned to each object after the mutation is executed
+
+> In fact, many GraphQL-related web front-end technologies (eg: [Apollo client](https://github.com/apollographql/apollo-client), [Relay](https://github.com/facebook/relay), [graphql-state](https://github.com/babyfish-ct/graphql-state)) will require you to design mutation return values in this way
+
 
 ## 3. Add transaction
