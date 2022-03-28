@@ -7,7 +7,7 @@
 3. [Configure batch size](./doc/batch-size.md)
 4. [Add arguments to query](./doc/query-arguments.md)
 5. [Add arguments to association](./doc/association-arguments.md)
-6. [User-implemented properties](./doc/user-implementation.md)
+6. [User-implemented fields](./doc/user-implementation.md)
 7. [Pagination query](./doc/pagination.md)
 8. [Map inputs](./doc/input-mapper.md)
 9. [Execute Mutation](./doc/mutation.md)
