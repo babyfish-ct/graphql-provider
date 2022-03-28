@@ -97,6 +97,62 @@ class BookQuery: Query() {
     - *table.books* represents table join through many-to-many associations, doing this in a subquery has no side effects (ksp argument *"kimmer.table.collection-join-only-for-sub-query"* only disallow this in top-level queries)
     
     - In fact, this is half join of kimmer-sql, please click [here](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/table-joins.md) to see more information about half join.
+
+
+Start the app, access http://localhost:8080/graphiql
+
+Execute
+```
+query {
+  findBooks(name: "GraphQL") {
+    name
+    store {
+      name
+    }
+    authors {
+      firstName
+      lastName
+    }
+  }
+}
+```
+The response is
+```
+{
+  "data": {
+    "findBooks": [
+      {
+        "name": "GraphQL in Action",
+        "store": {
+          "name": "MANNING"
+        },
+        "authors": [
+          {
+            "firstName": "Samer",
+            "lastName": "Buna"
+          }
+        ]
+      },
+      {
+        "name": "Learning GraphQL",
+        "store": {
+          "name": "O'REILLY"
+        },
+        "authors": [
+          {
+            "firstName": "Eve",
+            "lastName": "Procello"
+          },
+          {
+            "firstName": "Alex",
+            "lastName": "Banks"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
     
 ------------
 
