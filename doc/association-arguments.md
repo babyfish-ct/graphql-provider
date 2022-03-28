@@ -64,4 +64,4 @@ class BookMapper: EntityMapper<Book, UUID>() {
     
 ------------
     
-[< Previous: Add arguments into query](./query-associations.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: User implementation fields >](./user-implementation.md)
+[< Previous: Add arguments into query](./query-arguments.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: User implementation fields >](./user-implementation.md)
