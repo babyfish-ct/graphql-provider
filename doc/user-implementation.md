@@ -224,18 +224,18 @@ The response is
     @Component
     class BookStoreMapper: EntityMapper<BookStore, UUID>() {
 
-    override fun EntityTypeDSL<BookStore, UUID>.config() {
+        override fun EntityTypeDSL<BookStore, UUID>.config() {
 
-        ... other configuration ...
+            ... other configuration ...
 
-        userImplementation(BookStore::avgPrice) // α
-    }
-
-    fun avgPrice() = // β
-        runtime.batchImplementation(BookStore::avgPrice) { // γ
-            spring(BookRepository::class) // δ
-                .findAvgPriceGroupByStoreIds(it) // ε
+            userImplementation(BookStore::avgPrice) // α
         }
+
+        fun avgPrice() = // β
+            runtime.batchImplementation(BookStore::avgPrice) { // γ
+                spring(BookRepository::class) // δ
+                    .findAvgPriceGroupByStoreIds(it) // ε
+            }
     }
     ```
     
