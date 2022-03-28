@@ -30,7 +30,7 @@ class BookMapper: EntityMapper<Book, UUID>() {
         runtime.filterList(Book::authors) { // β
             firstName?.let {
                 db {
-                    where { table.firstName ilike it }
+                    where { table.firstName ilike it } // γ
                 }
             }
             lastName?.let {
@@ -57,3 +57,11 @@ class BookMapper: EntityMapper<Book, UUID>() {
     - *runtime* is a protected property provided by the superclass *org.babyfish.graphql.provider.EntityMapper*
     
     - *Book::authors* represents the association property for which you want to add arguments
+
+- γ
+
+    *table* represents the generic parameter of the association property type. Here, the generic parameter of type *List<Author>* is *Author*, so *table* represents *AUTHOR*.
+    
+------------
+    
+[< Previous: Add arguments into query](./query-associations.md) | [Next: User implementation fields >](./user-implementation.md)
