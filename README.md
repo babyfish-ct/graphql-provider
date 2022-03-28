@@ -7,7 +7,7 @@ Its development speed is very fast, and the usage method is very simple.
 
 1. It is a GRM (GraphQL-Relation mapping), and its usage is similar to ORM. When kotlin dsl is used to complete the mapping configuration between entities and tables, GraphQL objects and associations are automatically completed, including the runtime association-level DataLoader and related batch loading optimization.
 
-2. It is easy to add user implemention fields to entity, where you can implement business-related calculations. User implementation fields can also enjoy the automatic generated DataLoader and related batch query optimization at runtime.
+2. It is easy to add user implemention fields to entity, where you can implement business-related calculations. User implementation fields can also enjoy the automatic generated DataLoader and related batch loading optimization at runtime.
 
 3. Whether it is to implement query-level arguments or association-level arguments, you only need to use  strongly typed SQL DSL to specify some dynamic filtering and sorting, and the rest is done automatically.
 
