@@ -207,3 +207,7 @@ This is a complex user implementation field that requires not only access to the
         *it* is an implicit variable provided by the lambda expression of the *runtime.batchImplementation* function, it represents the collection formed by the ids of all *BookStores* in a DataLoader batch processing.
         
         The length of this collection is controlled by the *batchSize* configuration of the *BookStore.avgPrice*, We have already discussed the *bachSize* configuration in [Configure batch size](./batch-size.md), so I won't repeat it here.
+        
+-----------------
+
+[< Previous: Add arguments to association](./association-arguments.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: Pagination query >](./pagination.md)
