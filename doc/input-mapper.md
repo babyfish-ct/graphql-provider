@@ -249,8 +249,8 @@ input BookShallowTreeInput {
     id: UUID
     name: String!
     price: BigDecimal!
-    storeId: BookShallowTreeInput_store
-    authorIds: [BookShallowTreeInput_authors!]!
+    store: BookShallowTreeInput_store
+    authors: [BookShallowTreeInput_authors!]!
 }
 input BookShallowTreeInput_store {
     id: UUID
