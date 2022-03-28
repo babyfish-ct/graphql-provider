@@ -100,6 +100,6 @@ class BookInputMapper: InputMapper<Book, UUID> { // β
     In addition to `allScalars()`, you can perform many other mappings on scalar fields
     
     - `allNonNullScalar()`: Map all the non-null scalar fields of *Book* to *BookInput*
-    - `+Book::name`: Map all the `name` field of *Book* to *BookInput*
+    - `+Book::name`: Map the `name` field of *Book* to *BookInput*
     - `-Book::name`: Do not map the *name* field of *Book*, should be used after `allScalars()` or `allNonNullScalars()`
-    - `scalar(Book::name, "bookName")`: Map all the `name` field of *Book* to *BookInput* and specify the field name in the input type
+    - `scalar(Book::name, "bookName")`: Map the `name` field of *Book* to *BookInput* and specify the field name in the input type
