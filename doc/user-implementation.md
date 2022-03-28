@@ -196,7 +196,7 @@ This is a complex user implementation field that requires not only access to the
        
         `BookRepository ➤ R2dbcClient ➤ SqlClient ➤ All Entity Mappers`
         
-        If we directly inject *BookRepository* into *BookStoreMapper* here, Spring Boot will throw an exception because of the circular dependencies problem.
+        If we directly inject *BookRepository* into *BookStoreMapper* here, spring will throw an exception because of the circular dependencies problem.
         
         The solution provided by Spring for this scenario is @*org.springframework.beans.factory.annotation*.
         
