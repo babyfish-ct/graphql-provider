@@ -238,3 +238,29 @@ class BookDeepTreeInputMapper: InputMapper<Book, UUID> {
     - If the name of the input field is not specified, use the name of entity field. Therefore, `list(Book::authors)` is equivalent to `list(Book::authors, "authors")`.
 
     - Automatically create a new input type named "BookDeepTreeInput_authors" and use the code inside the lambda expression to map this new input type. If you don't like the name of the new input type "BookDeepTreeInput_authors", you can manually create another *InputMapper* (eg: *AuthorInputMapper*) and change the code here to `list(Book::authors, AuthorInputMapper::class)`
+
+- δ
+
+    Same as β
+    
+When the App starts, the following input type is automatically defined in the GraphQL schema
+```
+input BookShallowTreeInput {
+    id: UUID
+    name: String!
+    price: BigDecimal!
+    storeId: BookShallowTreeInput_store
+    authorIds: [BookShallowTreeInput_authors!]!
+}
+input BookShallowTreeInput_store {
+    id: UUID
+    name: String!
+    website: String
+}
+input BookShallowTreeInput_authors {
+    id: UUID
+    firstName: String!
+    lastName: String!
+    gender: Gender!
+}
+```
