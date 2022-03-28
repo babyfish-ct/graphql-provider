@@ -1,5 +1,9 @@
 # Quickly build GraphQL services with kotlin based on R2DBC
 
+If you use RDBMS to manage your persistent data, this framework can help you to quickly develop GraphQL services (based on kotlin and R2DBC) in the shortest time.
+
+Its development speed is very fast, and the usage method is very simple.
+
 ## Run the example
 Use intellij the open the [example](https://github.com/babyfish-ct/graphql-provider/tree/main/example), after waiting for gradle to finish all tasks, start the program and visit http://localhost:8080/graphiql.
 
