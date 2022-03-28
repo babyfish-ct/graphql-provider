@@ -198,6 +198,6 @@ This is a complex user implementation field that requires not only access to the
         
         If we directly inject *BookRepository* into *BookStoreMapper* here, spring will throw an exception because of the circular dependencies problem.
         
-        The solution provided by Spring for this scenario is @*org.springframework.beans.factory.annotation*.
+        The solution provided by Spring for this scenario is @*org.springframework.beans.factory.annotation.Lookup*.
         
         To simplify this problem, *org.babyfish.graphql.provider.EntityMapper* provides the *spring()* function, which can help us get external dependencies that cannot be injected directly.
