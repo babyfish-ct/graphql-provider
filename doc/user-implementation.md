@@ -47,7 +47,7 @@ This is a complex user implementation field that requires not only access to the
 
     - α
 
-        Map *Author.fullName* to user implementation field
+        Map *Author.fullName* as user implementation field
 
     - β
 
@@ -149,5 +149,55 @@ This is a complex user implementation field that requires not only access to the
 
 3. Change BookStoreMapper
 
+    ```kt
+    @Component
+    class BookStoreMapper: EntityMapper<BookStore, UUID>() {
+
+    override fun EntityTypeDSL<BookStore, UUID>.config() {
+
+        ... other configuration ...
+
+        userImplementation(BookStore::avgPrice) // α
+    }
+
+    fun avgPrice() = // β
+        runtime.batchImplementation(BookStore::avgPrice) { // γ
+            spring(BookRepository::class) // δ
+                .findAvgPriceGroupByStoreIds(it) ε
+        }
+    }
+    ```
     
+    - α
+
+        Map *BookStore.avgPrice* as user implementation field
+
+    - β
+
+        Provides a public function.
+
+        - In theory, the function name is arbitrary, but for readability it is recommended to keep the same as the name of *BookStore::avgPrice* at γ
+
+        - This function has no return type
+
+    - γ
+
+        - *runtime* is a protected property provided by the superclass *org.babyfish.graphql.provider.EntityMapper*
+
+        - *BookStore::avgPrice* represents the field for which you want to implement by your code
+
+        - Here, the function we call is not *runtime.implementation*, but *runtime.batchImplementation*. This means that *BookStore.avgPrice* can be optimized by DataLoader
+
+    - δ
     
+        *spring* is a protected function provided by the superclass *org.babyfish.graphql.provider.EntityMapper*
+    
+        In Spring dependencies, the dependency chain is as follows:
+       
+        `BookRepository ➤ R2dbcClient ➤ SqlClient ➤ All Entity Mappers`
+        
+        If we directly inject *BookRepository* into *BookStoreMapper* here, Spring Boot will throw an exception because of the circular dependencies problem.
+        
+        The solution provided by Spring for this scenario is @*org.springframework.beans.factory.annotation*.
+        
+        To simplify this problem, *org.babyfish.graphql.provider.EntityMapper* provides the *spring()* function, which can help us get external dependencies that cannot be injected directly.
