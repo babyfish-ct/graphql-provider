@@ -270,7 +270,7 @@ input BookShallowTreeInput_authors {
 In the above mappings, `keyProps(...)` is used for all three entity types, so it is necessary to specify ids generator for the entity types so that graphql-provider can automatically generate *id* when the user does not specify it.
 
 Change BookStoreMapper
-```
+```kt
 class BookStoreMapper: EntityMapper<BookStore, UUID> {
     db {
         idGenerator(UUIDIdGenerator())
