@@ -7,6 +7,7 @@ Since the underlying [kimmer-sql](https://github.com/babyfish-ct/kimmer/blob/mai
 ```kt
 package com.example.demo.query
 
+import org.springframework.stereotype.Service
 import org.babyfish.graphql.provider.Query
 import org.babyfish.kimmer.sql.ast.ilike
 import org.babyfish.kimmer.sql.ast.valueIn
