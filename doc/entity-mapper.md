@@ -140,6 +140,7 @@ class BookMapper: EntityMapper<Book, UUID>() { // β
 ```kt
 package com.example.demo.mapper.entity
 
+import com.example.demo.model.Book
 import org.babyfish.graphql.provider.EntityMapper
 import org.babyfish.graphql.provider.dsl.EntityTypeDSL
 import com.example.demo.model.BookStore
