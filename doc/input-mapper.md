@@ -302,7 +302,7 @@ class AuthorMapper: EntityMapper<Author, UUID> {
 graphql-provider provides these IdGenerators
 
 - SequenceIdGenerator: Use database sequence, this option is suitable for single database systems. 
-- IdentityGenerator: Some database support auto increment primary key, this option is suitable for single database systems.
+- IdentityIdGenerator: Some database support auto increment primary key, this option is suitable for single database systems.
 - UUIDIdGenerator: When the primary key is UUID, call `java.util.UUID.randomUUID()` to get id, This option is suitable for multi-database systems, but the performance is low
 - UserIdGenerator&lt;ID&gt;: The user programmatically decides how to generate the id, usually it should return the snowflake id. This option is suitable for multi-database systems.
 
