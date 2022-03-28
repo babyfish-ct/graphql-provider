@@ -234,7 +234,7 @@ The response is
     fun avgPrice() = // β
         runtime.batchImplementation(BookStore::avgPrice) { // γ
             spring(BookRepository::class) // δ
-                .findAvgPriceGroupByStoreIds(it) ε
+                .findAvgPriceGroupByStoreIds(it) // ε
         }
     }
     ```
