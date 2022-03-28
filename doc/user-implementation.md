@@ -70,6 +70,77 @@ This is a complex user implementation field that requires not only access to the
 
         *it* is an implicit variable provided by the lambda expression of the *runtime.implement function*, representing the current *Author* object
     
+Start the app, access http://localhost:8080/graphiql and execute
+```
+query {
+  findBooks {
+    name
+    store {
+      name
+    }
+    authors {
+      fullName
+    }
+  }
+}
+```
+The response is
+```
+{
+  "data": {
+    "findBooks": [
+      {
+        "name": "Effective TypeScript",
+        "store": {
+          "name": "O'REILLY"
+        },
+        "authors": [
+          {
+            "fullName": "Dan Vanderkam"
+          }
+        ]
+      },
+      {
+        "name": "GraphQL in Action",
+        "store": {
+          "name": "MANNING"
+        },
+        "authors": [
+          {
+            "fullName": "Samer Buna"
+          }
+        ]
+      },
+      {
+        "name": "Learning GraphQL",
+        "store": {
+          "name": "O'REILLY"
+        },
+        "authors": [
+          {
+            "fullName": "Eve Procello"
+          },
+          {
+            "fullName": "Alex Banks"
+          }
+        ]
+      },
+      {
+        "name": "Programming TypeScript",
+        "store": {
+          "name": "O'REILLY"
+        },
+        "authors": [
+          {
+            "fullName": "Boris Cherny"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 ## 2. BookStore.avgPrice
 
 1. Add new kotlin property in entity interface
