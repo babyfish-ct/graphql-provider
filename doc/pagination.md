@@ -55,3 +55,7 @@ There are three points to note
     This powerful feature is implemented based on [kimmer-sql paging query](https://github.com/babyfish-ct/kimmer/blob/main/doc/kimmer-sql/pagination.md).
     
 3. The cursors for result(*pageInfo.startCursor*, *pageInfo.endCursor* and *Edge.cursor*) are base64 encoding results of rowIndexs before pagination.
+    
+------------
+    
+[< Previous: User implementation fields](./user-implementation.md) | [Home](https://github.com/babyfish-ct/graphql-provider) | [Next: ./input-mapper.md>](Map inputs)
