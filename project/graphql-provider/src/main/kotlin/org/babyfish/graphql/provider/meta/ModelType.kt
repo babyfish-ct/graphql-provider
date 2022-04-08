@@ -19,5 +19,7 @@ interface ModelType : GraphQLType, EntityType {
     override val props: Map<String, ModelProp>
 
     override val backProps: Set<ModelProp>
+
+    val securityPredicate: SecurityPredicate?
 }
 

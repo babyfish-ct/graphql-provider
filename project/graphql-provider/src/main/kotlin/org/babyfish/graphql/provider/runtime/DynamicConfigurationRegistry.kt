@@ -1,13 +1,13 @@
 package org.babyfish.graphql.provider.runtime
 
 import org.babyfish.graphql.provider.ModelException
+import org.babyfish.graphql.provider.Mutation
 import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.*
 import org.babyfish.graphql.provider.meta.impl.FilterImpl
-import org.babyfish.graphql.provider.meta.impl.NoReturnValue
 import org.babyfish.graphql.provider.meta.impl.UserImplementationImpl
 import org.babyfish.kimmer.sql.Entity
-import java.lang.reflect.InvocationTargetException
+import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.javaGetter
@@ -36,6 +36,38 @@ internal class DynamicConfigurationRegistry {
         )
     }
 
+    fun addImplementation(
+        query: Query,
+        fn: KFunction<*>,
+        fnArguments: List<Argument>
+    ) {
+        val path = "Query.${fn.name}"
+        userImplementationMap[path]?.let {
+            throw ModelException("Conflict entity mapper function: '${it.fn}' and '$registryFun'")
+        }
+        userImplementationMap[path] = UserImplementationImpl(
+            query,
+            fn,
+            fnArguments
+        )
+    }
+
+    fun addImplementation(
+        mutation: Mutation,
+        fn: KFunction<*>,
+        fnArguments: List<Argument>
+    ) {
+        val path = "Mutation.${fn.name}"
+        userImplementationMap[path]?.let {
+            throw ModelException("Conflict entity mapper function: '${it.fn}' and '$registryFun'")
+        }
+        userImplementationMap[path] = UserImplementationImpl(
+            mutation,
+            fn,
+            fnArguments
+        )
+    }
+
     fun addFilter(
         prop: KProperty1<out Entity<*>, *>,
         mapper: org.babyfish.graphql.provider.EntityMapper<out Entity<*>, *>,
@@ -44,7 +76,7 @@ internal class DynamicConfigurationRegistry {
     ) {
         val path = prop.path
         filterMap[path]?.let {
-            throw ModelException("Conflict entity mapper function: '${it.fn}' and '${registryFun}'")
+            throw ModelException("Conflict entity mapper function: '${it.fn}' and '$registryFun'")
         }
         filterMap[path] = FilterImpl(
             mapper,
@@ -61,7 +93,7 @@ internal class DynamicConfigurationRegistry {
     ) {
         val path = prop.path
         userImplementationMap[path]?.let {
-            throw ModelException("Conflict entity mapper function: '${it.fn}' and ${registryFun}")
+            throw ModelException("Conflict entity mapper function: '${it.fn}' and '$registryFun'")
         }
         userImplementationMap[path] = UserImplementationImpl(
             mapper,
@@ -78,9 +110,19 @@ internal class DynamicConfigurationRegistry {
         cacheMap[path] = cache
     }
 
-    fun filter(function: KFunction<*>): Filter =
+    fun filter(function: KFunction<*>): Filter? =
         filterMap["Query.${function.name}"]
-            ?: throw IllegalArgumentException("The function '$function' is not query method")
+
+    fun userImplementation(function: KFunction<*>): UserImplementation? =
+        (function.parameters[0].type.classifier as? KClass<*>)?.let {
+            when {
+                Query::class.java.isAssignableFrom(it.java) ->
+                    userImplementationMap["Query.${function.name}"]
+                Mutation::class.java.isAssignableFrom(it.java) ->
+                    userImplementationMap["Mutation.${function.name}"]
+                else -> error("Internal bug: '$function' is declared in neither Query nor Mutation")
+            }
+        }
 
     fun filter(prop: KProperty1<*, *>): Filter? =
         filterMap[prop.path]
@@ -122,7 +164,7 @@ internal fun dynamicConfigurationRegistryFunScope(fn: KFunction<*>, block: (List
     }
 }
 
-internal fun registerQueryField(
+internal fun registerQueryFieldFilter(
     query: Query
 ): Boolean {
     val reg = registry
@@ -131,6 +173,30 @@ internal fun registerQueryField(
         return false
     }
     reg.addFilter(query, fn, registryFunArguments ?: error("Internal bug"))
+    return true
+}
+
+internal fun registerQueryFieldImplementation(
+    query: Query
+): Boolean {
+    val reg = registry
+    val fn = registryFun
+    if (reg === null || fn === null) {
+        return false
+    }
+    reg.addImplementation(query, fn, registryFunArguments ?: error("Internal bug"))
+    return true
+}
+
+internal fun registerMutationFieldImplementation(
+    mutation: Mutation
+): Boolean {
+    val reg = registry
+    val fn = registryFun
+    if (reg === null || fn === null) {
+        return false
+    }
+    reg.addImplementation(mutation, fn, registryFunArguments ?: error("Internal bug"))
     return true
 }
 

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Import
     GraphQLProviderAutoConfiguration::class,
     DynamicCodeRegistry::class,
     DynamicTypeDefinitions::class,
-    ScalarRegistration::class
+    ScalarRegistration::class,
+    DgsSecurityContextExtractor::class
 ])
 open class DgsAutoConfiguration

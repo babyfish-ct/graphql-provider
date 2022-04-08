@@ -8,7 +8,7 @@ import org.babyfish.kimmer.sql.meta.config.Storage
 @GraphQLProviderDSL
 class CollectionDSL internal constructor(
     prop: ModelPropImpl
-): AbstractAssociationDSL(prop) {
+): AbstractAssociationPropDSL(prop) {
 
     private var storage: Storage? = null
 

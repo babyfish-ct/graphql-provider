@@ -5,10 +5,12 @@ import com.babyfish.graphql.provider.model.name
 import org.babyfish.graphql.provider.Query
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.sql.ast.ilike
+import org.springframework.stereotype.Service
 
+@Service
 class AuthorQuery: Query() {
 
-    suspend fun findAuthors(
+    fun findAuthors(
         name: String?
     ): Connection<Author> =
         runtime.queryConnection {

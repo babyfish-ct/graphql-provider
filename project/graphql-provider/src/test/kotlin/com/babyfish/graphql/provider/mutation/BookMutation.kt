@@ -10,10 +10,12 @@ import org.springframework.stereotype.Service
 @Service
 class BookMutation(
     private val r2dbcClient: R2dbcClient
-) : Mutation {
+) : Mutation() {
 
-    suspend fun saveBook(
+    fun saveBook(
         input: ImplicitInput<Book, BookInputMapper>
     ): Int =
-        r2dbcClient.save(input.entity, input.saveOptionsBlock).totalAffectedRowCount
+        runtime.mutate {
+            r2dbcClient.save(input.entity, input.saveOptionsBlock).totalAffectedRowCount
+        }
 }

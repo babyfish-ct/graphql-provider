@@ -5,7 +5,8 @@ import org.babyfish.graphql.provider.dsl.graphql.EntityTypeGraphQLDSL
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.graphql.provider.meta.impl.ModelTypeImpl
 import org.babyfish.graphql.provider.ModelException
-import org.babyfish.graphql.provider.dsl.graphql.UserImplementationPropGraphQLDSL
+import org.babyfish.graphql.provider.dsl.security.SecurityDSL
+import org.babyfish.graphql.provider.meta.SecurityPredicate
 import org.babyfish.graphql.provider.meta.impl.ModelPropImpl
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.meta.EntityMappingBuilder
@@ -17,6 +18,12 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
     private val modelType: ModelTypeImpl,
     private val builder: EntityMappingBuilder
 ) {
+    fun security(block: SecurityDSL.() -> Unit) {
+        val dsl = SecurityDSL()
+        dsl.block()
+        modelType.setSecurityPredicate(dsl.predicate())
+    }
+
     fun db(block: EntityTypeDatabaseDSL<E, ID>.() -> Unit) {
         val dsl = EntityTypeDatabaseDSL<E, ID>().apply {
             block()
@@ -151,11 +158,11 @@ class EntityTypeDSL<E: Entity<ID>, ID: Comparable<ID>> internal constructor(
 
     fun <T> userImplementation(
         prop: KProperty1<E, T>,
-        block: (UserImplementationDSL.() -> Unit)? = null
+        block: (UserImplementationPropDSL.() -> Unit)? = null
     ) {
         val modelProp = builder.transientProp(prop) as ModelPropImpl
         if (block !== null) {
-            UserImplementationDSL(modelProp).block()
+            UserImplementationPropDSL(modelProp).block()
         }
     }
 }

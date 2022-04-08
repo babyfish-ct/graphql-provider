@@ -5,8 +5,6 @@ import org.babyfish.graphql.provider.meta.GraphQLProp
 import org.babyfish.graphql.provider.meta.ImplicitInputType
 import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.meta.ModelType
-import org.babyfish.graphql.provider.meta.impl.*
-import org.babyfish.graphql.provider.meta.impl.ModelPropImpl
 import org.babyfish.graphql.provider.meta.impl.MutationPropImpl
 import org.babyfish.graphql.provider.meta.impl.MutationTypeImpl
 import org.babyfish.graphql.provider.meta.impl.QueryPropImpl
@@ -32,8 +30,9 @@ fun createMetaProvider(
     val dynamicConfigurationRegistry = DynamicConfigurationRegistry()
     dynamicConfigurationRegistryScope(dynamicConfigurationRegistry) {
         for (query in queries) {
+            query.initAfterInjected()
             for (function in query::class.declaredFunctions) {
-                if (function.visibility == KVisibility.PUBLIC) {
+                if (function.visibility == KVisibility.PUBLIC && function.name != "config") {
                     queryType.props[function.name]?.let { conflict ->
                         throw ModelException("Conflict query functions: '${conflict.function}' and '$function'")
                     }
@@ -41,21 +40,30 @@ fun createMetaProvider(
                         throw ModelException("Query function '$function' cannot be suspend")
                     }
                     invokeByRegistryMode(query, function)
-                    queryType.props[function.name] = QueryPropImpl(function, modelTypeMap, dynamicConfigurationRegistry)
+                    queryType.props[function.name] = QueryPropImpl(
+                        function,
+                        modelTypeMap,
+                        dynamicConfigurationRegistry
+                    )
                 }
             }
         }
-    }
-    for (mutation in mutations) {
-        for (function in AopUtils.getTargetClass(mutation).kotlin.declaredFunctions) {
-            if (function.visibility == KVisibility.PUBLIC) {
-                mutationType.props[function.name]?.let { conflict ->
-                    throw ModelException("Conflict mutation functions: '${conflict.function}' and '$function'")
+        for (mutation in mutations) {
+            mutation.initAfterInjected()
+            for (function in AopUtils.getTargetClass(mutation).kotlin.declaredFunctions) {
+                if (function.visibility == KVisibility.PUBLIC && function.name != "config") {
+                    mutationType.props[function.name]?.let { conflict ->
+                        throw ModelException("Conflict mutation functions: '${conflict.function}' and '$function'")
+                    }
+                    if (!function.isSuspend) {
+                        invokeByRegistryMode(mutation, function)
+                    }
+                    mutationType.props[function.name] = MutationPropImpl(
+                        function,
+                        modelTypeMap,
+                        dynamicConfigurationRegistry
+                    )
                 }
-                if (!function.isSuspend) {
-                    throw ModelException("Mutation function '$function' must be suspend")
-                }
-                mutationType.props[function.name] = MutationPropImpl(function, modelTypeMap)
             }
         }
     }

@@ -20,6 +20,8 @@ internal class ModelPropImpl(
 
     private var _batchSize: Int? = null
 
+    private var _securityPredicate: SecurityPredicate? = null
+
     override val userImplementation: UserImplementation?
         get() = _userImplementation
 
@@ -31,6 +33,9 @@ internal class ModelPropImpl(
 
     override val batchSize: Int?
         get() = _batchSize
+
+    override val securityPredicate: SecurityPredicate?
+        get() = _securityPredicate
 
     override val name: String
         get() = super.name
@@ -69,5 +74,9 @@ internal class ModelPropImpl(
 
     internal fun setBatchSize(batchSize: Int?) {
         _batchSize = batchSize
+    }
+
+    internal fun setSecurityPredicate(predicate: SecurityPredicate?) {
+        _securityPredicate = predicate
     }
 }

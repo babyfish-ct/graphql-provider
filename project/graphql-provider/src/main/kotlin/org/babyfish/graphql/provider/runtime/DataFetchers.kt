@@ -1,14 +1,17 @@
 package org.babyfish.graphql.provider.runtime
 
 import graphql.schema.DataFetchingEnvironment
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.reactor.mono
+import org.babyfish.graphql.provider.Mutation
 import org.babyfish.graphql.provider.meta.*
 import org.babyfish.graphql.provider.meta.impl.MutationPropImpl
+import org.babyfish.graphql.provider.meta.impl.security.CompositeSecurityPredicateImpl
 import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
 import org.babyfish.graphql.provider.runtime.loader.BatchLoaderByParentId
 import org.babyfish.graphql.provider.runtime.loader.ManyToManyBatchLoader
 import org.babyfish.graphql.provider.runtime.loader.NonManyToManyBatchLoader
+import org.babyfish.graphql.provider.security.SecurityContextExtractor
+import org.babyfish.graphql.provider.security.cfg.SecurityChecker
+import org.babyfish.graphql.provider.security.executeWithSecurityContext
 import org.babyfish.kimmer.Draft
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.graphql.*
@@ -31,50 +34,96 @@ import kotlin.reflect.full.callSuspend
 import kotlin.reflect.jvm.javaMethod
 
 open class DataFetchers(
+    private val applicationContext: ApplicationContext,
     private val r2dbcClient: R2dbcClient,
     private val argumentsConverter: ArgumentsConverter,
-    private val applicationContext: ApplicationContext,
-    private val cfg: GraphQLProviderProperties
+    private val properties: GraphQLProviderProperties,
+    private val securityContextExtractor: SecurityContextExtractor?,
+    private val securityChecker: SecurityChecker
 ) {
 
     @Suppress("UNCHECKED_CAST")
-    fun fetch(prop: QueryProp, env: DataFetchingEnvironment): CompletableFuture<Any?> =
-        mono(Dispatchers.Unconfined) {
-            if (prop.isConnection) {
-                fetchConnectionAsync(prop, env)
-            } else {
-                r2dbcClient.execute {
-                    val query =
-                        r2dbcClient.sqlClient.createQuery(prop.targetType!!.kotlinType as KClass<Entity<FakeID>>) {
-                            prop.filter.execute(
-                                FilterExecutionContext(prop, env, argumentsConverter, this)
-                            )
-                            select(table)
+    fun fetch(
+        prop: QueryProp,
+        env: DataFetchingEnvironment
+    ): CompletableFuture<Any?> {
+        val filter = prop.filter
+        return if (filter === null) {
+            val userImplementation = prop.userImplementation
+                ?: error("'$prop' is not a valid query property")
+            userImplementation.execute(
+                UserImplementationExecutionContext(
+                    prop,
+                    env,
+                    argumentsConverter,
+                    securityContextExtractor?.get(env)
+                )
+            )
+        } else {
+            executeWithSecurityContext(securityContextExtractor?.get(env)) {
+                if (prop.isConnection) {
+                    fetchConnectionAsync(prop, env)
+                } else {
+                    r2dbcClient.execute {
+                        val query =
+                            r2dbcClient.sqlClient.createQuery(prop.targetType!!.kotlinType as KClass<Entity<FakeID>>) {
+                                filter.execute(
+                                    FilterExecutionContext(prop, env, argumentsConverter, this)
+                                )
+                                select(table)
+                            }
+                        if (prop.isList) {
+                            query.execute(it)
+                        } else {
+                            query.execute(it).firstOrNull()
                         }
-                    if (prop.isList) {
-                        query.execute(it)
-                    } else {
-                        query.execute(it).firstOrNull()
                     }
                 }
+            }.toFuture()
+        }
+    }
+
+    fun fetch(
+        prop: ModelProp,
+        env: DataFetchingEnvironment
+    ): Any? {
+        securityChecker.check(
+            securityContextExtractor?.get(env),
+            prop.securityPredicate,
+            prop.declaringType.securityPredicate
+        )
+        return fetchUserImplementation(prop, env)
+            ?: if (prop.isAssociation) {
+                fetchAssociation(prop, env)
+            } else {
+                val entity = env.getSource<Entity<*>>()
+                return CompletableFuture.completedFuture(
+                    Immutable.get(entity, prop.immutableProp)
+                )
             }
-        }.toFuture()
+    }
 
-    fun fetch(prop: ModelProp, env: DataFetchingEnvironment): CompletableFuture<Any?> =
-        fetchUserImplementation(prop, env) ?:
-            fetchSystemImplementation(prop, env)
-
-    private fun fetchUserImplementation(prop: ModelProp, env: DataFetchingEnvironment): CompletableFuture<Any?>? {
+    private fun fetchUserImplementation(
+        prop: ModelProp,
+        env: DataFetchingEnvironment
+    ): CompletableFuture<Any?>? {
         val userImplementation = prop.userImplementation ?: return null
         return userImplementation.execute(
-            UserImplementationExecutionContext(prop, env, argumentsConverter)
+            UserImplementationExecutionContext(
+                prop,
+                env,
+                argumentsConverter,
+                securityContextExtractor?.get(env)
+            )
         )
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun fetchSystemImplementation(prop: ModelProp, env: DataFetchingEnvironment): CompletableFuture<Any?> {
+    private fun fetchAssociation(
+        prop: ModelProp, env: DataFetchingEnvironment
+    ): CompletableFuture<Any?> {
         if (prop.isConnection) {
-            return mono(Dispatchers.Unconfined) {
+            return executeWithSecurityContext(securityContextExtractor?.get(env)) {
                 fetchConnectionAsync(prop, env)
             }.toFuture() as CompletableFuture<Any?>
         }
@@ -169,10 +218,10 @@ open class DataFetchers(
         val dataLoaderKey = "graphql-provider:loader-by-parent-id:${prop}"
         return dataLoaderRegistry.computeIfAbsent(dataLoaderKey) {
             DataLoaderFactory.newMappedDataLoader(
-                BatchLoaderByParentId(r2dbcClient, prop) {
+                BatchLoaderByParentId(r2dbcClient, prop, securityContextExtractor?.get(this)) {
                     applyFilter(prop, it)
                 },
-                DataLoaderOptions().setMaxBatchSize(cfg.batchSize(prop))
+                DataLoaderOptions().setMaxBatchSize(properties.batchSize(prop))
             )
         }
     }
@@ -183,15 +232,15 @@ open class DataFetchers(
             DataLoaderFactory.newMappedDataLoader(
                 when {
                     prop.isReference || prop.opposite?.isReference == true ->
-                        NonManyToManyBatchLoader(r2dbcClient, prop) {
+                        NonManyToManyBatchLoader(r2dbcClient, prop, securityContextExtractor?.get(this)) {
                             applyFilter(prop, it)
                         }
                     else ->
-                        ManyToManyBatchLoader(r2dbcClient, prop, idOnly) {
+                        ManyToManyBatchLoader(r2dbcClient, prop, idOnly, securityContextExtractor?.get(this)) {
                             applyFilter(prop, it)
                         }
                 },
-                DataLoaderOptions().setMaxBatchSize(cfg.batchSize(prop))
+                DataLoaderOptions().setMaxBatchSize(properties.batchSize(prop))
             )
         }
     }
@@ -207,17 +256,34 @@ open class DataFetchers(
         }
     }
 
-    fun fetch(prop: MutationProp, env: DataFetchingEnvironment): CompletableFuture<Any?> {
-        val function = (prop as MutationPropImpl).function
-        val javaMethod = function.javaMethod ?: error("Internal bug: No java method for '$function'")
-        val owner = applicationContext.getBean(javaMethod.declaringClass)
-        val args = argumentsConverter.convert(
-            prop.arguments,
-            owner,
-            env
-        )
-        return mono(Dispatchers.Unconfined) {
-            function.callSuspend(*args)
-        }.toFuture()
+    fun fetch(
+        prop: MutationProp,
+        env: DataFetchingEnvironment
+    ): CompletableFuture<Any?> {
+        val userImplementation = prop.userImplementation
+        return if (userImplementation !== null) {
+            userImplementation?.execute(
+                UserImplementationExecutionContext(
+                    prop,
+                    env,
+                    argumentsConverter,
+                    securityContextExtractor?.get(env)
+                )
+            )
+        } else {
+            val function = (prop as MutationPropImpl).function
+            val javaMethod = function.javaMethod ?: error("Internal bug: No java method for '$function'")
+            val owner = applicationContext.getBean(javaMethod.declaringClass) as Mutation
+            val securityContext = securityContextExtractor?.get(env)
+            securityChecker.check(securityContext, owner.securityPredicate())
+            val args = argumentsConverter.convert(
+                prop.arguments,
+                owner,
+                env
+            )
+            return executeWithSecurityContext(securityContext) {
+                function.callSuspend(*args)
+            }.toFuture()
+        }
     }
 }

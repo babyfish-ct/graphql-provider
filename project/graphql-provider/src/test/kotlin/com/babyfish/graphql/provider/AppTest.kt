@@ -14,6 +14,7 @@ import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderAutoConfiguratio
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.test.context.junit4.SpringRunner
 import kotlin.test.Test
 
@@ -33,8 +34,9 @@ import kotlin.test.Test
     BookQuery::class,
     BookMutation::class
 ])
+@EnableWebFluxSecurity
 @RunWith(SpringRunner::class)
-class AppTest {
+open class AppTest {
 
     @Autowired
     private lateinit var metaProvider: MetaProvider

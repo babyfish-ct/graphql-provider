@@ -6,6 +6,9 @@ import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.meta.ModelType
 import org.babyfish.graphql.provider.runtime.*
+import org.babyfish.graphql.provider.security.SecurityContextExtractor
+import org.babyfish.graphql.provider.security.cfg.SecurityChecker
+import org.babyfish.graphql.provider.security.cfg.SecurityConfiguration
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.SqlClient
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -16,8 +19,13 @@ import org.springframework.context.annotation.Import
 import kotlin.reflect.KClass
 
 @Configuration
-@EnableConfigurationProperties(GraphQLProviderProperties::class)
+@Import(SecurityConfiguration::class)
+@EnableConfigurationProperties(value = [
+    GraphQLProviderProperties::class,
+    GraphQLProviderProperties.Security::class
+])
 open class GraphQLProviderAutoConfiguration(
+    private val applicationContext: ApplicationContext,
     private val queries: List<Query>,
     private val mutations: List<Mutation>,
     private val inputMappers: List<InputMapper<*, *>>
@@ -42,10 +50,18 @@ open class GraphQLProviderAutoConfiguration(
     open fun dataFetchers(
         r2dbcClient: R2dbcClient,
         argumentsConverter: ArgumentsConverter,
-        ctx: ApplicationContext,
-        cfg: GraphQLProviderProperties
+        properties: GraphQLProviderProperties,
+        securityContextExtractor: SecurityContextExtractor?,
+        securityChecker: SecurityChecker
     ): DataFetchers =
-        DataFetchers(r2dbcClient, argumentsConverter, ctx, cfg)
+        DataFetchers(
+            applicationContext,
+            r2dbcClient,
+            argumentsConverter,
+            properties,
+            securityContextExtractor,
+            securityChecker
+        )
 
     @Bean
     open fun argumentsConverter(

@@ -1,11 +1,10 @@
 package org.babyfish.graphql.provider.meta.impl
 
-import graphql.schema.DataFetchingEnvironment
 import org.babyfish.graphql.provider.meta.Argument
 import org.babyfish.graphql.provider.meta.UserImplementation
-import org.babyfish.graphql.provider.runtime.ArgumentsConverter
 import org.babyfish.graphql.provider.runtime.UserImplementationExecutionContext
 import org.babyfish.graphql.provider.runtime.withUserImplementationExecutionContext
+import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KFunction
 
@@ -23,8 +22,14 @@ internal class UserImplementationImpl(
             fnOwner,
             ctx.env
         )
-        withUserImplementationExecutionContext(ctx) {
-            fn.call(*args)
+        try {
+            withUserImplementationExecutionContext(ctx) {
+                fn.call(*args)
+            }
+        } catch (ex: InvocationTargetException) {
+            if (ex.targetException !is NoReturnValue) {
+                throw ex.targetException
+            }
         }
         return ctx.result ?: error("Internal bug: '$fn' did not set result")
     }

@@ -8,8 +8,6 @@ interface ModelProp: GraphQLProp, EntityProp {
 
     override val declaringType: ModelType
 
-    val userImplementation: UserImplementation?
-
     val filter: Filter?
 
     val hidden: Boolean

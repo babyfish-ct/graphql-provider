@@ -11,9 +11,18 @@ internal class QueryPropImpl internal constructor(
     dynamicConfigurationRegistry: DynamicConfigurationRegistry
 ): RootPropImpl(function, modelTypeMap), QueryProp {
 
-    override val filter: Filter =
+    override val userImplementation: UserImplementation? =
+        dynamicConfigurationRegistry.userImplementation(function)
+
+    override val filter: Filter? =
         dynamicConfigurationRegistry.filter(function)
 
     override val cache: Cache =
         dynamicConfigurationRegistry.cache(function)
+
+    override fun toString(): String =
+        function.toString()
+
+    override val securityPredicate: SecurityPredicate?
+        get() = TODO("Not yet implemented")
 }

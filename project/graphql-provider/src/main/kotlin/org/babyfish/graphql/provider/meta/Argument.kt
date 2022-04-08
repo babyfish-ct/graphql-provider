@@ -4,9 +4,12 @@ import org.babyfish.graphql.provider.ImplicitInput
 import org.babyfish.graphql.provider.ImplicitInputs
 import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.ModelException
+import org.babyfish.graphql.provider.dsl.input.InputTypeDSL
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.graphql.Input
 import org.babyfish.kimmer.produce
+import org.babyfish.kimmer.sql.Entity
+import java.lang.UnsupportedOperationException
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.LocalDate
@@ -129,10 +132,13 @@ class Argument internal constructor(
 
     @Suppress("UNCHECKED_CAST")
     fun defaultValue(): Any? =
-        if (isNullable) {
-            null
-        } else {
-            when (type) {
+        when {
+            isNullable -> null
+            ImplicitInput::class.java.isAssignableFrom(type.java) ->
+                fakeImplicitInput
+            ImplicitInputs::class.java.isAssignableFrom(type.java) ->
+                fakeImplicitInputs
+            else -> when (type) {
                 Boolean::class -> false
                 Char::class -> Char(0)
                 Byte::class -> 0.toByte()
@@ -151,4 +157,23 @@ class Argument internal constructor(
                 else -> error("Internal bug, cannot determine default value for class '$type'")
             }
         }
+
+    private val fakeImplicitInput = ImplicitInput<FakeEntity, FakeInputMapper>(
+        FakeEntity
+    ) {}
+
+    private val fakeImplicitInputs = ImplicitInputs<FakeEntity, FakeInputMapper>(
+        listOf(FakeEntity)
+    ) {}
+
+    private object FakeEntity: Entity<String> {
+        override val id: String
+            get() = throw UnsupportedOperationException()
+    }
+
+    private object FakeInputMapper: InputMapper<FakeEntity, String> {
+        override fun InputTypeDSL<FakeEntity, String>.config() {
+            throw UnsupportedOperationException()
+        }
+    }
 }

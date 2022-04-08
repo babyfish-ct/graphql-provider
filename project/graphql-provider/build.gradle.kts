@@ -16,22 +16,26 @@ dependencies {
     implementation(kotlin("reflect"))
 
     api("org.babyfish.kimmer:kimmer-sql:0.3.1")
-    api("org.springframework.data:spring-data-r2dbc:1.4.2")
+    api("org.springframework.data:spring-data-r2dbc:1.4.3")
+    api("org.springframework.security:spring-security-config:5.6.2")
+    api("org.springframework.security:spring-security-web:5.6.2")
+    api("org.springframework:spring-webflux:5.3.18")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.0")
 
-    implementation("org.springframework.boot:spring-boot-autoconfigure:2.6.4")
+    implementation("org.springframework.boot:spring-boot-autoconfigure:2.6.5")
     implementation("com.graphql-java:graphql-java-extended-scalars:17.0")
     implementation("com.graphql-java:graphql-java:17.3")
 
     kspTest("org.babyfish.kimmer:kimmer-ksp:0.3.1")
     testImplementation(kotlin("test"))
-    testImplementation("org.springframework.boot:spring-boot-starter:2.6.4")
-    testImplementation("org.springframework.boot:spring-boot-starter-test:2.6.4")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc:2.6.4")
+    testImplementation("org.springframework.boot:spring-boot-starter:2.6.5")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:2.6.5")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc:2.6.5")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux:2.6.5")
     testRuntimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
 }
 

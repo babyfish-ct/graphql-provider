@@ -1,14 +1,19 @@
 package org.babyfish.graphql.provider
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.reactor.mono
 import org.babyfish.graphql.provider.dsl.*
+import org.babyfish.graphql.provider.dsl.runtime.PropBatchLoadingCodeDSL
+import org.babyfish.graphql.provider.dsl.runtime.PropLoadingCodeDSL
+import org.babyfish.graphql.provider.meta.ModelProp
+import org.babyfish.graphql.provider.meta.Transaction
+import org.babyfish.graphql.provider.meta.execute
 import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
 import org.babyfish.graphql.provider.runtime.filterExecutionContext
 import org.babyfish.graphql.provider.runtime.loader.UserImplementationLoader
 import org.babyfish.graphql.provider.runtime.registerEntityFieldFilter
 import org.babyfish.graphql.provider.runtime.registerEntityFieldImplementation
 import org.babyfish.graphql.provider.runtime.userImplementationExecutionContext
+import org.babyfish.graphql.provider.security.cfg.SecurityChecker
+import org.babyfish.graphql.provider.security.executeWithSecurityContext
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.meta.ImmutableType
 import org.babyfish.kimmer.sql.Entity
@@ -18,6 +23,7 @@ import org.dataloader.DataLoaderOptions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.core.GenericTypeResolver
+import org.springframework.transaction.ReactiveTransactionManager
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -32,7 +38,10 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
     private lateinit var applicationContext: ApplicationContext
 
     @Autowired
-    private lateinit var cfg: GraphQLProviderProperties
+    private lateinit var properties: GraphQLProviderProperties
+
+    @Autowired
+    private lateinit var securityChecker: SecurityChecker
 
     init {
         val arguments =
@@ -71,8 +80,8 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
 
     protected val runtime: Runtime = Runtime()
 
-    protected fun <T: Any> spring(type: KClass<T>): T =
-        applicationContext.getBean(type.java)
+    protected fun <T:Any> spring(beanType: KClass<T>): T =
+        applicationContext.getBean(beanType.java)
 
     inner class Runtime internal constructor() {
 
@@ -94,33 +103,71 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
             }
         }
 
-        fun <T> implementation(
+        fun <T> implement(
             prop: KProperty1<E, T>,
-            block: suspend (E) -> T,
+            block: suspend (E) -> T
+        ) {
+            implementBy(prop) {
+                async {
+                    block(it)
+                }
+            }
+        }
+
+        fun <T> implementBy(
+            prop: KProperty1<E, T>,
+            block: PropLoadingCodeDSL<E, ID, T>.() -> Unit,
         ) {
             if (!registerEntityFieldImplementation(prop, this@EntityMapper)) {
                 val ctx = userImplementationExecutionContext
                 val row = ctx.env.getSource<E>()
-                ctx.result = mono(Dispatchers.Unconfined) {
-                    block(row)
+                val dsl = PropLoadingCodeDSL<E, ID, T>()
+                dsl.block()
+                securityChecker.check(ctx.securityContext, dsl.predicate())
+                ctx.result = executeWithSecurityContext(ctx.securityContext) {
+                    spring(ReactiveTransactionManager::class).execute(dsl.transaction()) {
+                        dsl.async()(row)
+                    }
                 }.toFuture() as CompletableFuture<Any?>
             }
         }
 
-        fun <T> batchImplementation(
+        fun <T: Any> batchImplement(
             prop: KProperty1<E, T?>,
-            block: suspend (ids: Set<ID>) -> Map<ID, T>
+            block: suspend (Set<ID>) -> Map<ID, T>
+        ) {
+            batchImplementBy(prop) {
+                async {
+                    block(it)
+                }
+            }
+        }
+
+        fun <T: Any> batchImplementBy(
+            prop: KProperty1<E, T?>,
+            block: PropBatchLoadingCodeDSL<ID, T>.() -> Unit
         ) {
             if (!registerEntityFieldImplementation(prop, this@EntityMapper)) {
                 val ctx = userImplementationExecutionContext
                 val row = ctx.env.getSource<E>()
+                val dsl = PropBatchLoadingCodeDSL<ID, T>()
+                dsl.block()
+                securityChecker.check(ctx.securityContext, dsl.predicate())
+                val loaderFun: suspend (Set<Any>) -> Map<Any, Any> = {
+                    spring(ReactiveTransactionManager::class).execute(dsl.transaction()) {
+                        (dsl.async() as suspend (Set<Any>) -> Map<Any, Any>)(it)
+                    }
+                }
                 val dataLoader: DataLoader<Any, Any?> =
                     ctx.env.dataLoaderRegistry.computeIfAbsent(
                         "graphql-provider:loader-by-user-implementation:$prop"
                     ) {
                         DataLoaderFactory.newMappedDataLoader(
-                            UserImplementationLoader(block as suspend (Set<Any>) -> Map<Any, Any?>),
-                            DataLoaderOptions().setMaxBatchSize(cfg.batchSize(ctx.prop))
+                            UserImplementationLoader(
+                                ctx.securityContext,
+                                loaderFun
+                            ),
+                            DataLoaderOptions().setMaxBatchSize(properties.batchSize(ctx.prop as ModelProp))
                         )
                     }
                 ctx.result = dataLoader.load(row.id)

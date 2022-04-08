@@ -14,7 +14,8 @@ dependencies {
     implementation(kotlin("stdlib"))
 
     implementation(platform("com.netflix.graphql.dgs:graphql-dgs-platform-dependencies:4.9.21"))
-    api("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.9.21")
+    api("org.springframework.boot:spring-boot-starter-security:2.6.5")
+    api("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.9.24")
     api("com.graphql-java:graphql-java-extended-scalars:17.0")
 }
 

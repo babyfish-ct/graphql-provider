@@ -2,7 +2,7 @@ package org.babyfish.graphql.provider.runtime
 
 import graphql.schema.DataFetchingEnvironment
 import org.babyfish.graphql.provider.meta.GraphQLProp
-import org.babyfish.graphql.provider.meta.QueryProp
+import org.babyfish.graphql.provider.meta.SecurityPredicate
 import org.babyfish.graphql.provider.meta.impl.NoReturnValue
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.ast.Filterable
@@ -12,8 +12,10 @@ class FilterExecutionContext(
     val prop: GraphQLProp,
     val env: DataFetchingEnvironment,
     val argumentsConverter: ArgumentsConverter,
-    val query: Filterable<out Entity<*>, *>,
-)
+    val query: Filterable<out Entity<*>, *>
+) {
+    var securityPredicate: SecurityPredicate? = null
+}
 
 internal fun withFilterExecutionContext(
     ctx: FilterExecutionContext,

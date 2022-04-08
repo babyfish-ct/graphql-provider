@@ -23,7 +23,10 @@ internal fun invokeByRegistryMode(owner: Any, function: KFunction<*>) {
 }
 
 internal class NoReturnValue: Exception(
-    "The wrapper functions of Query.Runtime.queryReference, Query.Runtime.queryList and Query.queryConnection " +
+    "The wrapper functions of " +
+        "Query.Runtime.queryReference, Query.Runtime.queryList, Query.Runtime.queryConnection, " +
+        "Query.Runtime.query, Query.Runtime.queryBy, " +
+        "Mutation.Runtime.mutate and Mutation.Runtime.mutateBy " +
         "cannot be invoked directly in your code " +
         "because they can only be invoked by the framework internally."
 )

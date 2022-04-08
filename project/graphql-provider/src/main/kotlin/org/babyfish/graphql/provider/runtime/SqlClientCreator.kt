@@ -11,7 +11,6 @@ import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.SqlClient
 import org.babyfish.kimmer.sql.meta.EntityType
 import org.babyfish.kimmer.sql.meta.ScalarProvider
-import org.babyfish.kimmer.sql.meta.config.IdGenerator
 import org.babyfish.kimmer.sql.meta.spi.EntityPropImpl
 import org.babyfish.kimmer.sql.meta.spi.MetaFactory
 import org.babyfish.kimmer.sql.runtime.*
@@ -67,7 +66,6 @@ internal fun createSqlClientByEntityMappers(
                 }
             }
         }
-
     }.apply {
         for (entityType in this.entityTypeMap.values) {
             for (prop in entityType.declaredProps.values) {

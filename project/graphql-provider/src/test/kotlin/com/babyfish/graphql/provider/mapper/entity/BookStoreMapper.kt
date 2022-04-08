@@ -28,7 +28,7 @@ class BookStoreMapper: org.babyfish.graphql.provider.EntityMapper<BookStore, UUI
         }
 
     fun avgPrice() =
-        runtime.implementation(BookStore::avgPrice) {
+        runtime.implement(BookStore::avgPrice) {
             TODO()
         }
 }

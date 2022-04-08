@@ -8,11 +8,10 @@ import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.sql.ast.ge
 import org.babyfish.kimmer.sql.ast.ilike
 import org.babyfish.kimmer.sql.ast.le
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import kotlin.reflect.KProperty1
 
-@Component
+@Service
 class BookQuery: Query() {
 
     fun findBooks(

@@ -9,7 +9,7 @@ import org.babyfish.kimmer.sql.spi.databaseIdentifier
 @GraphQLProviderDSL
 class ReferenceDSL internal constructor(
     prop: ModelPropImpl
-): AbstractAssociationDSL(prop) {
+): AbstractAssociationPropDSL(prop) {
 
     private var storage: Storage? = null
 
