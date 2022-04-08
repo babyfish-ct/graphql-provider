@@ -1,4 +1,4 @@
-# Quickly build GraphQL services with kotlin based on R2DBC
+# A GRM *(GraphQL relation mapping)*, which is very similar to ORM, allowing users to quickly build a GraphQL server based on RDBMS (using kotlin and R2DBC)
 
 If you use RDBMS to manage your persistent data, this framework can help you to quickly develop GraphQL services (based on kotlin and R2DBC) in the shortest time.
 
