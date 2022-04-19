@@ -2,7 +2,6 @@ package org.babyfish.graphql.provider.meta.impl
 
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.meta.*
-import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.meta.spi.EntityPropImpl
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -21,6 +20,11 @@ internal class ModelPropImpl(
     private var _batchSize: Int? = null
 
     private var _securityPredicate: SecurityPredicate? = null
+
+    override val arguments: Arguments
+        get() = _userImplementation?.arguments
+            ?: _filter?.arguments
+            ?: Arguments.EMPTY
 
     override val userImplementation: UserImplementation?
         get() = _userImplementation
@@ -49,7 +53,9 @@ internal class ModelPropImpl(
     override val targetRawClass: KClass<*>
         get() = super.targetType?.kotlinType ?: super.returnType
 
-    internal fun setUserImplementation(userImplementation: UserImplementation) {
+    internal fun setUserImplementation(
+        userImplementation: UserImplementation
+    ) {
         if (!isTransient) {
             error("Internal bug: '$this' is not transient property")
         }
@@ -58,12 +64,24 @@ internal class ModelPropImpl(
                 "The user implementation of '$this' has already been specified, don't specify again"
             )
         }
+        if (_filter !== null) {
+            throw ModelException(
+                "Cannot set the user implementation of '$this' because it filter has been set"
+            )
+        }
         _userImplementation = userImplementation
     }
 
-    internal fun setFilter(filter: Filter) {
+    internal fun setFilter(
+        filter: Filter
+    ) {
         if (_filter !== null) {
             error("Internal bug: filter of '$this' can only be set once")
+        }
+        if (_userImplementation !== null) {
+            throw ModelException(
+                "Cannot set the filter of '$this' because it user implementation has been set"
+            )
         }
         _filter = filter
     }

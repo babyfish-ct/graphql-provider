@@ -1,0 +1,9 @@
+graphql:
+  provider:
+    security:
+      jwt:
+        enabled: true
+        accessTimeout: PT12H
+        refreshTimeout: PT24H
+      api:
+        usernameArgName: email

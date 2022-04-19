@@ -9,7 +9,7 @@ import org.babyfish.graphql.provider.meta.impl.MutationPropImpl
 import org.babyfish.graphql.provider.meta.impl.MutationTypeImpl
 import org.babyfish.graphql.provider.meta.impl.QueryPropImpl
 import org.babyfish.graphql.provider.meta.impl.QueryTypeImpl
-import org.babyfish.graphql.provider.meta.impl.invokeByRegistryMode
+import org.babyfish.graphql.provider.security.jwt.JwtAuthenticationResult
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.EntityMutationResult
@@ -27,43 +27,35 @@ fun createMetaProvider(
 ): MetaProvider {
     val queryType = QueryTypeImpl()
     val mutationType = MutationTypeImpl()
-    val dynamicConfigurationRegistry = DynamicConfigurationRegistry()
-    dynamicConfigurationRegistryScope(dynamicConfigurationRegistry) {
-        for (query in queries) {
-            query.initAfterInjected()
-            for (function in query::class.declaredFunctions) {
-                if (function.visibility == KVisibility.PUBLIC && function.name != "config") {
-                    queryType.props[function.name]?.let { conflict ->
-                        throw ModelException("Conflict query functions: '${conflict.function}' and '$function'")
-                    }
-                    if (function.isSuspend) {
-                        throw ModelException("Query function '$function' cannot be suspend")
-                    }
-                    invokeByRegistryMode(query, function)
-                    queryType.props[function.name] = QueryPropImpl(
-                        function,
-                        modelTypeMap,
-                        dynamicConfigurationRegistry
-                    )
+    for (query in queries) {
+        for (function in query::class.declaredFunctions) {
+            if (function.visibility == KVisibility.PUBLIC && function.name != "config") {
+                queryType.props[function.name]?.let { conflict ->
+                    throw ModelException("Conflict query functions: '${conflict.function}' and '$function'")
                 }
+                if (!function.isSuspend) {
+                    throw ModelException("Query function '$function' must be suspend")
+                }
+                queryType.props[function.name] = QueryPropImpl(
+                    function,
+                    modelTypeMap
+                )
             }
         }
-        for (mutation in mutations) {
-            mutation.initAfterInjected()
-            for (function in AopUtils.getTargetClass(mutation).kotlin.declaredFunctions) {
-                if (function.visibility == KVisibility.PUBLIC && function.name != "config") {
-                    mutationType.props[function.name]?.let { conflict ->
-                        throw ModelException("Conflict mutation functions: '${conflict.function}' and '$function'")
-                    }
-                    if (!function.isSuspend) {
-                        invokeByRegistryMode(mutation, function)
-                    }
-                    mutationType.props[function.name] = MutationPropImpl(
-                        function,
-                        modelTypeMap,
-                        dynamicConfigurationRegistry
-                    )
+    }
+    for (mutation in mutations) {
+        for (function in AopUtils.getTargetClass(mutation).kotlin.declaredFunctions) {
+            if (function.visibility == KVisibility.PUBLIC && function.name != "config") {
+                mutationType.props[function.name]?.let { conflict ->
+                    throw ModelException("Conflict mutation functions: '${conflict.function}' and '$function'")
                 }
+                if (!function.isSuspend) {
+                    throw ModelException("Mutation function '$function' must be suspend")
+                }
+                mutationType.props[function.name] = MutationPropImpl(
+                    function,
+                    modelTypeMap
+                )
             }
         }
     }
@@ -104,7 +96,8 @@ private fun collectScalarTypes(prop: GraphQLProp, scalarKotlinTypes: MutableSet<
     if (prop.isReference || prop.isList || prop.isConnection) {
         return
     }
-    if (prop.targetRawClass == EntityMutationResult::class) {
+    if (prop.targetRawClass == EntityMutationResult::class ||
+        prop.targetRawClass == JwtAuthenticationResult::class) {
         return
     }
     scalarKotlinTypes += prop.returnType

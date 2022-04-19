@@ -2,7 +2,7 @@ package org.babyfish.graphql.provider.meta.impl.security
 
 import org.babyfish.graphql.provider.meta.SecurityPredicate
 
-internal class SecuredSecurityPredicateImpl private constructor(
+internal class CoreSecurityPredicateImpl private constructor(
     private val authorities: Set<String>
 ): SecurityPredicate {
 
@@ -20,6 +20,6 @@ internal class SecuredSecurityPredicateImpl private constructor(
         fun of(authorities: Set<String>): SecurityPredicate? =
             authorities
                 .takeIf { it.isNotEmpty() }
-                ?.let { SecuredSecurityPredicateImpl(it) }
+                ?.let { CoreSecurityPredicateImpl(it) }
     }
 }

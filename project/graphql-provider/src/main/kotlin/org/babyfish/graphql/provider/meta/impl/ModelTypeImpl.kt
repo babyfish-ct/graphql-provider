@@ -9,7 +9,7 @@ import org.babyfish.kimmer.sql.meta.spi.MetaFactory
 
 internal class ModelTypeImpl(
     metaFactory: MetaFactory,
-    immutableType: ImmutableType
+    immutableType: ImmutableType,
 ): EntityTypeImpl(metaFactory, immutableType), ModelType {
 
     private var _isMapped: Boolean = false
@@ -23,6 +23,9 @@ internal class ModelTypeImpl(
     private var _securityPredicate: SecurityPredicate? = null
 
     private var _flags = 0
+
+    override val name: String
+        get() = immutableType.simpleName
 
     override val superType: ModelType?
         get() = super.superType as ModelType?

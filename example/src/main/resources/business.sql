@@ -1,3 +1,5 @@
+drop table favourite_book_mapping if exists;
+
 drop table book_author_mapping if exists;
 drop table book if exists;
 drop table author if exists;
@@ -75,6 +77,24 @@ alter table book_author_mapping
             references author(id)
                 on delete cascade
 ;
+
+create table favourite_book_mapping(
+    app_user_id uuid not null,
+    book_id uuid not null
+);
+alter table favourite_book_mapping
+    add constraint pk_favourite_book_mapping
+        primary key(app_user_id, book_id);
+alter table favourite_book_mapping
+    add constraint fk_favourite_book_mapping__app_user
+        foreign key(app_user_id)
+            references app_user(id)
+                on delete cascade;
+alter table favourite_book_mapping
+    add constraint fk_favourite_book_mapping__book
+        foreign key(book_id)
+            references book(id)
+                on delete cascade;
 
 insert into book_store(id, name, website) values
     ('d38c10da-6be8-4924-b9b9-5e81899612a0', 'O''REILLY', 'https://www.oreilly.com/'),

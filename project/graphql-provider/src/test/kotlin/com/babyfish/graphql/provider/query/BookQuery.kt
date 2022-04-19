@@ -14,7 +14,7 @@ import java.math.BigDecimal
 @Service
 class BookQuery: Query() {
 
-    fun findBooks(
+    suspend fun findBooks(
         name: String?,
         minPrice: BigDecimal?,
         maxPrice: BigDecimal?,

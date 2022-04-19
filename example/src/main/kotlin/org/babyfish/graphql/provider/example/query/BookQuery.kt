@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 @Service
 class BookQuery: Query() {
 
-    fun findBooks(
+    suspend fun books(
         name: String?,
         storeName: String?,
         authorFirstName: String?,

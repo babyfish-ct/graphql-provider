@@ -29,7 +29,13 @@ open class KimmerSQLAutoConfiguration(
         r2dbcExecutor: R2dbcExecutor?,
         dialect: Dialect?
     ): SqlClient =
-        createSqlClientByEntityMappers(mappers, scalarProviders, jdbcExecutor, r2dbcExecutor, dialect)
+        createSqlClientByEntityMappers(
+            mappers,
+            scalarProviders,
+            jdbcExecutor,
+            r2dbcExecutor,
+            dialect
+        )
 
     @Bean
     open fun r2dbcClient(
@@ -44,5 +50,4 @@ open class KimmerSQLAutoConfiguration(
         connectionFactory: ConnectionFactory
     ): ReactiveTransactionManager =
         R2dbcTransactionManager(connectionFactory)
-
 }

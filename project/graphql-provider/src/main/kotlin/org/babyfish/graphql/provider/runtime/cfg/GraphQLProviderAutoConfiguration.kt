@@ -6,8 +6,8 @@ import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.meta.ModelType
 import org.babyfish.graphql.provider.runtime.*
-import org.babyfish.graphql.provider.security.SecurityContextExtractor
-import org.babyfish.graphql.provider.security.cfg.SecurityChecker
+import org.babyfish.graphql.provider.security.AuthenticationExtractor
+import org.babyfish.graphql.provider.security.SecurityChecker
 import org.babyfish.graphql.provider.security.cfg.SecurityConfiguration
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.SqlClient
@@ -16,16 +16,22 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy
+import org.springframework.transaction.ReactiveTransactionManager
 import kotlin.reflect.KClass
 
 @Configuration
-@Import(SecurityConfiguration::class)
+@Import(value = [
+    SecurityConfiguration::class,
+    SecurityConfiguration::class,
+    Executor::class,
+])
 @EnableConfigurationProperties(value = [
-    GraphQLProviderProperties::class,
-    GraphQLProviderProperties.Security::class
+    GraphQLProviderProperties::class
 ])
 open class GraphQLProviderAutoConfiguration(
     private val applicationContext: ApplicationContext,
+    private val properties: GraphQLProviderProperties,
     private val queries: List<Query>,
     private val mutations: List<Mutation>,
     private val inputMappers: List<InputMapper<*, *>>
@@ -51,16 +57,18 @@ open class GraphQLProviderAutoConfiguration(
         r2dbcClient: R2dbcClient,
         argumentsConverter: ArgumentsConverter,
         properties: GraphQLProviderProperties,
-        securityContextExtractor: SecurityContextExtractor?,
-        securityChecker: SecurityChecker
+        authenticationExtractor: AuthenticationExtractor?,
+        securityChecker: SecurityChecker,
+        executor: Executor
     ): DataFetchers =
         DataFetchers(
             applicationContext,
             r2dbcClient,
             argumentsConverter,
             properties,
-            securityContextExtractor,
-            securityChecker
+            authenticationExtractor,
+            securityChecker,
+            executor
         )
 
     @Bean
@@ -68,4 +76,10 @@ open class GraphQLProviderAutoConfiguration(
         metaProvider: MetaProvider
     ): ArgumentsConverter =
         ArgumentsConverter(metaProvider.rootImplicitInputTypeMap)
+
+    @Bean
+    open fun securityChecker(
+        roleHierarchy: RoleHierarchy?
+    ): SecurityChecker =
+        SecurityChecker(properties, roleHierarchy)
 }

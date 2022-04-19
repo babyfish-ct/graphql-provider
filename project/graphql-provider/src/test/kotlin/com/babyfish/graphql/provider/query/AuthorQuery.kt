@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 @Service
 class AuthorQuery: Query() {
 
-    fun findAuthors(
+    suspend fun findAuthors(
         name: String?
     ): Connection<Author> =
         runtime.queryConnection {

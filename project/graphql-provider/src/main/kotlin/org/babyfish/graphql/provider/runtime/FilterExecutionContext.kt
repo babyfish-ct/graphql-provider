@@ -3,47 +3,39 @@ package org.babyfish.graphql.provider.runtime
 import graphql.schema.DataFetchingEnvironment
 import org.babyfish.graphql.provider.meta.GraphQLProp
 import org.babyfish.graphql.provider.meta.SecurityPredicate
-import org.babyfish.graphql.provider.meta.impl.NoReturnValue
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.ast.Filterable
-import java.lang.reflect.InvocationTargetException
+import org.springframework.security.core.Authentication
+import java.lang.UnsupportedOperationException
 
 class FilterExecutionContext(
     val prop: GraphQLProp,
     val env: DataFetchingEnvironment,
     val argumentsConverter: ArgumentsConverter,
-    val query: Filterable<out Entity<*>, *>
+    val filterable: Filterable<out Entity<*>, *>
 ) {
     var securityPredicate: SecurityPredicate? = null
 }
+
+internal fun filterExecutionContext(): FilterExecutionContext =
+    filterContextLocal.get()
+        ?: throw UnsupportedOperationException(
+            "These functions cannot be called by app directly: " +
+                "EntityMapper.Runtime.filterConnection, " +
+                "EntityMapper.Runtime.filterList"
+        )
 
 internal fun withFilterExecutionContext(
     ctx: FilterExecutionContext,
     block: () -> Unit
 ) {
-    val oldContext = filterExecutionContextLocal.get()
-    filterExecutionContextLocal.set(ctx)
+    filterContextLocal.set(ctx)
     try {
         block()
-    } catch (ex: InvocationTargetException) {
-        if (ex.targetException !is NoReturnValue) {
-            throw ex.targetException
-        }
     } finally {
-        if (oldContext !== null) {
-            filterExecutionContextLocal.set(oldContext)
-        } else {
-            filterExecutionContextLocal.remove()
-        }
+        filterContextLocal.remove()
     }
 }
 
-internal val filterExecutionContext
-    get() = filterExecutionContextLocal.get() ?: error(
-        "No FilterExecutionContext. wrapper functions of " +
-            "Query.Runtime.queryReference, Query.Runtime.queryList, Query.Runtime.queryConnection, " +
-            "EntityMapper.Runtime.filterList and EntityMapper.Runtime.filterConnection " +
-            "cannot be invoked directly because they can only be invoked by the framework internally"
-    )
-
-private val filterExecutionContextLocal = ThreadLocal<FilterExecutionContext>()
+private val filterContextLocal =
+    ThreadLocal<FilterExecutionContext>()

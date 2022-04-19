@@ -5,10 +5,10 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 @Component
-class DgsAuthenticatedPatternSupplier(
-    @Value("dgs.graphql.path") private val graphqlPath: String?
+internal open class DgsAuthenticatedPatternSupplier(
+    @Value("\${dgs.graphql.path:/graphql}") private val graphqlPath: String
 ) : AuthenticatedPatternSupplier {
 
-    override fun patterns(): Array<String>? =
-        graphqlPath?.let { arrayOf(it) }
+    override fun patterns(): Array<String> =
+        arrayOf(graphqlPath)
 }

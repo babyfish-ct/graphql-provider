@@ -3,9 +3,9 @@ package org.babyfish.graphql.provider.runtime
 import org.babyfish.graphql.provider.EntityMapper
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.dsl.EntityTypeDSL
+import org.babyfish.graphql.provider.meta.Arguments
 import org.babyfish.graphql.provider.meta.impl.ModelPropImpl
 import org.babyfish.graphql.provider.meta.impl.ModelTypeImpl
-import org.babyfish.graphql.provider.meta.impl.invokeByRegistryMode
 import org.babyfish.kimmer.meta.ImmutableType
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.SqlClient
@@ -15,7 +15,10 @@ import org.babyfish.kimmer.sql.meta.spi.EntityPropImpl
 import org.babyfish.kimmer.sql.meta.spi.MetaFactory
 import org.babyfish.kimmer.sql.runtime.*
 import org.babyfish.kimmer.sql.spi.createSqlClient
+import org.springframework.aop.support.AopUtils
+import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredFunctions
@@ -41,16 +44,37 @@ internal fun createSqlClientByEntityMappers(
         for (scalarProvider in scalarProviders) {
             scalarProvider(scalarProvider)
         }
-
-        dynamicConfigurationRegistryScope(dynamicConfigurationRegistry) {
-            for (mapper in mappers) {
-                for (function in mapper::class.declaredFunctions) {
-                    if (function.name != "config") {
-                        if (function.visibility == KVisibility.PUBLIC) {
-                            if (function.isSuspend) {
-                                throw ModelException("Filter function '$function' cannot be suspend")
+        for (mapper in mappers) {
+            if (AopUtils.isAopProxy(mapper)) {
+                throw ModelException(
+                    "Illegal class '${AopUtils.getTargetClass(mapper).name}', " +
+                        "entity mapper cannot be AOP proxy"
+                )
+            }
+            for (function in mapper::class.declaredFunctions) {
+                if (function.name != "config") {
+                    if (function.visibility == KVisibility.PUBLIC) {
+                        if (function.isSuspend) {
+                            throw ModelException("Entity mapper function '$function' cannot be suspend")
+                        }
+                        mapper.register(
+                            dynamicConfigurationRegistry,
+                            mapper,
+                            function
+                        ) {
+                            val arguments = Arguments.of(function)
+                            val args = mutableMapOf<KParameter, Any?>()
+                            args[function.parameters[0]] = mapper
+                            for (argument in arguments) {
+                                if (!argument.parameter.isOptional) {
+                                    args[argument.parameter] = argument.defaultValue()
+                                }
                             }
-                            invokeByRegistryMode(mapper, function)
+                            try {
+                                function.callBy(args)
+                            } catch (ex: InvocationTargetException) {
+                                throw ex.targetException
+                            }
                         }
                     }
                 }

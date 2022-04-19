@@ -15,28 +15,34 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
 
-    api("org.babyfish.kimmer:kimmer-sql:0.3.1")
+    api("org.babyfish.kimmer:kimmer-sql:0.3.3")
     api("org.springframework.data:spring-data-r2dbc:1.4.3")
     api("org.springframework.security:spring-security-config:5.6.2")
     api("org.springframework.security:spring-security-web:5.6.2")
     api("org.springframework:spring-webflux:5.3.18")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.1")
 
-    implementation("org.springframework.boot:spring-boot-autoconfigure:2.6.5")
+    implementation("org.springframework.boot:spring-boot-autoconfigure:2.6.6")
     implementation("com.graphql-java:graphql-java-extended-scalars:17.0")
     implementation("com.graphql-java:graphql-java:17.3")
 
-    kspTest("org.babyfish.kimmer:kimmer-ksp:0.3.1")
+    implementation("io.jsonwebtoken:jjwt-api:0.11.2")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.2")
+
+    kspTest("org.babyfish.kimmer:kimmer-ksp:0.3.3")
     testImplementation(kotlin("test"))
-    testImplementation("org.springframework.boot:spring-boot-starter:2.6.5")
-    testImplementation("org.springframework.boot:spring-boot-starter-test:2.6.5")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc:2.6.5")
-    testImplementation("org.springframework.boot:spring-boot-starter-webflux:2.6.5")
+    testImplementation("org.springframework.boot:spring-boot-starter:2.6.6")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:2.6.6")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc:2.6.6")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux:2.6.6")
     testRuntimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
+
+    implementation("org.springdoc:springdoc-openapi-kotlin:1.6.7")
+    implementation("org.springdoc:springdoc-openapi-webflux-ui:1.6.7")
 }
 
 ksp {

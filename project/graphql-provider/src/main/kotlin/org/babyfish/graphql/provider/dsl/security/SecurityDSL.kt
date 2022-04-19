@@ -5,7 +5,7 @@ import org.babyfish.graphql.provider.meta.SecurityPredicate
 import org.babyfish.graphql.provider.meta.impl.security.AnonymousSecurityPredicateImpl
 import org.babyfish.graphql.provider.meta.impl.security.CompositeSecurityPredicateImpl
 import org.babyfish.graphql.provider.meta.impl.security.NotSecurityPredicateImpl
-import org.babyfish.graphql.provider.meta.impl.security.SecuredSecurityPredicateImpl
+import org.babyfish.graphql.provider.meta.impl.security.CoreSecurityPredicateImpl
 
 @GraphQLProviderDSL
 class SecurityDSL internal constructor(
@@ -18,8 +18,8 @@ class SecurityDSL internal constructor(
         predicates += AnonymousSecurityPredicateImpl
     }
 
-    fun secured(vararg authorities: String) {
-        SecuredSecurityPredicateImpl.of(authorities.toSet())?.let {
+    fun authorities(vararg authorities: String) {
+        CoreSecurityPredicateImpl.of(authorities.toSet())?.let {
             predicates += it
         }
     }

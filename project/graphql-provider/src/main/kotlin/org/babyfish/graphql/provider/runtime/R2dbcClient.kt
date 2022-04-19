@@ -1,9 +1,7 @@
 package org.babyfish.graphql.provider.runtime
 
 import io.r2dbc.spi.Connection
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.mono
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.EntityMutationResult
 import org.babyfish.kimmer.sql.SaveOptionsDSL
@@ -13,28 +11,32 @@ import org.babyfish.kimmer.sql.ast.MutableUpdate
 import org.babyfish.kimmer.sql.ast.query.ConfigurableTypedRootQuery
 import org.babyfish.kimmer.sql.ast.query.MutableRootQuery
 import org.springframework.r2dbc.core.DatabaseClient
+import org.springframework.transaction.reactive.TransactionSynchronizationManager
 import kotlin.reflect.KClass
 
 class R2dbcClient(
     internal val sqlClient: SqlClient,
-    internal val databaseClient: DatabaseClient
+    private val databaseClient: DatabaseClient
 ) {
     suspend fun <R> execute(
-        block: suspend (Connection) -> R
-    ): R =
-        databaseClient.inConnection {
-            mono(Dispatchers.Unconfined) {
-                block(it)
+        block: suspend SqlClient.(Connection) -> R
+    ): R {
+        val ctx = executorContextOrNull()
+        return databaseClient.inConnection {
+            graphqlMono(ctx) {
+                sqlClient.block(it)
             }
         }.awaitSingle()
+    }
 
     suspend fun <E: Entity<ID>, ID: Comparable<ID>, R> query(
         entityType: KClass<E>,
         block: MutableRootQuery<E, ID>.() -> ConfigurableTypedRootQuery<E, ID, R>
     ): List<R> {
+        val ctx = executorContextOrNull()
         val query = sqlClient.createQuery(entityType, block)
         return databaseClient.inConnection {
-            mono(Dispatchers.Unconfined) {
+            graphqlMono(ctx) {
                 query.execute(it)
             }
         }.awaitSingle()
@@ -44,9 +46,10 @@ class R2dbcClient(
         entityType: KClass<E>,
         block: MutableUpdate<E, ID>.() -> Unit
     ): Int {
+        val ctx = executorContextOrNull()
         val update = sqlClient.createUpdate(entityType, block)
         return databaseClient.inConnection {
-            mono(Dispatchers.Unconfined) {
+            graphqlMono(ctx) {
                 update.execute(it)
             }
         }.awaitSingle()
@@ -56,9 +59,10 @@ class R2dbcClient(
         entityType: KClass<E>,
         block: MutableDelete<E, ID>.() -> Unit
     ): Int {
+        val ctx = executorContextOrNull()
         val update = sqlClient.createDelete(entityType, block)
         return databaseClient.inConnection {
-            mono(Dispatchers.Unconfined) {
+            graphqlMono(ctx) {
                 update.execute(it)
             }
         }.awaitSingle()
@@ -68,9 +72,10 @@ class R2dbcClient(
         entity: E,
         block: (SaveOptionsDSL<E>.() -> Unit)? = null
     ): EntityMutationResult {
+        val ctx = executorContextOrNull()
         val command = sqlClient.entities.saveCommand(entity, block)
         return databaseClient.inConnection {
-            mono(Dispatchers.Unconfined) {
+            graphqlMono(ctx) {
                 command.execute(it)
             }
         }.awaitSingle()
@@ -80,9 +85,10 @@ class R2dbcClient(
         entities: List<E>,
         block: (SaveOptionsDSL<E>.() -> Unit)? = null
     ): List<EntityMutationResult> {
+        val ctx = executorContextOrNull()
         val command = sqlClient.entities.saveCommand(entities, block)
         return databaseClient.inConnection {
-            mono(Dispatchers.Unconfined) {
+            graphqlMono(ctx) {
                 command.execute(it)
             }
         }.awaitSingle()
@@ -92,9 +98,10 @@ class R2dbcClient(
         entityType: KClass<E>,
         id: ID
     ): EntityMutationResult {
+        val ctx = executorContextOrNull()
         val command = sqlClient.entities.deleteCommand(entityType, id)
         return databaseClient.inConnection {
-            mono(Dispatchers.Unconfined) {
+            graphqlMono(ctx) {
                 command.execute(it)
             }
         }.awaitSingle()
@@ -104,9 +111,10 @@ class R2dbcClient(
         entityType: KClass<E>,
         ids: List<ID>
     ): List<EntityMutationResult> {
+        val ctx = executorContextOrNull()
         val command = sqlClient.entities.deleteCommand(entityType, ids)
         return databaseClient.inConnection {
-            mono(Dispatchers.Unconfined) {
+            graphqlMono(ctx) {
                 command.execute(it)
             }
         }.awaitSingle()

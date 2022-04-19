@@ -6,12 +6,16 @@ import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.idl.TypeDefinitionRegistry
 import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.runtime.DataFetchers
+import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
 import org.babyfish.graphql.provider.runtime.registryDynamicCodeRegistry
+import org.babyfish.graphql.provider.security.jwt.JwtAuthenticationService
 
 @DgsComponent
 internal open class DynamicCodeRegistry(
+    private val properties: GraphQLProviderProperties,
     private val dataFetchers: DataFetchers,
     private val metaProvider: MetaProvider,
+    private val jwtAuthenticationService: JwtAuthenticationService?
 ) {
     @DgsCodeRegistry
     open fun registry(
@@ -19,6 +23,11 @@ internal open class DynamicCodeRegistry(
         @Suppress("UNUSED") typeDefinitionRegistry: TypeDefinitionRegistry
     ): GraphQLCodeRegistry.Builder =
         builder.apply {
-            registryDynamicCodeRegistry(dataFetchers, metaProvider)
+            registryDynamicCodeRegistry(
+                properties,
+                dataFetchers,
+                metaProvider,
+                jwtAuthenticationService
+            )
         }
 }

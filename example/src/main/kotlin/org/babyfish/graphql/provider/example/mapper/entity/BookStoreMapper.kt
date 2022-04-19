@@ -22,13 +22,19 @@ class BookStoreMapper: EntityMapper<BookStore, UUID>() {
 
         mappedList(BookStore::books, Book::store)
 
-        userImplementation(BookStore::avgPrice)
+        userImplementation(BookStore::avgPrice) {
+            security {
+                not {
+                    anonymous()
+                }
+            }
+        }
     }
 
     // Dynamic code configuration--------------------------------
 
     fun avgPrice() =
-        runtime.batchImplementation(BookStore::avgPrice) {
+        runtime.batchImplement(BookStore::avgPrice) {
             spring(BookRepository::class)
                 .findAvgPriceGroupByStoreIds(it)
         }

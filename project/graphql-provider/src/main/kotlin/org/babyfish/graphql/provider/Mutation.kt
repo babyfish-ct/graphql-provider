@@ -4,36 +4,29 @@ import org.babyfish.graphql.provider.dsl.runtime.CodeDSL
 import org.babyfish.graphql.provider.dsl.MutationDSL
 import org.babyfish.graphql.provider.meta.SecurityPredicate
 import org.babyfish.graphql.provider.meta.Transaction
-import org.babyfish.graphql.provider.meta.execute
-import org.babyfish.graphql.provider.meta.impl.NoReturnValue
-import org.babyfish.graphql.provider.meta.impl.TransactionImpl
-import org.babyfish.graphql.provider.runtime.registerMutationFieldImplementation
-import org.babyfish.graphql.provider.runtime.userImplementationExecutionContext
-import org.babyfish.graphql.provider.security.cfg.SecurityChecker
-import org.babyfish.graphql.provider.security.executeWithSecurityContext
+import org.babyfish.graphql.provider.runtime.Executor
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.ReactiveTransactionManager
-import org.springframework.transaction.support.DefaultTransactionDefinition
-import java.util.concurrent.CompletableFuture
+import org.springframework.context.ApplicationContext
 
 abstract class Mutation {
 
     @Autowired
-    private lateinit var transactionManager: ReactiveTransactionManager
+    private lateinit var applicationContext: ApplicationContext
 
-    @Autowired
-    private lateinit var securityChecker: SecurityChecker
+    private val executor: Executor by lazy { // Resolve circular reference problem
+        applicationContext.getBean(Executor::class.java)
+    }
 
-    protected val runtime = Runtime()
+    protected open val runtime = Runtime()
 
-    private lateinit var transaction: Transaction
+    private var transaction: Transaction? = null
 
     private var securityPredicate: SecurityPredicate? = null
 
-    internal fun initAfterInjected() {
+    init {
         val dsl = MutationDSL()
         dsl.config()
-        transaction = dsl.transaction() ?: TransactionImpl(DefaultTransactionDefinition())
+        transaction = dsl.transaction()
         securityPredicate = dsl.predicate()
     }
 
@@ -44,7 +37,7 @@ abstract class Mutation {
 
     inner class Runtime internal constructor() {
 
-        fun <T> mutate(block: suspend () -> T): T =
+        suspend fun <T> mutate(block: suspend () -> T): T =
             mutateBy {
                 async {
                     block()
@@ -52,20 +45,7 @@ abstract class Mutation {
             }
 
         @Suppress("UNCHECKED_CAST")
-        fun <T> mutateBy(block: CodeDSL<T>.() -> Unit): T {
-            if (registerMutationFieldImplementation(this@Mutation)) {
-                throw NoReturnValue()
-            }
-            val dsl = CodeDSL<T>()
-            dsl.block()
-            val ctx = userImplementationExecutionContext
-            securityChecker.check(ctx.securityContext, dsl.predicate(), securityPredicate)
-            ctx.result = executeWithSecurityContext(ctx.securityContext) {
-                transactionManager.execute(dsl.transaction() ?: transaction) {
-                    dsl.async()()
-                }
-            }.toFuture() as CompletableFuture<Any?>
-            throw NoReturnValue()
-        }
+        suspend fun <T> mutateBy(block: CodeDSL<T>.() -> Unit): T =
+            executor.execute(securityPredicate, transaction, block)
     }
 }

@@ -14,8 +14,15 @@ import org.springframework.context.annotation.Bean
 import org.springframework.core.io.ClassPathResource
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer
 import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
+import org.springframework.transaction.annotation.EnableTransactionManagement
+import java.util.*
 
 @SpringBootApplication
+@EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
+@EnableTransactionManagement
 class ExampleApplication {
 
 	@Bean
@@ -35,7 +42,12 @@ class ExampleApplication {
 	): ConnectionFactoryInitializer =
 		ConnectionFactoryInitializer().apply {
 			setConnectionFactory(connectionFactory)
-			setDatabasePopulator(ResourceDatabasePopulator(ClassPathResource("data.sql")))
+			setDatabasePopulator(
+				ResourceDatabasePopulator(
+					ClassPathResource("security.sql"),
+					ClassPathResource("business.sql")
+				)
+			)
 			afterPropertiesSet()
 		}
 
@@ -59,5 +71,6 @@ class ExampleApplication {
 private val LOGGER = LoggerFactory.getLogger(ExampleApplication::class.java)
 
 fun main(args: Array<String>) {
+	println(TimeZone.getDefault())
 	runApplication<ExampleApplication>(*args)
 }

@@ -19,7 +19,7 @@ import java.time.OffsetTime
 import java.util.*
 
 @DgsComponent
-open class ScalarRegistration(
+internal open class ScalarRegistration(
     private val metaProvider: MetaProvider
 ) {
 

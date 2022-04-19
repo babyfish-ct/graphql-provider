@@ -12,7 +12,7 @@ class BookMutation(
     private val r2dbcClient: R2dbcClient
 ) : Mutation() {
 
-    fun saveBook(
+    suspend fun saveBook(
         input: ImplicitInput<Book, BookInputMapper>
     ): Int =
         runtime.mutate {

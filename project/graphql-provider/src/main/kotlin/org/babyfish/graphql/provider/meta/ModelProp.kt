@@ -10,11 +10,12 @@ interface ModelProp: GraphQLProp, EntityProp {
 
     val filter: Filter?
 
+    val userImplementation: UserImplementation?
+
+    val securityPredicate: SecurityPredicate?
+
     val hidden: Boolean
 
     val batchSize: Int?
-
-    override val arguments: List<Argument>
-        get() = userImplementation?.arguments ?: filter?.arguments ?: emptyList()
 }
 

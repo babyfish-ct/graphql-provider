@@ -32,6 +32,16 @@ class BookMapper: EntityMapper<Book, UUID>() {
                 }
             }
         }
+
+        list(Book::fans) {
+            db {
+                middleTable {
+                    tableName = "FAVOURITE_BOOK_MAPPING"
+                    joinColumnName = "BOOK_ID"
+                    targetJoinColumnName = "APP_USER_ID"
+                }
+            }
+        }
     }
 
     // Dynamic code configuration--------------------------------

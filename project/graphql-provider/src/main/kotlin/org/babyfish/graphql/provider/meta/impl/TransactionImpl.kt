@@ -1,10 +1,10 @@
 package org.babyfish.graphql.provider.meta.impl
 
-import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.babyfish.graphql.provider.meta.Transaction
 import org.springframework.transaction.ReactiveTransactionManager
 import org.springframework.transaction.TransactionDefinition
+import org.springframework.transaction.reactive.TransactionalOperator
+import org.springframework.transaction.reactive.executeAndAwait
 import java.lang.Error
 import java.lang.RuntimeException
 import kotlin.reflect.KClass
@@ -15,25 +15,15 @@ internal class TransactionImpl(
     private val noRollbackFor: Collection<KClass<out Throwable>>? = null
 ): Transaction {
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun <R> execute(
         transactionManager: ReactiveTransactionManager,
         block: suspend () -> R
     ): R {
-        val trans = transactionManager.getReactiveTransaction(definition).awaitSingle()
-        return try {
+        val transactionalOperator = TransactionalOperator.create(transactionManager, definition)
+        return transactionalOperator.executeAndAwait {
             block()
-        } catch (ex: Throwable) {
-            if (rollbackFor(ex)) {
-                trans.setRollbackOnly()
-            }
-            throw ex
-        } finally {
-            if (trans.isRollbackOnly) {
-                transactionManager.rollback(trans).awaitSingleOrNull()
-            } else {
-                transactionManager.commit(trans).awaitSingleOrNull()
-            }
-        }
+        } as R
     }
 
     private fun rollbackFor(ex: Throwable): Boolean =

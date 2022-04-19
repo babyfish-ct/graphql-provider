@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Import
     DynamicCodeRegistry::class,
     DynamicTypeDefinitions::class,
     ScalarRegistration::class,
-    DgsSecurityContextExtractor::class
+    DgsAuthenticationExtractor::class,
+    DgsAuthenticatedPatternSupplier::class,
+    DgsExceptionHandler::class,
 ])
 open class DgsAutoConfiguration

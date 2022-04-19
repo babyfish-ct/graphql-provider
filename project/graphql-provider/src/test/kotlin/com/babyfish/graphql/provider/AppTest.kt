@@ -11,11 +11,13 @@ import com.babyfish.graphql.provider.query.BookQuery
 import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.runtime.cfg.KimmerSQLAutoConfiguration
 import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderAutoConfiguration
+import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.test.context.junit4.SpringRunner
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 @SpringBootTest(classes = [
@@ -33,6 +35,8 @@ import kotlin.test.Test
 
     BookQuery::class,
     BookMutation::class
+], properties = [
+    "${GraphQLProviderProperties.Security.Jwt.PROPERTY_PATH}=true"
 ])
 @EnableWebFluxSecurity
 @RunWith(SpringRunner::class)
@@ -47,3 +51,4 @@ open class AppTest {
         println(metaProvider.allImplicitInputTypes)
     }
 }
+

@@ -2,43 +2,40 @@ package org.babyfish.graphql.provider.runtime
 
 import graphql.schema.DataFetchingEnvironment
 import org.babyfish.graphql.provider.meta.GraphQLProp
-import org.springframework.security.core.context.SecurityContext
+import org.springframework.security.core.Authentication
+import java.lang.UnsupportedOperationException
 import java.util.concurrent.CompletableFuture
 
 class UserImplementationExecutionContext(
     val prop: GraphQLProp,
     val env: DataFetchingEnvironment,
     val argumentsConverter: ArgumentsConverter,
-    val securityContext: SecurityContext?
+    val authentication: Authentication?
 ) {
     internal var result: CompletableFuture<Any?>? = null
 }
 
-internal fun <R> withUserImplementationExecutionContext(
+internal fun userImplementationExecutionContext(): UserImplementationExecutionContext =
+    userImplementationContextLocal.get()
+        ?: throw UnsupportedOperationException(
+            "These functions cannot be called by app directly: " +
+                "EntityMapper.Runtime.implement, " +
+                "EntityMapper.Runtime.implementBy, " +
+                "EntityMapper.Runtime.batchImplement, " +
+                "EntityMapper.Runtime.batchImplementBy"
+        )
+
+internal fun withUserImplementationExecutionContext(
     ctx: UserImplementationExecutionContext,
-    block: () -> R
-): R {
-    val oldContext = userImplementationExecutionContextLocal.get()
-    userImplementationExecutionContextLocal.set(ctx)
-    return try {
+    block: () -> Unit
+) {
+    userImplementationContextLocal.set(ctx)
+    try {
         block()
     } finally {
-        if (oldContext !== null) {
-            userImplementationExecutionContextLocal.set(oldContext)
-        } else {
-            userImplementationExecutionContextLocal.remove()
-        }
+        userImplementationContextLocal.remove()
     }
 }
 
-internal val userImplementationExecutionContext: UserImplementationExecutionContext
-    get() = userImplementationExecutionContextLocal.get() ?: error(
-        "No UserImplementationExecutionContext. wrapper functions of " +
-            "Query.Runtime.query, Query.Runtime.queryBy, " +
-            "Mutation.Runtime.mutate, Mutation.Runtime.mutateBy " +
-            "EntityMapper.Runtime.implementation and EntityMapper.Runtime.batchImplementation " +
-            "cannot be invoked directly because they can only be invoked by the framework internally"
-    )
-
-private val userImplementationExecutionContextLocal =
+private val userImplementationContextLocal =
     ThreadLocal<UserImplementationExecutionContext>()

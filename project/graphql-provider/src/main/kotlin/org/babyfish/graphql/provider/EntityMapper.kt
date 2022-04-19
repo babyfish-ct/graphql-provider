@@ -4,16 +4,12 @@ import org.babyfish.graphql.provider.dsl.*
 import org.babyfish.graphql.provider.dsl.runtime.PropBatchLoadingCodeDSL
 import org.babyfish.graphql.provider.dsl.runtime.PropLoadingCodeDSL
 import org.babyfish.graphql.provider.meta.ModelProp
-import org.babyfish.graphql.provider.meta.Transaction
 import org.babyfish.graphql.provider.meta.execute
+import org.babyfish.graphql.provider.runtime.*
 import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
 import org.babyfish.graphql.provider.runtime.filterExecutionContext
 import org.babyfish.graphql.provider.runtime.loader.UserImplementationLoader
-import org.babyfish.graphql.provider.runtime.registerEntityFieldFilter
-import org.babyfish.graphql.provider.runtime.registerEntityFieldImplementation
-import org.babyfish.graphql.provider.runtime.userImplementationExecutionContext
-import org.babyfish.graphql.provider.security.cfg.SecurityChecker
-import org.babyfish.graphql.provider.security.executeWithSecurityContext
+import org.babyfish.graphql.provider.security.SecurityChecker
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.meta.ImmutableType
 import org.babyfish.kimmer.sql.Entity
@@ -26,6 +22,7 @@ import org.springframework.core.GenericTypeResolver
 import org.springframework.transaction.ReactiveTransactionManager
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
 
 @Suppress("UNCHECKED_CAST")
@@ -40,8 +37,7 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
     @Autowired
     private lateinit var properties: GraphQLProviderProperties
 
-    @Autowired
-    private lateinit var securityChecker: SecurityChecker
+    private var tmpRegistry: TmpRegistry? = null
 
     init {
         val arguments =
@@ -83,23 +79,50 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
     protected fun <T:Any> spring(beanType: KClass<T>): T =
         applicationContext.getBean(beanType.java)
 
+    internal fun register(
+        dynamicConfigurationRegistry: DynamicConfigurationRegistry,
+        proxy: EntityMapper<*, *>, // this of proxy of this
+        fn: KFunction<*>,
+        block: () -> Unit
+    ) {
+        tmpRegistry = TmpRegistry(dynamicConfigurationRegistry, proxy, fn)
+        try {
+            block()
+        } finally {
+            tmpRegistry = null
+        }
+    }
+
     inner class Runtime internal constructor() {
 
         fun <X: Entity<XID>, XID: Comparable<XID>> filterList(
             prop: KProperty1<E, List<X>?>,
             block: FilterDSL<X, XID>.() -> Unit
         ) {
-            if (!registerEntityFieldFilter(prop, this@EntityMapper)) {
-                FilterDSL<X, XID>(filterExecutionContext).block()
-            }
+            filter(prop, block as FilterDSL<*, *>.() -> Unit)
         }
 
         fun <X: Entity<XID>, XID: Comparable<XID>> filterConnection(
             prop: KProperty1<E, Connection<X>?>,
             block: FilterDSL<X, XID>.() -> Unit
         ) {
-            if (!registerEntityFieldFilter(prop, this@EntityMapper)) {
-                FilterDSL<X, XID>(filterExecutionContext).block()
+            filter(prop, block as FilterDSL<*, *>.() -> Unit)
+        }
+
+        private fun filter(
+            prop: KProperty1<out Entity<*>, *>,
+            block: FilterDSL<*, *>.() -> Unit
+        ) {
+            val registry = tmpRegistry
+            if (registry !== null) {
+                registry.apply {
+                    dynamicConfigurationRegistry.addFilter(prop, proxy, fn, block)
+                }
+            } else {
+                val ctx = filterExecutionContext()
+                val dsl = FilterDSL(ctx.filterable)
+                dsl.block()
+                ctx.securityPredicate = dsl.predicate()
             }
         }
 
@@ -118,13 +141,18 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
             prop: KProperty1<E, T>,
             block: PropLoadingCodeDSL<E, ID, T>.() -> Unit,
         ) {
-            if (!registerEntityFieldImplementation(prop, this@EntityMapper)) {
-                val ctx = userImplementationExecutionContext
+            val registry = tmpRegistry
+            if (registry !== null) {
+                registry.apply {
+                    dynamicConfigurationRegistry.addUserImplementation(prop, proxy, fn)
+                }
+            } else {
+                val ctx = userImplementationExecutionContext()
                 val row = ctx.env.getSource<E>()
                 val dsl = PropLoadingCodeDSL<E, ID, T>()
                 dsl.block()
-                securityChecker.check(ctx.securityContext, dsl.predicate())
-                ctx.result = executeWithSecurityContext(ctx.securityContext) {
+                spring(SecurityChecker::class).check(ctx.authentication, dsl.predicate())
+                ctx.result = graphqlMono(ExecutorContext(ctx.prop, ctx.env, ctx.authentication)) {
                     spring(ReactiveTransactionManager::class).execute(dsl.transaction()) {
                         dsl.async()(row)
                     }
@@ -147,12 +175,17 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
             prop: KProperty1<E, T?>,
             block: PropBatchLoadingCodeDSL<ID, T>.() -> Unit
         ) {
-            if (!registerEntityFieldImplementation(prop, this@EntityMapper)) {
-                val ctx = userImplementationExecutionContext
+            val registry = tmpRegistry
+            if (registry !== null) {
+                registry.apply {
+                    dynamicConfigurationRegistry.addUserImplementation(prop, proxy, fn)
+                }
+            } else {
+                val ctx = userImplementationExecutionContext()
                 val row = ctx.env.getSource<E>()
                 val dsl = PropBatchLoadingCodeDSL<ID, T>()
                 dsl.block()
-                securityChecker.check(ctx.securityContext, dsl.predicate())
+                spring(SecurityChecker::class).check(ctx.authentication, dsl.predicate())
                 val loaderFun: suspend (Set<Any>) -> Map<Any, Any> = {
                     spring(ReactiveTransactionManager::class).execute(dsl.transaction()) {
                         (dsl.async() as suspend (Set<Any>) -> Map<Any, Any>)(it)
@@ -164,7 +197,7 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
                     ) {
                         DataLoaderFactory.newMappedDataLoader(
                             UserImplementationLoader(
-                                ctx.securityContext,
+                                ctx.authentication,
                                 loaderFun
                             ),
                             DataLoaderOptions().setMaxBatchSize(properties.batchSize(ctx.prop as ModelProp))
@@ -174,4 +207,10 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
             }
         }
     }
+
+    private class TmpRegistry(
+        val dynamicConfigurationRegistry: DynamicConfigurationRegistry,
+        val proxy: EntityMapper<*, *>,
+        val fn: KFunction<*>
+    )
 }

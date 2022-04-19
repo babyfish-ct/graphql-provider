@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 @Service
 class CustomizedQuery: Query() {
 
-    fun login(userName: String, password: String): String =
+    suspend fun login(userName: String, password: String): String =
         runtime.query {
             ""
         }

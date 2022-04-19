@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 @Service
 class BookStoreQuery : Query() {
 
-    fun findBookStores(
+    suspend fun findBookStores(
         name: String?
     ): Connection<BookStore> =
         runtime.queryConnection {

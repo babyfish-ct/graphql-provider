@@ -16,13 +16,12 @@ repositories {
 }
 
 dependencies {
-	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.5")
+	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.6")
 	ksp("org.babyfish.kimmer:kimmer-ksp:0.3.1")
 	runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
 }
 
 ksp {
-	arg("kimmer.draft", "false")
 	arg("kimmer.table", "true")
 	arg("kimmer.table.collection-join-only-for-sub-query", "true")
 }

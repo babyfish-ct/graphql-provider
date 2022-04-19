@@ -7,13 +7,18 @@ import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.ModelException
 import org.babyfish.graphql.provider.Query
 import org.babyfish.graphql.provider.meta.*
+import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
+import org.babyfish.graphql.provider.security.jwt.JwtAuthenticationResult
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.EntityMutationResult
 import kotlin.reflect.KClass
 
-fun MetaProvider.createTypeDefinitionRegistry(): TypeDefinitionRegistry =
+fun MetaProvider.createTypeDefinitionRegistry(
+    properties: GraphQLProviderProperties
+): TypeDefinitionRegistry =
     TypeDefinitionRegistryGenerator(
+        properties,
         queryType,
         mutationType,
         modelTypes,
@@ -24,6 +29,7 @@ fun MetaProvider.createTypeDefinitionRegistry(): TypeDefinitionRegistry =
     ).generate()
 
 private class TypeDefinitionRegistryGenerator(
+    private val properties: GraphQLProviderProperties,
     private val queryType: QueryType,
     private val mutationType: MutationType,
     private val modelTypeMap: Map<KClass<out Entity<*>>, ModelType>,
@@ -43,10 +49,12 @@ private class TypeDefinitionRegistryGenerator(
 
     fun generate(): TypeDefinitionRegistry =
         TypeDefinitionRegistry().apply {
-            add(generateQueryType())
-            if (mutationType.props.isNotEmpty()) {
-                add(generateMutationType())
+            val authenticationSDLDefinitions = createAuthenticationSDLDefinitions(properties)
+            add(generateQueryType(authenticationSDLDefinitions.queryFields))
+            if (mutationType.props.isNotEmpty() || authenticationSDLDefinitions.mutationFields.isNotEmpty()) {
+                add(generateMutationType(authenticationSDLDefinitions.mutationFields))
             }
+            addAll(authenticationSDLDefinitions.objectTypes)
             addAll(generateMutationResultTypes())
             addAll(modelTypeMap.values.map { generateEntityType(it) })
             addAll(allImplicitInputTypes.map { generateInputType(it) })
@@ -54,19 +62,25 @@ private class TypeDefinitionRegistryGenerator(
             addAll(generateScalarTypes())
         }
 
-    private fun generateQueryType(): ObjectTypeDefinition =
+    private fun generateQueryType(additionalFields: Collection<FieldDefinition>? = null): ObjectTypeDefinition =
         ObjectTypeDefinition.newObjectTypeDefinition().apply {
             name("Query")
             for (prop in queryType.props.values) {
                 fieldDefinition(generateField(prop))
             }
+            additionalFields?.forEach {
+                fieldDefinition(it)
+            }
         }.build()
 
-    private fun generateMutationType(): ObjectTypeDefinition =
+    private fun generateMutationType(additionalFields: Collection<FieldDefinition>? = null): ObjectTypeDefinition =
         ObjectTypeDefinition.newObjectTypeDefinition().apply {
             name("Mutation")
             for (prop in mutationType.props.values) {
                 fieldDefinition(generateField(prop))
+            }
+            additionalFields?.forEach {
+                fieldDefinition(it)
             }
         }.build()
 
@@ -132,7 +146,10 @@ private class TypeDefinitionRegistryGenerator(
                         prop.targetType!!.graphql.name
                     ).asNullable(prop.isTargetNullable)
                 prop.returnType == EntityMutationResult::class ->
-                    TypeName("EntityMutationResult")
+                    TypeName(EntityMutationResult::class.simpleName)
+                        .asNullable(prop.isNullable)
+                prop.returnType == JwtAuthenticationResult::class ->
+                    TypeName(JwtAuthenticationResult::class.simpleName)
                         .asNullable(prop.isNullable)
                 else ->
                     scalarTypeName(prop.returnType)

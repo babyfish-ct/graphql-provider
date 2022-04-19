@@ -25,8 +25,8 @@ class AuthorMapper: EntityMapper<Author, UUID>() {
 
     // Dynamic code configuration--------------------------------
 
-    fun fullName(separator: String?) =
-        runtime.implementation(Author::fullName) {
-            "${it.firstName}${separator ?: " "}${it.lastName}"
+    fun fullName(separator: String = " ") =
+        runtime.implement(Author::fullName) {
+            "${it.firstName}$separator${it.lastName}"
         }
 }

@@ -1,36 +1,30 @@
 package org.babyfish.graphql.provider.security.cfg
 
-import org.springframework.beans.factory.annotation.Value
+import org.babyfish.graphql.provider.security.jwt.JwtAuthenticationFilter
+import org.babyfish.graphql.provider.security.jwt.cfg.JwtSecurityConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
-import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
-import org.springframework.security.authentication.ReactiveAuthenticationManager
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.server.SecurityWebFilterChain
-import org.springframework.security.web.server.context.ServerSecurityContextRepository
-import reactor.core.publisher.Mono
 
 @Configuration
 @Import(value = [
     CorsConfigurer::class,
-    HttpHeaderSecurityContextFactory::class,
-    NoOpAuthenticationManager::class,
-    SecurityChecker::class
+    AuthenticationEntryPoint::class,
+    JwtSecurityConfiguration::class
 ])
-open class SecurityConfiguration(
-    private val authenticationManager: ReactiveAuthenticationManager,
-    private val securityContextRepository: ServerSecurityContextRepository,
-    private val authenticatedPatternSupplier: AuthenticatedPatternSupplier?
+open class SecurityConfiguration internal constructor(
+    private val authenticatedPatternSupplier: AuthenticatedPatternSupplier?,
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter?
 ) {
+
     @Bean
     open fun securityWebFilterChain(
         http: ServerHttpSecurity
     ): SecurityWebFilterChain =
         http
-            .authenticationManager(authenticationManager)
-            .securityContextRepository(securityContextRepository)
             .csrf {
                 it.disable()
             }
@@ -44,25 +38,25 @@ open class SecurityConfiguration(
                 it.disable()
             }
             .exceptionHandling {
-                it.authenticationEntryPoint { exchange, _ ->
-                    Mono.fromRunnable {
-                        exchange.response.statusCode = HttpStatus.UNAUTHORIZED
-                    }
-                }
-                it.accessDeniedHandler { exchange, _ ->
-                    Mono.fromRunnable {
-                        exchange.response.statusCode = HttpStatus.FORBIDDEN
-                    }
+                it.authenticationEntryPoint(AuthenticationEntryPoint())
+            }
+            .apply {
+                jwtAuthenticationFilter?.let {
+                    addFilterAt(it, SecurityWebFiltersOrder.AUTHENTICATION)
                 }
             }
             .authorizeExchange {
                 it
                     .pathMatchers(
-                        *authenticatedPatternSupplier?.patterns() ?: arrayOf("/graphql")
+                        *(authenticatedPatternSupplier?.patterns() ?: arrayOf("/graphql"))
                     )
                     .authenticated()
-                    .pathMatchers(HttpMethod.OPTIONS).permitAll()
-                    .anyExchange().permitAll()
+                    .anyExchange()
+                    .permitAll()
             }
             .build()
+
+    companion object {
+        const val GRAPHQL_AUTHENTICATION_KEY = "GRAPHQL_AUTHENTICATION"
+    }
 }

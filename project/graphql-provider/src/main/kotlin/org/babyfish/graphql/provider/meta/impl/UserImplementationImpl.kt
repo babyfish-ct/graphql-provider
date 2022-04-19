@@ -1,6 +1,8 @@
 package org.babyfish.graphql.provider.meta.impl
 
+import org.babyfish.graphql.provider.EntityMapper
 import org.babyfish.graphql.provider.meta.Argument
+import org.babyfish.graphql.provider.meta.Arguments
 import org.babyfish.graphql.provider.meta.UserImplementation
 import org.babyfish.graphql.provider.runtime.UserImplementationExecutionContext
 import org.babyfish.graphql.provider.runtime.withUserImplementationExecutionContext
@@ -8,26 +10,25 @@ import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KFunction
 
-internal class UserImplementationImpl(
-    val fnOwner: Any,
-    val fn: KFunction<*>,
-    override val arguments: List<Argument>
-) : UserImplementation {
+class UserImplementationImpl(
+    val entityMapper: EntityMapper<*, *>,
+    val fn: KFunction<*>
+): UserImplementation {
+
+    override val arguments = Arguments.of(fn)
 
     override fun execute(
         ctx: UserImplementationExecutionContext
     ): CompletableFuture<Any?> {
         val args = ctx.argumentsConverter.convert(
             arguments,
-            fnOwner,
+            entityMapper,
             ctx.env
         )
-        try {
-            withUserImplementationExecutionContext(ctx) {
-                fn.call(*args)
-            }
-        } catch (ex: InvocationTargetException) {
-            if (ex.targetException !is NoReturnValue) {
+        withUserImplementationExecutionContext(ctx) {
+            try {
+                fn.callBy(args)
+            } catch (ex: InvocationTargetException) {
                 throw ex.targetException
             }
         }

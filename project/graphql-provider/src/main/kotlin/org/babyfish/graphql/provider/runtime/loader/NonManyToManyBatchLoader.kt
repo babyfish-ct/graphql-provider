@@ -3,13 +3,13 @@ package org.babyfish.graphql.provider.runtime.loader
 import org.babyfish.graphql.provider.meta.ModelProp
 import org.babyfish.graphql.provider.runtime.FakeID
 import org.babyfish.graphql.provider.runtime.R2dbcClient
-import org.babyfish.graphql.provider.security.executeWithSecurityContext
+import org.babyfish.graphql.provider.runtime.graphqlMono
 import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.sql.Entity
 import org.babyfish.kimmer.sql.ast.query.MutableRootQuery
 import org.babyfish.kimmer.sql.ast.valueIn
 import org.dataloader.MappedBatchLoader
-import org.springframework.security.core.context.SecurityContext
+import org.springframework.security.core.Authentication
 import java.util.concurrent.CompletionStage
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -17,14 +17,14 @@ import kotlin.reflect.KProperty1
 internal class NonManyToManyBatchLoader(
     private val r2dbcClient: R2dbcClient,
     private val prop: ModelProp,
-    private val securityContext: SecurityContext?,
+    private val authentication: Authentication?,
     private val filterApplier: (MutableRootQuery<Entity<FakeID>, FakeID>) -> Unit
 ) : MappedBatchLoader<Any, List<Any>> {
 
     override fun load(
         keys: Set<Any>
     ): CompletionStage<Map<Any, List<Any>>> =
-        executeWithSecurityContext(securityContext) {
+        graphqlMono(prop, null, authentication) {
             loadImpl(keys)
         }.toFuture()
 

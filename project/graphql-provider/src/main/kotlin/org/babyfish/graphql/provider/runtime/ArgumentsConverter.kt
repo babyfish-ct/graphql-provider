@@ -5,31 +5,35 @@ import org.babyfish.graphql.provider.ImplicitInput
 import org.babyfish.graphql.provider.ImplicitInputs
 import org.babyfish.graphql.provider.InputMapper
 import org.babyfish.graphql.provider.meta.Argument
+import org.babyfish.graphql.provider.meta.Arguments
 import org.babyfish.graphql.provider.meta.ImplicitInputType
 import org.babyfish.kimmer.Draft
 import org.babyfish.kimmer.Immutable
 import org.babyfish.kimmer.graphql.Input
 import org.babyfish.kimmer.meta.ImmutableType
 import org.babyfish.kimmer.produce
-import org.babyfish.kimmer.produceDraft
 import org.babyfish.kimmer.sql.Entity
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 
 open class ArgumentsConverter(
     private val rootImplicitInputTypeMap: Map<KClass<out InputMapper<*, *>>, ImplicitInputType>
 ) {
 
     fun convert(
-        arguments: List<Argument>,
+        arguments: Arguments,
         owner: Any,
         env: DataFetchingEnvironment
-    ): Array<Any?> {
-        val arr = Array<Any?>(1 + arguments.size) { null }
-        arr[0] = owner
-        for (index in arguments.indices) {
-            arr[index + 1] = convert(arguments[index], env)
+    ): Map<KParameter, Any?> {
+        val map = mutableMapOf<KParameter, Any?>()
+        map[arguments.function!!.parameters[0]] = owner
+        for (argument in arguments) {
+            val value = convert(argument, env)
+            if (value !== null || !argument.parameter.isOptional) {
+                map[argument.parameter] = value
+            }
         }
-        return arr
+        return map
     }
 
     private fun convert(

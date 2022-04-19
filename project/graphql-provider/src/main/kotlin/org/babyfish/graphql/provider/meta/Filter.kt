@@ -1,12 +1,13 @@
 package org.babyfish.graphql.provider.meta
 
+import org.babyfish.graphql.provider.dsl.FilterDSL
 import org.babyfish.graphql.provider.runtime.FilterExecutionContext
 
 interface Filter {
 
-    val arguments: List<Argument>
+    val raw: FilterDSL<*, *>.() -> Unit
 
-    fun execute(
-        ctx: FilterExecutionContext
-    )
+    val arguments: Arguments
+
+    fun apply(ctx: FilterExecutionContext)
 }
