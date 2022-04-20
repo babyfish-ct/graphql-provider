@@ -17,7 +17,6 @@ import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.transaction.annotation.EnableTransactionManagement
-import java.util.*
 
 @SpringBootApplication
 @EnableWebFluxSecurity
@@ -71,6 +70,5 @@ class ExampleApplication {
 private val LOGGER = LoggerFactory.getLogger(ExampleApplication::class.java)
 
 fun main(args: Array<String>) {
-	println(TimeZone.getDefault())
 	runApplication<ExampleApplication>(*args)
 }
