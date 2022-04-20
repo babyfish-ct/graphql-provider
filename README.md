@@ -15,6 +15,8 @@ Its development speed is very fast, and the usage method is very simple.
 
 5. For mutation operations, the inputs type can be automatically generated according to a simple configuration, develpers only need to focus on entity objects, not input objects. At runtime, the framework can automatically convert the input object to a dynamic entity object tree and you only need one sentence to save any complex entity object tree to the database.
 
+6. Integrated Spring security and JWT. Allows users to authorize by behavior, authorize by column, and authorize by row through the kotlin DSL.
+
 ## Run the example
 Use intellij the open the [example](https://github.com/babyfish-ct/graphql-provider/tree/main/example), after waiting for gradle to finish all tasks, start the program and visit http://localhost:8080/graphiql.
 
