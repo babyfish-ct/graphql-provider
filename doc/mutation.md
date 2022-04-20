@@ -219,25 +219,21 @@ class BookMutation(
     private val r2dbcClient: R2dbcClient
 ) : Mutation {
 
-    @Transactional
     suspend fun saveBook(
         input: ImplicitInput<Book, BookInputMapper>
     ): Book =
         r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
-
-    @Transactional
+        
     suspend fun saveBooks(
         inputs: ImplicitInputs<Book, BookInputMapper>
     ): List<Book> =
         r2dbcClient.save(inputs.entities, inputs.saveOptionsBlock).entities()
 
-    @Transactional
     suspend fun saveBookShallowTree(
         input: ImplicitInput<Book, BookShallowTreeInputMapper>
     ): Book =
         r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
 
-    @Transactional
     suspend fun saveBookDeepTree(
         input: ImplicitInput<Book, BookDeepTreeInputMapper>
     ): Book =
@@ -305,9 +301,56 @@ The client can easily access the id assigned to each object after the mutation i
 
 ## 3. Add transaction
 
-The internal implementation of *R2dbcClient.save* will execute multiple SQLs, in order to ensure that the entire mutation is fully complete or completely undone, please use @*org.springframework.transaction.annotation.Transactional*
+The internal implementation of *R2dbcClient.save* will execute multiple SQLs, in order to ensure that the entire mutation is fully complete or completely undone.
 
-The final code is
+> After experimenting, the *@Transactional* annotation seems to have no effect on suspend functions. So you can use the DSL to complete the transaction configuration
+
+There are two ways to use the transaction DSL
+
+1. Class level
+    ```kt
+    @Service
+    class MyMutation(): Mutation() {
+    
+        override fun MutationDSL.config() {
+            transaction()
+        }
+        
+        suspend fun field1(...argument...): ReturnType = runtime.mutate {
+            ... async code here...
+        }
+        
+        suspend fun field2(...argument...): ReturnType = runtime.mutate {
+            ... async code here...
+        }
+    }
+    ```
+    Once class-level configuration is used *(either transactions as discussed here, or security as explained in subsequent documentation)*, all functions need to be wrapped in "runtime.mutate"
+    
+2. Function level
+    ```kt
+    @Service
+    class MyMutation(): Mutation() {
+        
+        suspend fun field1(...argument...): ReturnType = runtime.mutateBy {
+            transaction()
+            async {
+                ... async code here...
+            }
+        }
+        
+        suspend fun field2(...argument...): ReturnType = runtime.mutateBy {
+            transaction()
+            async {
+                ... async code here...
+            }
+        }
+    }
+    ```
+
+The two usages can be mixed, and the function-level configuration will override the class-level configuration
+
+In this example we use class level configuration, the final code is
 
 ```kt
 @Service
@@ -315,29 +358,35 @@ class BookMutation(
     private val r2dbcClient: R2dbcClient
 ) : Mutation {
 
-    @Transactional
+    override fun MutationDSL.config() {
+        transaction()
+    }
+    
     suspend fun saveBook(
         input: ImplicitInput<Book, BookInputMapper>
-    ): Book =
+    ): Book = runtime.muate {
         r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
+    }
 
-    @Transactional
     suspend fun saveBooks(
         inputs: ImplicitInputs<Book, BookInputMapper>
-    ): List<Book> =
+    ): List<Book> = runtime.muate {
         r2dbcClient.save(inputs.entities, inputs.saveOptionsBlock).entities()
+    }
 
     @Transactional
     suspend fun saveBookShallowTree(
         input: ImplicitInput<Book, BookShallowTreeInputMapper>
-    ): Book =
+    ): Book = runtime.muate {
         r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
+    }
 
     @Transactional
     suspend fun saveBookDeepTree(
         input: ImplicitInput<Book, BookDeepTreeInputMapper>
-    ): Book =
+    ): Book = runtime.muate {
         r2dbcClient.save(input.entity, input.saveOptionsBlock).entity()
+    }
 }
 ```
 

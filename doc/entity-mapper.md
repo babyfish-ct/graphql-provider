@@ -230,7 +230,7 @@ import org.springframework.stereotype.Service
 @Service // α
 class BookQuery: Query() { // β
 
-    fun findBooks(): List<Book> =
+    suspend fun books(): List<Book> =
         runtime.queryList {} // γ
 }
 ```
@@ -257,7 +257,7 @@ Now, you can run it, start app and access http://localhost:8080/graphiql/
 Execute
 ```
 query {
-  findBooks {
+  books {
     name
     store {
       name
@@ -273,7 +273,7 @@ The response is
 ```
 {
   "data": {
-    "findBooks": [
+    "books": [
       {
         "name": "Learning GraphQL",
         "store": {

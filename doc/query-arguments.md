@@ -16,28 +16,25 @@ import com.example.demo.model.* // α
 
 @Service
 class BookQuery: Query() {
-    fun findBooks(
+
+    suspend fun books(
         name: String?,
         storeName: String?,
         authorFirstName: String?,
         authorLastName: String?
     ): List<Book> =
         runtime.queryList {
-            name?.let {
-                db {
+            db {
+                name?.let {
                     where(table.name ilike it) // β
                 }
-            }
-            storeName?.let { 
-                db {
+                storeName?.let {
                     where(table.store.name ilike it) // γ
                 }
-            }
-            if (authorFirstName !== null || authorLastName !== null) { 
-                db { 
-                    where { 
+                if (authorFirstName !== null || authorLastName !== null) {
+                    where {
                         table.id valueIn subQuery(Author::class) { // δ
-                            authorFirstName?.let { 
+                            authorFirstName?.let {
                                 where(table.firstName ilike it) // ε
                             }
                             authorLastName?.let {
@@ -47,8 +44,6 @@ class BookQuery: Query() {
                         }
                     }
                 }
-            }
-            db {
                 orderBy(table.name)
             }
         }
@@ -104,7 +99,7 @@ Start the app, access http://localhost:8080/graphiql
 Execute
 ```
 query {
-  findBooks(name: "GraphQL") {
+  books(name: "GraphQL") {
     name
     store {
       name
@@ -120,7 +115,7 @@ The response is
 ```
 {
   "data": {
-    "findBooks": [
+    "books": [
       {
         "name": "GraphQL in Action",
         "store": {
