@@ -1,4 +1,4 @@
-package org.babyfish.graphql.provider.example.query
+package org.babyfish.graphql.provider.example.mutation
 
 import org.babyfish.graphql.provider.Mutation
 import org.babyfish.graphql.provider.dsl.MutationDSL
