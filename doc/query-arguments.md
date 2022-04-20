@@ -16,39 +16,34 @@ import com.example.demo.model.* // α
 
 @Service
 class BookQuery: Query() {
-    fun findBooks(
+
+    suspend fun books(
         name: String?,
         storeName: String?,
         authorFirstName: String?,
         authorLastName: String?
     ): List<Book> =
         runtime.queryList {
-            name?.let {
-                db {
-                    where(table.name ilike it) // β
+            db {
+                name?.let {
+                    where(table.name ilike it)
                 }
-            }
-            storeName?.let { 
-                db {
-                    where(table.store.name ilike it) // γ
+                storeName?.let {
+                    where(table.store.name ilike it)
                 }
-            }
-            if (authorFirstName !== null || authorLastName !== null) { 
-                db { 
-                    where { 
-                        table.id valueIn subQuery(Author::class) { // δ
-                            authorFirstName?.let { 
-                                where(table.firstName ilike it) // ε
+                if (authorFirstName !== null || authorLastName !== null) {
+                    where {
+                        table.id valueIn subQuery(Author::class) {
+                            authorFirstName?.let {
+                                where(table.firstName ilike it)
                             }
                             authorLastName?.let {
                                 where(table.lastName ilike it)
                             }
-                            select(table.books.id) // ζ
+                            select(table.books.id)
                         }
                     }
                 }
-            }
-            db {
                 orderBy(table.name)
             }
         }
@@ -104,7 +99,7 @@ Start the app, access http://localhost:8080/graphiql
 Execute
 ```
 query {
-  findBooks(name: "GraphQL") {
+  books(name: "GraphQL") {
     name
     store {
       name
@@ -120,7 +115,7 @@ The response is
 ```
 {
   "data": {
-    "findBooks": [
+    "books": [
       {
         "name": "GraphQL in Action",
         "store": {
