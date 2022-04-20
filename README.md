@@ -54,7 +54,7 @@ In order to experience this example, there are three things to note
       }
     }
     ```
-2. *BookStore.avgPrice*, *Mutation.like* and *Mutation.unlike* are not open to anonymous users
+2. *BookStore.avgPrice*, *Query.myFavoriteBooks*, *Mutation.like* and *Mutation.unlike* are not open to anonymous users
 
     Look at this query
 
