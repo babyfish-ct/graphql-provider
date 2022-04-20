@@ -9,7 +9,7 @@ That means, change the old code
 @Service
 class BookQuery: Query() {
 
-    fun findBooks(
+    suspend fun books(
         name: String?,
         storeName: String?,
         authorFirstName: String?,
@@ -25,7 +25,7 @@ to the new code
 @Service
 class BookQuery: Query() {
 
-    fun findBooks(
+    suspend fun books(
         name: String?,
         storeName: String?,
         authorFirstName: String?,
@@ -44,7 +44,7 @@ class BookQuery: Query() {
 
 There are three points to note
 
-1. graphql-provider automatically adds 4 optional arguments to the query *findBooks* in the GraphQL Schema: first, after, last and before.
+1. graphql-provider automatically adds 4 optional arguments to the query *books* in the GraphQL Schema: first, after, last and before.
     
 2. *Connection&lt;N&gt;* supports a integer field *totalCount*, this is the count of data that meets the conditions before pagination, not the count of data after pagination.
     
@@ -60,7 +60,7 @@ There are three points to note
 Start app, access http://localhost:8080/graphiql and execute
 ```
 query {
-  findBooks(first: 2) {
+  books(first: 2) {
     totalCount
     pageInfo {
       hasNextPage
@@ -86,7 +86,7 @@ The response is
 ```
 {
   "data": {
-    "findBooks": {
+    "books": {
       "totalCount": 4,
       "pageInfo": {
         "hasNextPage": true,
@@ -134,7 +134,7 @@ The response is
 Copy the value "MQ==" of *pageInfo.endCusor*, use it as the argument "after", execute
 ```
 query {
-  findBooks(first: 2, after: "MQ==") {
+  books(first: 2, after: "MQ==") {
     totalCount
     pageInfo {
       hasNextPage
@@ -160,7 +160,7 @@ The response is
 ```
 {
   "data": {
-    "findBooks": {
+    "books": {
       "totalCount": 4,
       "pageInfo": {
         "hasNextPage": false,
@@ -207,7 +207,7 @@ The response is
 Copy the value "Mw==" of *pageInfo.endCusor*, use it as the argument "after", execute
 ```
 query {
-  findBooks(first: 2, after: "Mw==") {
+  books(first: 2, after: "Mw==") {
     totalCount
     pageInfo {
       hasNextPage
@@ -233,7 +233,7 @@ The response is
 ```
 {
   "data": {
-    "findBooks": {
+    "books": {
       "totalCount": 4,
       "pageInfo": {
         "hasNextPage": false,
