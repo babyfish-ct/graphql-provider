@@ -38,7 +38,7 @@ class AuthenticationMutation(
          * In a real project, please
          *  1. Create a locked user
          *  2. Send email with activation link to the user.
-         *  3. Unlock that user row click the user receives the email and click the activation link.
+         *  3. Unlock that user row when user click the activation link in the email.
          */
     }
 }
