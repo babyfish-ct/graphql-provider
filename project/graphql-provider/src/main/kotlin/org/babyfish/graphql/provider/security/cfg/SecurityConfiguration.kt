@@ -2,12 +2,15 @@ package org.babyfish.graphql.provider.security.cfg
 
 import org.babyfish.graphql.provider.security.jwt.JwtAuthenticationFilter
 import org.babyfish.graphql.provider.security.jwt.cfg.JwtSecurityConfiguration
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.server.SecurityWebFilterChain
+import reactor.core.publisher.Mono
 
 @Configuration
 @Import(value = [
@@ -47,14 +50,22 @@ open class SecurityConfiguration internal constructor(
             }
             .authorizeExchange {
                 it
-                    .pathMatchers(
-                        *(authenticatedPatternSupplier?.patterns() ?: arrayOf("/graphql"))
-                    )
-                    .authenticated()
+                    .apply {
+                        if (jwtAuthenticationFilter !== null) {
+                            pathMatchers(
+                                *(authenticatedPatternSupplier?.patterns() ?: arrayOf("/graphql"))
+                            ).authenticated()
+                        }
+                    }
                     .anyExchange()
                     .permitAll()
             }
             .build()
+
+    @Bean
+    @ConditionalOnMissingBean(ReactiveAuthenticationManager::class)
+    open fun disabledAuthenticationManager(): ReactiveAuthenticationManager =
+        ReactiveAuthenticationManager { Mono.empty() }
 
     companion object {
         const val GRAPHQL_AUTHENTICATION_KEY = "GRAPHQL_AUTHENTICATION"

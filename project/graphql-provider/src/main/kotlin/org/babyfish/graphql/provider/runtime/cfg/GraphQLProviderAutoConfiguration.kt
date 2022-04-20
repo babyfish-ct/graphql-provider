@@ -23,7 +23,6 @@ import kotlin.reflect.KClass
 @Configuration
 @Import(value = [
     SecurityConfiguration::class,
-    SecurityConfiguration::class,
     Executor::class,
 ])
 @EnableConfigurationProperties(value = [

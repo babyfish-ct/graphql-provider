@@ -14,6 +14,7 @@ import org.babyfish.kimmer.sql.ast.Expression
 import org.babyfish.kimmer.sql.ast.count
 import org.babyfish.kimmer.sql.ast.eq
 import org.babyfish.kimmer.sql.ast.value
+import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
 import org.springframework.transaction.ReactiveTransactionManager
 import kotlin.reflect.KClass
@@ -28,10 +29,10 @@ class Executor(
 
     @Suppress("UNCHECKED_CAST")
     suspend fun <E: Entity<ID>, ID: Comparable<ID>> queryConnection(
-        block: FilterDSL<E, ID>.() -> Unit
+        block: FilterDSL<E, ID>.(Authentication?) -> Unit
     ): Connection<E> =
         r2dbcClient.execute {
-            val (prop, env) = executorContext()
+            val (prop, env, authentication) = executorContext()
             prop ?: error("Internal bug: Connection fetch requires GraphQLProp")
             env ?: error("Internal bug: Connection fetch requires DataFetchingEnvironment")
             val nodeType = prop.targetType!!.kotlinType as KClass<E>
@@ -46,7 +47,7 @@ class Executor(
                     where { sourceTable.id eq value(sourceId) as Expression<ID> }
                 }
                 val dsl = FilterDSL(this)
-                dsl.block()
+                dsl.block(authentication)
                 securityPredicate = dsl.predicate()
                 select(table)
             }
@@ -85,17 +86,17 @@ class Executor(
 
     @Suppress("UNCHECKED_CAST")
     suspend fun <E: Entity<ID>, ID: Comparable<ID>> queryList(
-        block: FilterDSL<E, ID>.() -> Unit
+        block: FilterDSL<E, ID>.(Authentication?) -> Unit
     ): List<E> =
         r2dbcClient.execute {
-            val (prop) = executorContext()
+            val (prop, _, authentication) = executorContext()
             prop ?: error("Internal bug: List/Reference fetch requires DataFetchingEnvironment")
             val targetType = prop.targetType!!.kotlinType as KClass<E>
             var securityPredicate: SecurityPredicate? = null
             val query =
                 r2dbcClient.sqlClient.createQuery(targetType) {
                     val dsl = FilterDSL(this)
-                    dsl.block()
+                    dsl.block(authentication)
                     securityPredicate = dsl.predicate()
                     select(table)
                 }
@@ -105,7 +106,7 @@ class Executor(
 
     @Suppress("UNCHECKED_CAST")
     suspend fun <E: Entity<ID>, ID: Comparable<ID>> queryReference(
-        block: FilterDSL<E, ID>.() -> Unit
+        block: FilterDSL<E, ID>.(Authentication?) -> Unit
     ): E? =
         queryList(block).firstOrNull()
 

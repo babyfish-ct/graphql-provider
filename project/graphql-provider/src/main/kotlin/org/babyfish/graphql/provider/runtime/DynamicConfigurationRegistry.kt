@@ -7,6 +7,7 @@ import org.babyfish.graphql.provider.meta.*
 import org.babyfish.graphql.provider.meta.impl.FilterImpl
 import org.babyfish.graphql.provider.meta.impl.UserImplementationImpl
 import org.babyfish.kimmer.sql.Entity
+import org.springframework.security.core.Authentication
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.javaGetter
@@ -21,7 +22,7 @@ internal class DynamicConfigurationRegistry {
         prop: KProperty1<out Entity<*>, *>,
         mapper: EntityMapper<out Entity<*>, *>,
         fn: KFunction<*>,
-        raw: FilterDSL<*, *>.() -> Unit
+        raw: FilterDSL<*, *>.(Authentication?) -> Unit
     ) {
         val path = prop.path
         filterMap[path]?.let {

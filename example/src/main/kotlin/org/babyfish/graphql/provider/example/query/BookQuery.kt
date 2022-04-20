@@ -17,18 +17,14 @@ class BookQuery: Query() {
         authorLastName: String?
     ): Connection<Book> =
         runtime.queryConnection {
-            name?.let {
-                db {
+            db {
+                name?.let {
                     where(table.name ilike it)
                 }
-            }
-            storeName?.let {
-                db {
+                storeName?.let {
                     where(table.store.name ilike it)
                 }
-            }
-            if (authorFirstName !== null || authorLastName !== null) {
-                db {
+                if (authorFirstName !== null || authorLastName !== null) {
                     where {
                         table.id valueIn subQuery(Author::class) {
                             authorFirstName?.let {
@@ -41,8 +37,6 @@ class BookQuery: Query() {
                         }
                     }
                 }
-            }
-            db {
                 orderBy(table.name)
             }
         }

@@ -19,6 +19,7 @@ import org.dataloader.DataLoaderOptions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.core.GenericTypeResolver
+import org.springframework.security.core.Authentication
 import org.springframework.transaction.ReactiveTransactionManager
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KClass
@@ -97,21 +98,21 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
 
         fun <X: Entity<XID>, XID: Comparable<XID>> filterList(
             prop: KProperty1<E, List<X>?>,
-            block: FilterDSL<X, XID>.() -> Unit
+            block: FilterDSL<X, XID>.(Authentication?) -> Unit
         ) {
-            filter(prop, block as FilterDSL<*, *>.() -> Unit)
+            filter(prop, block as FilterDSL<*, *>.(Authentication?) -> Unit)
         }
 
         fun <X: Entity<XID>, XID: Comparable<XID>> filterConnection(
             prop: KProperty1<E, Connection<X>?>,
-            block: FilterDSL<X, XID>.() -> Unit
+            block: FilterDSL<X, XID>.(Authentication?) -> Unit
         ) {
-            filter(prop, block as FilterDSL<*, *>.() -> Unit)
+            filter(prop, block as FilterDSL<*, *>.(Authentication?) -> Unit)
         }
 
         private fun filter(
             prop: KProperty1<out Entity<*>, *>,
-            block: FilterDSL<*, *>.() -> Unit
+            block: FilterDSL<*, *>.(Authentication?) -> Unit
         ) {
             val registry = tmpRegistry
             if (registry !== null) {
@@ -121,7 +122,7 @@ abstract class EntityMapper<E: Entity<ID>, ID: Comparable<ID>> {
             } else {
                 val ctx = filterExecutionContext()
                 val dsl = FilterDSL(ctx.filterable)
-                dsl.block()
+                dsl.block(ctx.authentication)
                 ctx.securityPredicate = dsl.predicate()
             }
         }

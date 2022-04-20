@@ -6,13 +6,14 @@ import org.babyfish.graphql.provider.meta.Arguments
 import org.babyfish.graphql.provider.meta.Filter
 import org.babyfish.graphql.provider.runtime.FilterExecutionContext
 import org.babyfish.graphql.provider.runtime.withFilterExecutionContext
+import org.springframework.security.core.Authentication
 import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KFunction
 
 internal class FilterImpl(
     val entityMapper: EntityMapper<*, *>,
     val fn: KFunction<*>,
-    override val raw: FilterDSL<*, *>.() -> Unit
+    override val raw: FilterDSL<*, *>.(Authentication?) -> Unit
 ): Filter {
 
     override val arguments = Arguments.of(fn)

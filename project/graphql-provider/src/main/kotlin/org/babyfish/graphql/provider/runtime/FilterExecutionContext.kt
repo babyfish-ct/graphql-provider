@@ -12,7 +12,8 @@ class FilterExecutionContext(
     val prop: GraphQLProp,
     val env: DataFetchingEnvironment,
     val argumentsConverter: ArgumentsConverter,
-    val filterable: Filterable<out Entity<*>, *>
+    val filterable: Filterable<out Entity<*>, *>,
+    val authentication: Authentication?
 ) {
     var securityPredicate: SecurityPredicate? = null
 }

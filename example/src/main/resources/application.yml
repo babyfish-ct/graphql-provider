@@ -3,6 +3,7 @@ graphql:
     security:
       jwt:
         enabled: true
+        secret: LKX+BPFUvOSEuxktD4W7d5gLGl1KyRFsSWSSGwdSExA=
         accessTimeout: PT12H
         refreshTimeout: PT24H
       api:

@@ -10,6 +10,7 @@ import org.babyfish.kimmer.graphql.Connection
 import org.babyfish.kimmer.sql.Entity
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
+import org.springframework.security.core.Authentication
 
 abstract class Query {
 
@@ -41,17 +42,17 @@ abstract class Query {
     inner class Runtime internal constructor() {
 
         suspend fun <N : Entity<NID>, NID : Comparable<NID>> queryConnection(
-            block: FilterDSL<N, NID>.() -> Unit
+            block: FilterDSL<N, NID>.(Authentication?) -> Unit
         ): Connection<N> =
             executor.queryConnection(block)
 
         suspend fun <E : Entity<EID>, EID : Comparable<EID>> queryList(
-            block: FilterDSL<E, EID>.() -> Unit
+            block: FilterDSL<E, EID>.(Authentication?) -> Unit
         ): List<E> =
             executor.queryList(block)
 
         suspend fun <R : Entity<RID>, RID : Comparable<RID>> queryReference(
-            block: FilterDSL<R, RID>.() -> Unit
+            block: FilterDSL<R, RID>.(Authentication?) -> Unit
         ): R? =
             executor.queryReference(block)
 

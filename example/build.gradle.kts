@@ -9,14 +9,14 @@ plugins {
 }
 
 group = "org.babyfish.graphql.provider"
-version = "0.0.5"
+version = "0.0.7"
 
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.6")
+	implementation("org.babyfish.graphql.provider:graphql-provider-starter-dgs:0.0.7")
 	ksp("org.babyfish.kimmer:kimmer-ksp:0.3.1")
 	runtimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
 }

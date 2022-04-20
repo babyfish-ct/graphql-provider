@@ -198,7 +198,15 @@ open class DataFetchers(
 
     private fun DataFetchingEnvironment.applyFilter(prop: ModelProp, query: MutableRootQuery<Entity<FakeID>, FakeID>) {
         prop.filter?.let {
-            it.apply(FilterExecutionContext(prop, this, argumentsConverter, query))
+            it.apply(
+                FilterExecutionContext(
+                    prop,
+                    this,
+                    argumentsConverter,
+                    query,
+                    authenticationExtractor?.get(this)
+                )
+            )
         }
     }
 }

@@ -22,25 +22,25 @@ class FavoriteMutation(
         }
     }
 
-    suspend fun like(bookId: UUID): Int =
+    suspend fun like(bookId: UUID): Boolean =
         runtime.mutate {
             val me = (authentication().principal as AppUserDetails).appUser
             r2dbcClient.execute {
                 associations.byList(Book::fans).saveCommand(
                     bookId,
                     me.id
-                ).execute(it).totalAffectedRowCount
+                ).execute(it).totalAffectedRowCount != 0
             }
         }
 
-    suspend fun unlike(bookId: UUID): Int =
+    suspend fun unlike(bookId: UUID): Boolean =
         runtime.mutate {
             val me = (authentication().principal as AppUserDetails).appUser
             r2dbcClient.execute {
                 associations.byList(Book::fans).deleteCommand(
                     bookId,
                     me.id
-                ).execute(it).totalAffectedRowCount
+                ).execute(it).totalAffectedRowCount != 0
             }
         }
 }

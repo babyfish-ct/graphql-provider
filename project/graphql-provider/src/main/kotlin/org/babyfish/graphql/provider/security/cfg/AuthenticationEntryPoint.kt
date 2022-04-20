@@ -5,9 +5,11 @@ import org.slf4j.LoggerFactory
 import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.web.server.ServerAuthenticationEntryPoint
+import org.springframework.stereotype.Component
 import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 
+@Component
 internal class AuthenticationEntryPoint : ServerAuthenticationEntryPoint {
 
     private val mapper = jacksonObjectMapper()
