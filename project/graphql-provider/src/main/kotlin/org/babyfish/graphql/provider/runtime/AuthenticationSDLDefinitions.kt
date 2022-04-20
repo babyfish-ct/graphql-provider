@@ -32,19 +32,19 @@ internal fun createAuthenticationSDLDefinitions(
                     inputValueDefinition(InputValueDefinition("password", TypeName("String")))
                 }.build()
             }
+            api.refreshAccessToken.trim().takeIf { it.isNotEmpty() }?.let {
+                queryFields += FieldDefinition.newFieldDefinition().apply {
+                    name(it)
+                    type(TypeName(AUTHENTICATION_RESULT))
+                    inputValueDefinition(InputValueDefinition("refreshToken", TypeName("String")))
+                }.build()
+            }
             api.updatePassword.trim().takeIf { it.isNotEmpty() }?.let {
                 mutationFields += FieldDefinition.newFieldDefinition().apply {
                     name(it)
                     type(TypeName(AUTHENTICATION_RESULT))
                     inputValueDefinition(InputValueDefinition("oldPassword", TypeName("String")))
                     inputValueDefinition(InputValueDefinition("newPassword", TypeName("String")))
-                }.build()
-            }
-            api.refreshAccessToken.trim().takeIf { it.isNotEmpty() }?.let {
-                mutationFields += FieldDefinition.newFieldDefinition().apply {
-                    name(it)
-                    type(TypeName(AUTHENTICATION_RESULT))
-                    inputValueDefinition(InputValueDefinition("refreshToken", TypeName("String")))
                 }.build()
             }
         }

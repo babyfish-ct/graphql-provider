@@ -40,9 +40,6 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-data-r2dbc:2.6.6")
     testImplementation("org.springframework.boot:spring-boot-starter-webflux:2.6.6")
     testRuntimeOnly("io.r2dbc:r2dbc-h2:0.8.5.RELEASE")
-
-    implementation("org.springdoc:springdoc-openapi-kotlin:1.6.7")
-    implementation("org.springdoc:springdoc-openapi-webflux-ui:1.6.7")
 }
 
 ksp {

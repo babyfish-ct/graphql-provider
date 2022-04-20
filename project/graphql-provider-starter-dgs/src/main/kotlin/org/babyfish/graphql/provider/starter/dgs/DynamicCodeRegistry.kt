@@ -8,6 +8,7 @@ import org.babyfish.graphql.provider.meta.MetaProvider
 import org.babyfish.graphql.provider.runtime.DataFetchers
 import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
 import org.babyfish.graphql.provider.runtime.registryDynamicCodeRegistry
+import org.babyfish.graphql.provider.security.AuthenticationExtractor
 import org.babyfish.graphql.provider.security.jwt.JwtAuthenticationService
 
 @DgsComponent
@@ -15,7 +16,8 @@ internal open class DynamicCodeRegistry(
     private val properties: GraphQLProviderProperties,
     private val dataFetchers: DataFetchers,
     private val metaProvider: MetaProvider,
-    private val jwtAuthenticationService: JwtAuthenticationService?
+    private val jwtAuthenticationService: JwtAuthenticationService?,
+    private val authenticationExtractor: AuthenticationExtractor?
 ) {
     @DgsCodeRegistry
     open fun registry(
@@ -27,7 +29,8 @@ internal open class DynamicCodeRegistry(
                 properties,
                 dataFetchers,
                 metaProvider,
-                jwtAuthenticationService
+                jwtAuthenticationService,
+                authenticationExtractor
             )
         }
 }

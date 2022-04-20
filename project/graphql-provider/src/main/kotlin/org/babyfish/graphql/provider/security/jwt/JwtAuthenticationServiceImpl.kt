@@ -74,7 +74,7 @@ internal open class JwtAuthenticationServiceImpl(
         newPassword: String
     ): JwtAuthenticationResult {
         authenticationBehaviorProvider.validateRawPassword(newPassword)
-        val user = authenticationOrNull()?.details as UserDetails?
+        val user = authenticationOrNull()?.principal as? UserDetails
             ?: throw JwtUpdatePasswordException(JwtUpdatePasswordException.Reason.UNAUTHENTICATED)
         if (!matches(oldPassword, user.password)) {
             throw JwtUpdatePasswordException(JwtUpdatePasswordException.Reason.ILLEGAL_OLD_PASSWORD)
