@@ -21,109 +21,109 @@ Use intellij the open the [example](https://github.com/babyfish-ct/graphql-provi
 In order to experience this example, there are three things to note
 
 1. *Query.books* is pagination query, so you must specify the argument "first" or "last", like this
-  ```
-  query {
-    books(first: 10) {
-      edges {
-        node {
-          name
-        }
-      }
-    }
-  }
-  ```
-  
-  Otherwise, exeption will be thrown
-  
-  ```
-  {
-    "errors": [
-      {
-        "message": "java.lang.IllegalArgumentException: neither 'first' nor 'last' is specified",
-        "locations": [],
-        "path": [
-          "books"
-        ],
-        "extensions": {
-          "errorType": "INTERNAL"
-        }
-      }
-    ],
-    "data": {
-      "books": null
-    }
-  }
-  ```
-2. *BookStore.avgPrice*, *Mutation.like* and *Mutation.unlike* are not open to anonymous users
-
-  Look at this query
-
-  ```
-  query {
-    books(first: 10) {
-      edges {
-        node {
-          name
-          store {
+    ```
+    query {
+      books(first: 10) {
+        edges {
+          node {
             name
-            avgPrice # Access BookStore.avgPrice
           }
         }
       }
     }
-  }
-  ```
-  
-  *BookStore.avgPrice* is not open to anonymous users, spring security throws *AccessDeniedException* when *Authorization* of HTTP request header is not specified.
-  
-  You can login 
-  - by graphql way
     ```
-    query {
-      login(email: "user1@gmail.com", password: "123456") {
-        accessToken
+  
+    Otherwise, exeption will be thrown
+
+    ```
+    {
+      "errors": [
+        {
+          "message": "java.lang.IllegalArgumentException: neither 'first' nor 'last' is specified",
+          "locations": [],
+          "path": [
+            "books"
+          ],
+          "extensions": {
+            "errorType": "INTERNAL"
+          }
+        }
+      ],
+      "data": {
+        "books": null
       }
     }
     ```
-  - or by rest way
-    http://localhost:8080/authentication/login?email=user1@gmail.com&password=123456
-    
-  No matter which way you use, you can get the *accessToken*. Copy the *accessToken* and make the following HTTP header for the originally rejected graphql request
-  ````
-  { "Authorization": "...paste AccessToken here..."}
-  ````
-  
+2. *BookStore.avgPrice*, *Mutation.like* and *Mutation.unlike* are not open to anonymous users
+
+    Look at this query
+
+    ```
+    query {
+      books(first: 10) {
+        edges {
+          node {
+            name
+            store {
+              name
+              avgPrice # Access BookStore.avgPrice
+            }
+          }
+        }
+      }
+    }
+    ```
+
+    *BookStore.avgPrice* is not open to anonymous users, spring security throws *AccessDeniedException* when *Authorization* of HTTP request header is not specified.
+
+    You can login 
+    - by graphql way
+      ```
+      query {
+        login(email: "user1@gmail.com", password: "123456") {
+          accessToken
+        }
+      }
+      ```
+    - or by rest way
+      http://localhost:8080/authentication/login?email=user1@gmail.com&password=123456
+
+    No matter which way you use, you can get the *accessToken*. Copy the *accessToken* and make the following HTTP header for the originally rejected graphql request
+    ````
+    { "Authorization": "...paste AccessToken here..."}
+    ````
+
 3. *Mutation.saveBook*, *Mutation.saveBooks*, *Mutation.saveShallowTree* and *Mutation.saveBookDeepTree* are only open to administrators.
 
-  ```
-  mutation {
-    saveBook(input: {
-      name: "NewBook",
-      price: 70
-    }) {
-      id
-    }
-  }
-  ```
-  
-  This mutation can only be executed by admininstor, spring security throws *AccessDeniedException* when the current user is not administrator.
-  
-  You can login as administrator *(admin@gmail.com)*
-  - by graphql way
     ```
-    query {
-      login(email: "admin@gmail.com", password: "123456") {
-        accessToken
+    mutation {
+      saveBook(input: {
+        name: "NewBook",
+        price: 70
+      }) {
+        id
       }
     }
     ```
-  - or by rest way
-    http://localhost:8080/authentication/login?email=admin@gmail.com&password=123456
-    
-  No matter which way you use, you can get the *accessToken* of administrator. Copy the *accessToken* of administrator and make the following HTTP header for the originally rejected graphql request
-  ````
-  { "Authorization": "...paste AccessToken of administrator here..."}
-  ````
+
+    This mutation can only be executed by admininstor, spring security throws *AccessDeniedException* when the current user is not administrator.
+
+    You can login as administrator *(admin@gmail.com)*
+    - by graphql way
+      ```
+      query {
+        login(email: "admin@gmail.com", password: "123456") {
+          accessToken
+        }
+      }
+      ```
+    - or by rest way
+      http://localhost:8080/authentication/login?email=admin@gmail.com&password=123456
+
+    No matter which way you use, you can get the *accessToken* of administrator. Copy the *accessToken* of administrator and make the following HTTP header for the originally rejected graphql request
+    ````
+    { "Authorization": "...paste AccessToken of administrator here..."}
+    ````
   
 ## User guide & Documentation
 
