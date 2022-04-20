@@ -38,9 +38,9 @@ This is a complex user implementation field that requires not only access to the
             userImplementation(Author::fullName) // α
         }
 
-        fun fullName(separator: String?) = // β
-            runtime.implementation(Author::fullName) { // γ
-                "${it.firstName}${separator ?: " "}${it.lastName}" // δ
+        fun fullName(separator: String = " ") = // β
+            runtime.implement(Author::fullName) { // γ
+                "${it.firstName}${separator}${it.lastName}" // δ
             }
     }
     ```
@@ -73,7 +73,7 @@ This is a complex user implementation field that requires not only access to the
 Start the app, access http://localhost:8080/graphiql and execute
 ```
 query {
-  findBooks {
+  books {
     name
     store {
       name
@@ -88,7 +88,7 @@ The response is
 ```
 {
   "data": {
-    "findBooks": [
+    "books": [
       {
         "name": "Effective TypeScript",
         "store": {
@@ -232,7 +232,7 @@ The response is
         }
 
         fun avgPrice() = // β
-            runtime.batchImplementation(BookStore::avgPrice) { // γ
+            runtime.batchImplement(BookStore::avgPrice) { // γ
                 spring(BookRepository::class) // δ
                     .findAvgPriceGroupByStoreIds(it) // ε
             }
@@ -282,7 +282,7 @@ The response is
 Start app, access http://localhost:8080/graphiql and execute
 ```
 query {
-  findBooks {
+  books {
     name
     store {
       name
@@ -295,7 +295,7 @@ The response is
 ```
 {
   "data": {
-    "findBooks": [
+    "books": [
       {
         "name": "Effective TypeScript",
         "store": {
