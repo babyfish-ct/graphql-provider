@@ -28,13 +28,11 @@ class BookMapper: EntityMapper<Book, UUID>() {
 
     fun authors(firstName: String?, lastName: String?) = // α
         runtime.filterList(Book::authors) { // β
-            firstName?.let {
-                db {
+            db {
+                firstName?.let {
                     where { table.firstName ilike it } // γ
                 }
-            }
-            lastName?.let {
-                db {
+                lastName?.let {
                     where { table.lastName ilike it }
                 }
             }
@@ -66,7 +64,7 @@ class BookMapper: EntityMapper<Book, UUID>() {
 Start app, access http://localhost:8080/graphiql, and execute
 ```
 query {
-  findBooks {
+  books {
     name
     store {
       name
@@ -82,7 +80,7 @@ The response is
 ```
 {
   "data": {
-    "findBooks": [
+    "books": [
       {
         "name": "Effective TypeScript",
         "store": {
