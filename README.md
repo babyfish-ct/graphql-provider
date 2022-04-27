@@ -17,6 +17,9 @@ Its development speed is very fast, and the usage method is very simple.
 
 6. Integrated Spring security and JWT. Allows users to authorize by behavior, authorize by column, and authorize by row through the kotlin DSL.
 
+## View the video
+https://www.youtube.com/watch?v=5UxmkNbCe0Q
+
 ## Run the example
 Use intellij the open the [example](https://github.com/babyfish-ct/graphql-provider/tree/main/example), after waiting for gradle to finish all tasks, start the program and visit http://localhost:8080/graphiql.
 
