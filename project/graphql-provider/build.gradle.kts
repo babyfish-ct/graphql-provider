@@ -32,6 +32,7 @@ dependencies {
 
     implementation("io.jsonwebtoken:jjwt-api:0.11.2")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.2")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.2")
 
     kspTest("org.babyfish.kimmer:kimmer-ksp:0.3.3")
     testImplementation(kotlin("test"))

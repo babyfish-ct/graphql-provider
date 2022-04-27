@@ -8,3 +8,11 @@ graphql:
         refreshTimeout: PT24H
       api:
         usernameArgName: email
+
+# Special reminder!
+#
+# The accessTimeout and refreshTimeout are set to
+# be very long for the convenience of experimentation
+# and learning.
+#
+# Do not configure them in this way in real projects!

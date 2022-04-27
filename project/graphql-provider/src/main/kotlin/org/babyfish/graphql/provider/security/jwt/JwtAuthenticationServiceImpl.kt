@@ -3,6 +3,7 @@ package org.babyfish.graphql.provider.security.jwt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.withContext
+import org.babyfish.graphql.provider.runtime.cfg.GraphQLProviderProperties
 import org.babyfish.graphql.provider.security.AuthenticationBehaviorProvider
 import org.babyfish.graphql.provider.security.authenticationOrNull
 import org.springframework.security.core.userdetails.ReactiveUserDetailsPasswordService
@@ -11,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import java.lang.IllegalStateException
 
 @Service
 internal open class JwtAuthenticationServiceImpl(
@@ -18,8 +20,16 @@ internal open class JwtAuthenticationServiceImpl(
     private val userDetailsPasswordService: ReactiveUserDetailsPasswordService,
     private val jwtTokenService: JwtTokenService,
     private val passwordEncoder: PasswordEncoder,
-    private val authenticationBehaviorProvider: AuthenticationBehaviorProvider<*>,
+    authenticationBehaviorProvider: AuthenticationBehaviorProvider<*>?,
 ) : JwtAuthenticationService {
+
+    private val authenticationBehaviorProvider: AuthenticationBehaviorProvider<*> =
+        authenticationBehaviorProvider
+            ?: throw IllegalStateException(
+                "A bean whose type is '${AuthenticationBehaviorProvider::class.qualifiedName}' " +
+                    "must be configured when " +
+                    "'${GraphQLProviderProperties.Security.Jwt.PROPERTY_PATH}.enabled' is true"
+            )
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun login(

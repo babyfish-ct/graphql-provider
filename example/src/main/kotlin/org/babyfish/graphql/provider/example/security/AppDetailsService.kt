@@ -12,11 +12,12 @@ import org.babyfish.kimmer.sql.ast.eq
 import org.springframework.stereotype.Component
 
 @Component
-class UserDetailsServiceImpl(
+class AppUserDetailsService(
     private val r2dbcClient: R2dbcClient
 ) : AsyncUserDetailsService<AppUserDetails>,
     AsyncUserDetailsPasswordService<AppUserDetails> {
 
+    // Tell the framework how to get single user with roles.
     override suspend fun findByUsername(name: String): AppUserDetails? =
         r2dbcClient
             .query(AppUser::class) {
@@ -26,15 +27,16 @@ class UserDetailsServiceImpl(
             .firstOrNull()
             ?.let { user ->
                 return AppUserDetails(
-                    newAsync(AppUser::class).by(user) {
+                    newAsync(AppUser::class).by (user) {
                         roles = r2dbcClient.query(Role::class) {
                             where(table.`appUsers ∩`(listOf(user.id)))
                             select(table)
                         }
                     }
                 )
-        }
+            }
 
+    // Tell the framework how to update user's password.
     override suspend fun updatePassword(
         user: AppUserDetails,
         newPassword: String

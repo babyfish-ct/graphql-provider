@@ -21,8 +21,8 @@ internal class JwtTokenService(
     private val key = properties.security.jwt.secret.takeIf { it.isNotBlank() }?.let {
         Keys.hmacShaKeyFor(it.toByteArray())
     } ?: Keys.secretKeyFor(SignatureAlgorithm.HS256).also {
-        if (logger.isInfoEnabled) {
-            logger.info(
+        if (logger.isWarnEnabled) {
+            logger.warn(
                 "The generated security key of JWT is '{}'. " +
                     "If you do not want to use the generated value, " +
                     "please configure '${
