@@ -26,7 +26,7 @@ class AppUserDetailsService(
             }
             .firstOrNull()
             ?.let { user ->
-                return AppUserDetails(
+                AppUserDetails(
                     newAsync(AppUser::class).by (user) {
                         roles = r2dbcClient.query(Role::class) {
                             where(table.`appUsers ∩`(listOf(user.id)))
